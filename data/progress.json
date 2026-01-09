@@ -1,0 +1,280 @@
+{
+  "version": "v1",
+  "lastUpdated": "2026-01-09T22:02:38.637Z",
+  "projects": [
+    {
+      "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
+      "name": "overlap-resolution",
+      "path": "~/Desktop/overlap-resolution",
+      "status": "active",
+      "primaryFocus": "Theory, documentation, experiments",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "e1e231be-3b98-49c2-ae3a-69ffbc98708a",
+      "name": "marketplace-design",
+      "path": "~/Desktop/marketplace-design",
+      "status": "complete",
+      "primaryFocus": "Production Go RTB platform",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "15ae299a-e19e-4682-9888-edd0ef442c68",
+      "name": "stable-marriage",
+      "path": "~/Desktop/stable-marriage",
+      "status": "active",
+      "primaryFocus": "Dashboard frontend, Python pacing",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "bf5138cc-bf76-47c8-8e7d-13f2270e736c",
+      "name": "stag-hunt",
+      "path": "~/Desktop/stag-hunt",
+      "status": "complete",
+      "primaryFocus": "Advertiser cooperation game theory",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "8e10134e-26b0-4f25-8af3-4051701060db",
+      "name": "analysis",
+      "path": "~/Desktop/analysis",
+      "status": "active",
+      "primaryFocus": "BPM/NER analysis (separate project)",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "DATA-001",
+      "priority": "P0",
+      "task": "Conversion tracking (CVR)",
+      "project": "marketplace-design",
+      "status": "not_started",
+      "blocking": "eCPM formula incomplete",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "INT-001",
+      "priority": "P0",
+      "task": "Wire up v̂ᵢₜ from NN to bid calculation",
+      "project": "overlap-resolution",
+      "status": "not_started",
+      "blocking": "Bidding pipeline",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "INT-002",
+      "priority": "P0",
+      "task": "Wire up α price ceiling logic",
+      "project": "overlap-resolution",
+      "status": "not_started",
+      "blocking": "Overpay protection",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "ML-001",
+      "priority": "P0",
+      "task": "Train with 100K production data",
+      "project": "marketplace-design",
+      "status": "waiting",
+      "blocking": "Model accuracy",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "DATA-002",
+      "priority": "P1",
+      "task": "Add advertiser entity (campaign grouping)",
+      "project": "marketplace-design",
+      "status": "not_started",
+      "notes": "Multi-campaign pacing",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "INT-003",
+      "priority": "P1",
+      "task": "Full integration test (ad request → auction)",
+      "project": "overlap-resolution",
+      "status": "not_started",
+      "notes": "E2E validation",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "DASH-001",
+      "priority": "P1",
+      "task": "Chat interface for interpretability",
+      "project": "stable-marriage",
+      "status": "not_started",
+      "notes": "Phase 7.2",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "STAG-001",
+      "priority": "P1",
+      "task": "Integration with stable-marriage RTB",
+      "project": "stag-hunt",
+      "status": "not_started",
+      "notes": "Data coalition → auction",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "DATA-003",
+      "priority": "P2",
+      "task": "Device/Geo context (3.2% → 80%+)",
+      "project": "marketplace-design",
+      "status": "not_started",
+      "notes": "User segmentation",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "EXP-001",
+      "priority": "P2",
+      "task": "Comparative analysis experiments",
+      "project": "overlap-resolution",
+      "status": "not_started",
+      "notes": "Task 4",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "EKS-001",
+      "priority": "P2",
+      "task": "Resume EKS deployment",
+      "project": "marketplace-design",
+      "status": "blocked",
+      "notes": "When ready for prod",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "DATA-004",
+      "priority": "P3",
+      "task": "User embeddings (replace hash)",
+      "project": "marketplace-design",
+      "status": "not_started",
+      "notes": "Personalization",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "ML-002",
+      "priority": "P3",
+      "task": "Improve Neural Network (direct eCPM)",
+      "project": "overlap-resolution",
+      "status": "not_started",
+      "notes": "Task 5",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "DASH-002",
+      "priority": "P3",
+      "task": "Fix chart rendering warnings",
+      "project": "stable-marriage",
+      "status": "not_started",
+      "notes": "Minor polish",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    }
+  ],
+  "dataGaps": [
+    {
+      "id": "fcaf3a45-3e8b-45b4-8183-60c9f187c24b",
+      "element": "Conversions",
+      "coverage": "0%",
+      "priority": "P0",
+      "impact": "CRITICAL GAP - eCPM = P(click) × P(convert|click) × payout",
+      "effort": "medium",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "3d460702-51d0-4c0e-b7e7-f2d2fcadc984",
+      "element": "Advertiser entity",
+      "coverage": "0%",
+      "priority": "P1",
+      "impact": "Enables cross-campaign budget coordination",
+      "effort": "low",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "197131ba-56ff-4d65-a430-d9b3c6dcfa0c",
+      "element": "Device/Geo context",
+      "coverage": "3.2%",
+      "priority": "P2",
+      "impact": "Better user segmentation for NN",
+      "effort": "medium",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "c7e13588-c518-43ef-a1b3-aead0113270a",
+      "element": "User embeddings",
+      "coverage": "0%",
+      "priority": "P3",
+      "impact": "Replace SHA256 hash with real embeddings",
+      "effort": "high",
+      "createdAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-09T22:02:38.638Z"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "f24133e9-2af4-472d-8d0c-d542c2bfb6b1",
+      "date": "2026-01-08",
+      "decision": "Use Go backend, not Python",
+      "rationale": "Performance for hot path",
+      "createdAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "1420b6c6-5cb3-4144-8d8f-670a19a94a9b",
+      "date": "2026-01-08",
+      "decision": "REST API, not gRPC-Web",
+      "rationale": "Simplicity for dashboard",
+      "createdAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "c331b44b-c019-4690-ae5b-fd1373785f02",
+      "date": "2026-01-08",
+      "decision": "Pacing at advertiser level",
+      "rationale": "Go backend is source of truth",
+      "createdAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "05aa0168-9583-48a2-8bb4-382fef74a6aa",
+      "date": "2026-01-09",
+      "decision": "Separate CTR and CVR models",
+      "rationale": "Different training populations",
+      "createdAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "301f3163-749f-4b86-ae2a-252291073a4d",
+      "date": "2026-01-09",
+      "decision": "Memoized selectors + throttled slider",
+      "rationale": "Performance fix",
+      "createdAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "d886375f-03ec-4fec-ac3f-48d321304c58",
+      "date": "2026-01-09",
+      "decision": "HTTP MCP server with JSON storage",
+      "rationale": "Team rollout capability, simple start with upgrade path to SQLite",
+      "createdAt": "2026-01-09T22:02:38.638Z"
+    }
+  ],
+  "completionRecords": []
+}
