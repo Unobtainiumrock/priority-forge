@@ -515,7 +515,7 @@ const tools = [
   },
   {
     name: 'get_priorities',
-    description: 'Get all tasks sorted by priority (P0 first)',
+    description: 'Get all tasks sorted by priority (P0 first). Excludes completed tasks by default.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -523,6 +523,10 @@ const tools = [
           type: 'string',
           enum: ['P0', 'P1', 'P2', 'P3'],
           description: 'Filter by specific priority level',
+        },
+        includeCompleted: {
+          type: 'boolean',
+          description: 'Include completed tasks (default: false)',
         },
       },
       required: [],
@@ -716,10 +720,12 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
     }
 
     case 'get_priorities': {
+      const includeCompleted = params.includeCompleted === true;
       if (params.priority) {
-        return storage.getTasksByPriority(params.priority as 'P0' | 'P1' | 'P2' | 'P3');
+        const tasks = await storage.getTasksByPriority(params.priority as 'P0' | 'P1' | 'P2' | 'P3');
+        return includeCompleted ? tasks : tasks.filter(t => t.status !== 'complete');
       }
-      return storage.getTasks();
+      return storage.getTasks(includeCompleted);
     }
 
     case 'get_top_priority': {

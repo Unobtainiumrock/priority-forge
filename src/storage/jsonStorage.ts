@@ -169,9 +169,28 @@ export class JsonStorage implements StorageInterface {
   }
 
   // Tasks - V2 with heap-based ordering
-  async getTasks(): Promise<WeightedTask[]> {
+  async getTasks(includeCompleted: boolean = false): Promise<WeightedTask[]> {
     // Return sorted by priority score (lowest first = highest priority)
+    const all = this.taskHeap.toSortedArray();
+    if (includeCompleted) {
+      return all;
+    }
+    // Filter out completed tasks by default
+    return all.filter(t => t.status !== 'complete');
+  }
+
+  /**
+   * Get all tasks including completed (for history/archival purposes)
+   */
+  async getAllTasks(): Promise<WeightedTask[]> {
     return this.taskHeap.toSortedArray();
+  }
+
+  /**
+   * Get completed tasks only
+   */
+  async getCompletedTasks(): Promise<WeightedTask[]> {
+    return this.taskHeap.toSortedArray().filter(t => t.status === 'complete');
   }
 
   async getTask(id: string): Promise<WeightedTask | null> {
@@ -189,10 +208,12 @@ export class JsonStorage implements StorageInterface {
   }
 
   /**
-   * V2: Get the single highest priority task
+   * V2: Get the single highest priority task (excludes completed tasks)
    */
   async getTopPriority(): Promise<WeightedTask | null> {
-    return this.taskHeap.peek();
+    // Get all tasks sorted by priority and find the first non-completed one
+    const sorted = this.taskHeap.toSortedArray();
+    return sorted.find(t => t.status !== 'complete') || null;
   }
 
   /**
