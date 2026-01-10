@@ -242,23 +242,10 @@ Look for these signals that indicate a new project:
 - User mentions a new project name
 - Opening files in an untracked path
 
-### Step 2: Check for Existing Tracker
-Call \`check_project_tracker\` with the project path to see if a \`PROGRESS_TRACKER.md\` exists.
-
-### Step 3: Based on Result
-
-**If tracker exists:**
-- Call \`import_project_tracker\` to sync tasks into MCP
-- Register the project with \`create_project\`
-
-**If no tracker:**
+### Step 2: Register the Project
 - Ask user: "I notice this is a new project. Should I register it with the task tracker?"
 - If yes: Call \`create_project\` with name, path, and primary focus
 - Create initial tasks based on what user wants to accomplish
-
-### Step 4: Ongoing Sync
-- Use \`sync_to_project\` to write MCP tasks back to project's local tracker
-- This keeps per-project markdown files in sync with central MCP
 
 ## PROJECT REGISTRATION TEMPLATE
 
@@ -268,35 +255,9 @@ When registering a new project, gather:
 - **primaryFocus**: One-line description of project purpose
 - **status**: One of: active, complete, blocked, shelved
 
-## CROSS-PROJECT SYNC ARCHITECTURE
+## ARCHITECTURE
 
-\`\`\`
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Project A      │     │  Project B      │     │  Project C      │
-│  PROGRESS_      │     │  PROGRESS_      │     │  PROGRESS_      │
-│  TRACKER.md     │     │  TRACKER.md     │     │  TRACKER.md     │
-└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
-         │                       │                       │
-         │    import/sync        │    import/sync        │
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                                 ▼
-                    ┌────────────────────────┐
-                    │   MCP Progress Server   │
-                    │   (Central Source of    │
-                    │    Truth)               │
-                    │                         │
-                    │   progress.json         │
-                    │   ┌─────────────────┐   │
-                    │   │  All Projects   │   │
-                    │   │  All Tasks      │   │
-                    │   │  Priority Queue │   │
-                    │   └─────────────────┘   │
-                    └────────────────────────┘
-\`\`\`
-
-The MCP server is the **source of truth**. Per-project trackers are convenience views.
+The MCP server maintains a centralized \`progress.json\` database as the **single source of truth** for all projects and tasks. No per-project files are created - all task management happens through the MCP API.
 `;
       
       return content;
@@ -478,23 +439,14 @@ async function handlePromptGet(name: string, args: Record<string, string>): Prom
               type: 'text',
               text: `# Project Onboarding: ${projectName}
 
-## Step 1: Check for existing tracker
-Call \`check_project_tracker\` with projectPath: "${projectPath}"
-
-## Step 2: Based on result
-
-**If tracker exists:**
-1. Call \`import_project_tracker\` with projectPath: "${projectPath}" and projectName: "${projectName}"
-2. Call \`create_project\` to register the project
-
-**If no tracker:**
-1. Call \`create_project\` with:
+## Step 1: Register the Project
+Call \`create_project\` with:
    - name: "${projectName}"
    - path: "${projectPath}"
    - primaryFocus: [ask user for one-line description]
    - status: "active"
 
-## Step 3: Confirm registration
+## Step 2: Confirm registration
 - Show user the registered project details
 - List any imported tasks
 - Ask what they want to work on first`,
@@ -717,7 +669,7 @@ const tools = [
       required: [],
     },
   },
-  // ====== V2.2: Project Sync & Onboarding Tools ======
+  // ====== V2.2: Project & Task Tools ======
   {
     name: 'create_project',
     description: 'Register a new project with the task tracker. Use this when working in a new directory.',
@@ -730,41 +682,6 @@ const tools = [
         status: { type: 'string', enum: ['active', 'complete', 'blocked', 'shelved'], description: 'Project status (default: active)' },
       },
       required: ['name', 'path', 'primaryFocus'],
-    },
-  },
-  {
-    name: 'check_project_tracker',
-    description: 'Check if a PROGRESS_TRACKER.md exists in a project directory. Use for onboarding new projects.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        projectPath: { type: 'string', description: 'Path to check for PROGRESS_TRACKER.md' },
-      },
-      required: ['projectPath'],
-    },
-  },
-  {
-    name: 'import_project_tracker',
-    description: 'Import tasks from an existing PROGRESS_TRACKER.md file into the MCP. Parses markdown and creates tasks.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        projectPath: { type: 'string', description: 'Path to project containing PROGRESS_TRACKER.md' },
-        projectName: { type: 'string', description: 'Project name for imported tasks' },
-      },
-      required: ['projectPath', 'projectName'],
-    },
-  },
-  {
-    name: 'sync_to_project',
-    description: 'Sync MCP tasks to a project\'s local PROGRESS_TRACKER.md file. Writes current task state.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        projectName: { type: 'string', description: 'Project name to filter tasks' },
-        projectPath: { type: 'string', description: 'Path where PROGRESS_TRACKER.md should be written' },
-      },
-      required: ['projectName', 'projectPath'],
     },
   },
   {
@@ -898,7 +815,7 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
       };
     }
 
-    // ====== V2.2: Project Sync & Onboarding ======
+    // ====== V2.2: Project Tools ======
     case 'create_project': {
       return storage.createProject({
         name: params.name as string,
@@ -906,170 +823,6 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
         primaryFocus: params.primaryFocus as string,
         status: (params.status as 'active' | 'complete' | 'blocked' | 'shelved') || 'active',
       });
-    }
-
-    case 'check_project_tracker': {
-      const projectPath = (params.projectPath as string).replace(/^~/, process.env.HOME || '');
-      const trackerPath = path.join(projectPath, 'PROGRESS_TRACKER.md');
-      const unifiedPath = path.join(projectPath, 'UNIFIED_PROGRESS_TRACKER.md');
-      
-      const trackerExists = fs.existsSync(trackerPath);
-      const unifiedExists = fs.existsSync(unifiedPath);
-      
-      // Check if project is already registered
-      const projects = await storage.getProjects();
-      const isRegistered = projects.some(p => 
-        p.path === projectPath || 
-        p.path === params.projectPath ||
-        p.path.replace(/^~/, process.env.HOME || '') === projectPath
-      );
-      
-      return {
-        projectPath,
-        trackerExists,
-        trackerPath: trackerExists ? trackerPath : null,
-        unifiedTrackerExists: unifiedExists,
-        unifiedTrackerPath: unifiedExists ? unifiedPath : null,
-        isRegisteredProject: isRegistered,
-        recommendation: !isRegistered 
-          ? 'Project not registered. Call create_project to register it.'
-          : trackerExists || unifiedExists
-            ? 'Project has existing tracker. Consider calling import_project_tracker.'
-            : 'Project registered but no local tracker. Tasks are tracked in central MCP.',
-      };
-    }
-
-    case 'import_project_tracker': {
-      const projectPath = (params.projectPath as string).replace(/^~/, process.env.HOME || '');
-      const projectName = params.projectName as string;
-      
-      // Try both tracker file names
-      let trackerPath = path.join(projectPath, 'PROGRESS_TRACKER.md');
-      if (!fs.existsSync(trackerPath)) {
-        trackerPath = path.join(projectPath, 'UNIFIED_PROGRESS_TRACKER.md');
-      }
-      
-      if (!fs.existsSync(trackerPath)) {
-        return {
-          success: false,
-          error: 'No PROGRESS_TRACKER.md or UNIFIED_PROGRESS_TRACKER.md found',
-          projectPath,
-        };
-      }
-      
-      const content = fs.readFileSync(trackerPath, 'utf-8');
-      
-      // Parse markdown for tasks (simple regex-based parsing)
-      const tasksCreated: Array<{ id: string; task: string; priority: string }> = [];
-      
-      // Match table rows like: | **ID** | Task | Project | Status |
-      // or | ID | Task | Project | Status |
-      const taskTableRegex = /\|\s*\*?\*?([A-Z]+-\d+)\*?\*?\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|/g;
-      let match;
-      
-      while ((match = taskTableRegex.exec(content)) !== null) {
-        const [, id, task, , status] = match;
-        const cleanTask = task.trim();
-        const cleanStatus = status.trim().toLowerCase();
-        
-        // Skip header rows
-        if (id === 'ID' || cleanTask === 'Task' || cleanTask.includes('---')) continue;
-        
-        // Determine priority from ID prefix or context
-        let priority: 'P0' | 'P1' | 'P2' | 'P3' = 'P2';
-        if (content.includes(`### P0`) && content.indexOf(id) > content.indexOf('### P0')) priority = 'P0';
-        else if (content.includes(`### P1`) && content.indexOf(id) > content.indexOf('### P1')) priority = 'P1';
-        else if (content.includes(`### P3`) && content.indexOf(id) > content.indexOf('### P3')) priority = 'P3';
-        
-        // Map status
-        let taskStatus: 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'waiting' = 'not_started';
-        if (cleanStatus.includes('✅') || cleanStatus.includes('complete')) taskStatus = 'complete';
-        else if (cleanStatus.includes('🔄') || cleanStatus.includes('progress')) taskStatus = 'in_progress';
-        else if (cleanStatus.includes('⏳') || cleanStatus.includes('waiting')) taskStatus = 'waiting';
-        else if (cleanStatus.includes('⏸️') || cleanStatus.includes('blocked')) taskStatus = 'blocked';
-        
-        // Check if task already exists
-        const existingTask = await storage.getTask(id);
-        if (!existingTask) {
-          await storage.createTask({
-            id,
-            priority,
-            task: cleanTask,
-            project: projectName,
-            status: taskStatus,
-          });
-          tasksCreated.push({ id, task: cleanTask, priority });
-        }
-      }
-      
-      return {
-        success: true,
-        trackerPath,
-        tasksImported: tasksCreated.length,
-        tasks: tasksCreated,
-        message: tasksCreated.length > 0 
-          ? `Imported ${tasksCreated.length} tasks from ${trackerPath}`
-          : 'No new tasks to import (may already exist in MCP)',
-      };
-    }
-
-    case 'sync_to_project': {
-      const projectName = params.projectName as string;
-      const projectPath = (params.projectPath as string).replace(/^~/, process.env.HOME || '');
-      const trackerPath = path.join(projectPath, 'PROGRESS_TRACKER.md');
-      
-      // Get tasks for this project
-      const allTasks = await storage.getTasks();
-      const projectTasks = allTasks.filter(t => 
-        t.project === projectName || 
-        t.project.toLowerCase() === projectName.toLowerCase()
-      );
-      
-      // Generate markdown
-      let md = `# Progress Tracker: ${projectName}\n\n`;
-      md += `> Auto-generated from MCP Progress Server\n`;
-      md += `> Last synced: ${new Date().toISOString()}\n\n`;
-      md += `---\n\n`;
-      
-      // Group by priority
-      const byPriority = {
-        P0: projectTasks.filter(t => t.priority === 'P0'),
-        P1: projectTasks.filter(t => t.priority === 'P1'),
-        P2: projectTasks.filter(t => t.priority === 'P2'),
-        P3: projectTasks.filter(t => t.priority === 'P3'),
-      };
-      
-      const statusEmoji: Record<string, string> = {
-        not_started: '❌',
-        in_progress: '🔄',
-        complete: '✅',
-        blocked: '⏸️',
-        waiting: '⏳',
-      };
-      
-      for (const [priority, tasks] of Object.entries(byPriority)) {
-        if (tasks.length === 0) continue;
-        
-        md += `## ${priority}: ${priority === 'P0' ? 'Critical' : priority === 'P1' ? 'High' : priority === 'P2' ? 'Medium' : 'Low'} Priority\n\n`;
-        md += `| ID | Task | Status | Notes |\n`;
-        md += `|----|------|--------|-------|\n`;
-        
-        for (const task of tasks) {
-          const emoji = statusEmoji[task.status] || '❓';
-          md += `| ${task.id} | ${task.task} | ${emoji} ${task.status} | ${task.notes || ''} |\n`;
-        }
-        md += `\n`;
-      }
-      
-      // Write file
-      fs.writeFileSync(trackerPath, md);
-      
-      return {
-        success: true,
-        trackerPath,
-        tasksSynced: projectTasks.length,
-        message: `Synced ${projectTasks.length} tasks to ${trackerPath}`,
-      };
     }
 
     case 'suggest_tasks': {
@@ -1178,9 +931,7 @@ export async function mcpHandler(req: Request, res: Response): Promise<void> {
 - Log context switches when changing topics
 
 ## ON NEW PROJECT
-- Call 'check_project_tracker' to see if PROGRESS_TRACKER.md exists
-- If unregistered: call 'create_project' to register it
-- If tracker exists: call 'import_project_tracker' to sync
+- Call 'create_project' to register untracked directories
 
 ## END OF CONVERSATION
 - Update all in-progress tasks
