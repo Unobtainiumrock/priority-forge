@@ -1,6 +1,6 @@
 {
   "version": "v2",
-  "lastUpdated": "2026-01-10T23:10:10.806Z",
+  "lastUpdated": "2026-01-10T23:24:09.003Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -582,6 +582,13 @@
       "decision": "ESMM model deferred to P2, pipeline components (Isotonic, MC Dropout) promoted to P1",
       "rationale": "Can build functional pipeline without full ESMM model. Calibration and exploration components work standalone.",
       "createdAt": "2026-01-10T23:10:07.397Z"
+    },
+    {
+      "id": "c244bd4f-c383-4fe0-9bdf-7a4739de3630",
+      "date": "2026-01-10",
+      "decision": "Completed tasks hidden from priority queue by default, toggle to show",
+      "rationale": "Cleaner active queue while preserving completed tasks for history and V3 training. Use includeCompleted=true or ?all=true to see all.",
+      "createdAt": "2026-01-10T23:24:09.003Z"
     }
   ],
   "completionRecords": [
