@@ -1,6 +1,6 @@
 {
-  "version": "v1",
-  "lastUpdated": "2026-01-09T22:02:38.637Z",
+  "version": "v2",
+  "lastUpdated": "2026-01-10T19:50:56.143Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -46,6 +46,15 @@
       "primaryFocus": "BPM/NER analysis (separate project)",
       "createdAt": "2026-01-09T22:02:38.638Z",
       "updatedAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "c2093158-12b3-4c62-a780-ccfd6e1713be",
+      "name": "esmm",
+      "path": "/Users/fleischn/Desktop/gravity/esmm",
+      "status": "active",
+      "primaryFocus": "ESMM (Entire Space Multi-Task Model) implementation for recommendation system with 4-stage pipeline integration",
+      "createdAt": "2026-01-10T19:50:38.872Z",
+      "updatedAt": "2026-01-10T19:50:38.872Z"
     }
   ],
   "tasks": [
@@ -57,7 +66,15 @@
       "status": "not_started",
       "blocking": "eCPM formula incomplete",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": -50,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "INT-001",
@@ -67,7 +84,15 @@
       "status": "not_started",
       "blocking": "Bidding pipeline",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": -50,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "INT-002",
@@ -77,7 +102,15 @@
       "status": "not_started",
       "blocking": "Overpay protection",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": -50,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "ML-001",
@@ -87,7 +120,15 @@
       "status": "waiting",
       "blocking": "Model accuracy",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": -50,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "DATA-002",
@@ -97,7 +138,15 @@
       "status": "not_started",
       "notes": "Multi-campaign pacing",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 82,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "INT-003",
@@ -107,7 +156,15 @@
       "status": "not_started",
       "notes": "E2E validation",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 82,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "DASH-001",
@@ -117,7 +174,15 @@
       "status": "not_started",
       "notes": "Phase 7.2",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 82,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "STAG-001",
@@ -127,7 +192,15 @@
       "status": "not_started",
       "notes": "Data coalition → auction",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 82,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "DATA-003",
@@ -137,7 +210,15 @@
       "status": "not_started",
       "notes": "User segmentation",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 182,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "EXP-001",
@@ -147,7 +228,15 @@
       "status": "not_started",
       "notes": "Task 4",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 182,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "EKS-001",
@@ -157,7 +246,15 @@
       "status": "blocked",
       "notes": "When ready for prod",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 182,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "DATA-004",
@@ -167,7 +264,15 @@
       "status": "not_started",
       "notes": "Personalization",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 282,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "ML-002",
@@ -177,7 +282,15 @@
       "status": "not_started",
       "notes": "Task 5",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 282,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
     },
     {
       "id": "DASH-002",
@@ -187,7 +300,146 @@
       "status": "not_started",
       "notes": "Minor polish",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z"
+      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "priorityScore": 282,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "ESMM-001",
+      "priority": "P0",
+      "task": "Implement ESMMWithAttention PyTorch model",
+      "project": "esmm",
+      "status": "not_started",
+      "blocking": "All downstream pipeline stages",
+      "notes": "Core model from ESMM_MODEL.md - embeddings, attention, CTR/CVR towers",
+      "createdAt": "2026-01-10T19:50:56.031Z",
+      "updatedAt": "2026-01-10T19:50:56.031Z",
+      "effort": "high",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 3,
+        "dependencyDepth": 0
+      },
+      "priorityScore": -41
+    },
+    {
+      "id": "ESMM-002",
+      "priority": "P0",
+      "task": "Implement multi-task loss function with attribution weighting",
+      "project": "esmm",
+      "status": "not_started",
+      "blocking": "Model training",
+      "dependencies": [
+        "ESMM-001"
+      ],
+      "createdAt": "2026-01-10T19:50:56.035Z",
+      "updatedAt": "2026-01-10T19:50:56.035Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 1
+      },
+      "priorityScore": -52
+    },
+    {
+      "id": "ESMM-003",
+      "priority": "P1",
+      "task": "Integrate Isotonic Regression calibration (Stage 3: Safety)",
+      "project": "esmm",
+      "status": "not_started",
+      "dependencies": [
+        "ESMM-001"
+      ],
+      "notes": "Calibrate raw ESMM outputs to true probabilities",
+      "createdAt": "2026-01-10T19:50:56.067Z",
+      "updatedAt": "2026-01-10T19:50:56.067Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 1
+      },
+      "priorityScore": 71
+    },
+    {
+      "id": "ESMM-004",
+      "priority": "P1",
+      "task": "Implement MC Dropout for Thompson Sampling (Stage 4: Exploration)",
+      "project": "esmm",
+      "status": "not_started",
+      "dependencies": [
+        "ESMM-001"
+      ],
+      "notes": "Uncertainty quantification via multiple forward passes",
+      "createdAt": "2026-01-10T19:50:56.101Z",
+      "updatedAt": "2026-01-10T19:50:56.101Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 1
+      },
+      "priorityScore": 80
+    },
+    {
+      "id": "ESMM-005",
+      "priority": "P1",
+      "task": "Build RecommendationPipeline class (full 4-stage integration)",
+      "project": "esmm",
+      "status": "not_started",
+      "dependencies": [
+        "ESMM-001",
+        "ESMM-003",
+        "ESMM-004"
+      ],
+      "notes": "End-to-end ranking with ESMM → Calibration → Thompson Sampling",
+      "createdAt": "2026-01-10T19:50:56.113Z",
+      "updatedAt": "2026-01-10T19:50:56.113Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 2
+      },
+      "priorityScore": 78
+    },
+    {
+      "id": "ESMM-006",
+      "priority": "P2",
+      "task": "Add optional pLTV (Value) tower for revenue prediction",
+      "project": "esmm",
+      "status": "not_started",
+      "dependencies": [
+        "ESMM-001"
+      ],
+      "createdAt": "2026-01-10T19:50:56.129Z",
+      "updatedAt": "2026-01-10T19:50:56.129Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 1
+      },
+      "priorityScore": 180
     }
   ],
   "dataGaps": [
@@ -274,7 +526,28 @@
       "decision": "HTTP MCP server with JSON storage",
       "rationale": "Team rollout capability, simple start with upgrade path to SQLite",
       "createdAt": "2026-01-09T22:02:38.638Z"
+    },
+    {
+      "id": "2b4c2da0-d284-45c5-8664-4f795021e56f",
+      "date": "2026-01-09",
+      "decision": "REST polling for prod deployment (Kafka deferred)",
+      "rationale": "Kafka + Flink in PRD is aspirational high-scale architecture for observability layer; REST polling via Go API sufficient for initial prod deployment. Kafka becomes relevant when needing stream processing at scale, event replay/audit capabilities, or decoupling for multiple downstream consumers.",
+      "createdAt": "2026-01-10T05:36:30.369Z"
+    },
+    {
+      "id": "9cae5776-173b-49ff-816b-315445776920",
+      "date": "2026-01-10",
+      "decision": "Adopt ESMM over separate CTR/CVR models",
+      "rationale": "Eliminates Sample Selection Bias by training CVR on entire impression space via pCTCVR loss trick",
+      "createdAt": "2026-01-10T19:50:56.142Z"
     }
   ],
-  "completionRecords": []
+  "completionRecords": [],
+  "heuristicWeights": {
+    "blocking": 10,
+    "crossProject": 5,
+    "timeSensitive": 8,
+    "effortValue": 3,
+    "dependency": 2
+  }
 }
