@@ -145,41 +145,17 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 
 Then restart Claude Desktop.
 
-## Agent Configuration (Critical)
+## Agent Rules (Critical)
 
-Connecting the MCP server is only half the setup. You also need to configure your AI assistant to **proactively check the tracker at session start**. Without this, the AI won't know to use the tracker unless you explicitly ask.
+Connecting the MCP server is only half the setup. You also need to configure your AI assistant to **proactively check the tracker at session start**. Without this, the AI won't use the tracker unless you explicitly ask.
 
-### Droid (Factory CLI)
+👉 **Copy the contents of [`AGENT_RULES.md`](./AGENT_RULES.md) to the appropriate location:**
 
-Create or update `~/.factory/AGENTS.md`:
-
-```markdown
-# Session Start
-
-At the start of each session:
-1. Check the progress-tracker MCP for current project status and priorities using `get_status`
-2. Cross-reference registered projects with actual directories in the workspace
-3. Flag any unregistered projects that should be tracked and offer to register them
-```
-
-### Cursor
-
-Create or update `.cursorrules` in your project root (or `~/.cursorrules` for global):
-
-```markdown
-# Session Start
-
-At the start of each session:
-1. Check the progress-tracker MCP for current project status and priorities using `get_status`
-2. Cross-reference registered projects with actual directories in the workspace
-3. Flag any unregistered projects that should be tracked and offer to register them
-```
-
-### Claude Desktop / Claude Code
-
-These tools don't have a persistent rules file equivalent. Instead, you can:
-1. Start each session with: "Check the progress-tracker MCP status"
-2. Or create a custom prompt template that includes this instruction
+| Client | Where to copy it |
+|--------|------------------|
+| **Cursor** | `.cursorrules` in your project root (or `~/.cursorrules` for global) |
+| **Droid** | `~/.factory/AGENTS.md` |
+| **Claude Desktop / Code** | Paste at start of conversation, or use a custom prompt template |
 
 ## REST API Endpoints
 
