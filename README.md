@@ -31,7 +31,7 @@ HTTP-based MCP server for cross-project task prioritization with heap-based prio
 - **REST API**: Full CRUD operations for all entities
 - **V3 Ready**: Context switch tracking for future ML-based priority optimization
 
-## 🎯 Universal Task Tracking (V2.1)
+##  Universal Task Tracking (V2.1)
 
 The server provides **automatic context injection** via MCP Resources and Prompts that work with ANY MCP-compliant client:
 
