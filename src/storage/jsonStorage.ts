@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   Project,
   Task,
+  WeightedTask,
   DataGap,
   Decision,
   TaskCompletionRecord,
@@ -16,21 +17,26 @@ import {
   UpdateDataGapDTO,
   CreateDecisionDTO,
   Priority,
+  HeuristicWeights,
+  DEFAULT_HEURISTIC_WEIGHTS,
+  UpdateHeuristicWeightsDTO,
 } from '../types/schema';
 import { StorageInterface } from './interface';
+import { MinHeap, toWeightedTask, recalculateAllScores, getDefaultWeights } from '../heap';
 
 const DATA_DIR = path.join(__dirname, '../../data');
 const DB_FILE = path.join(DATA_DIR, 'progress.json');
 
 function getEmptyDatabase(): ProgressDatabase {
   return {
-    version: 'v1',
+    version: 'v2',
     lastUpdated: new Date().toISOString(),
     projects: [],
     tasks: [],
     dataGaps: [],
     decisions: [],
     completionRecords: [],
+    heuristicWeights: { ...DEFAULT_HEURISTIC_WEIGHTS },
   };
 }
 
@@ -39,10 +45,12 @@ const contextSwitchCounts: Map<string, number> = new Map();
 
 export class JsonStorage implements StorageInterface {
   private db: ProgressDatabase;
+  private taskHeap: MinHeap<WeightedTask>;
   private onWrite: (() => Promise<void>) | null = null;
 
   constructor() {
     this.db = this.load();
+    this.taskHeap = new MinHeap(this.db.tasks);
   }
 
   setOnWriteCallback(callback: () => Promise<void>) {
@@ -59,7 +67,40 @@ export class JsonStorage implements StorageInterface {
       return empty;
     }
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw) as ProgressDatabase;
+    const db = JSON.parse(raw) as ProgressDatabase;
+    
+    // Migrate V1 to V2 if needed
+    if (db.version === 'v1' || !db.heuristicWeights) {
+      return this.migrateToV2(db);
+    }
+    
+    return db;
+  }
+
+  /**
+   * Migrate V1 database to V2 format
+   */
+  private migrateToV2(db: ProgressDatabase): ProgressDatabase {
+    console.log('🔄 Migrating database from V1 to V2...');
+    
+    const heuristicWeights = db.heuristicWeights || { ...DEFAULT_HEURISTIC_WEIGHTS };
+    
+    // Convert all tasks to weighted tasks
+    const weightedTasks = recalculateAllScores(db.tasks, heuristicWeights);
+    
+    const v2Db: ProgressDatabase = {
+      ...db,
+      version: 'v2',
+      tasks: weightedTasks,
+      heuristicWeights,
+      lastUpdated: new Date().toISOString(),
+    };
+    
+    // Save migrated database
+    fs.writeFileSync(DB_FILE, JSON.stringify(v2Db, null, 2));
+    console.log('✅ Migration complete! Database is now V2.');
+    
+    return v2Db;
   }
 
   private async save(): Promise<void> {
@@ -68,6 +109,13 @@ export class JsonStorage implements StorageInterface {
     if (this.onWrite) {
       await this.onWrite();
     }
+  }
+
+  /**
+   * Rebuild heap from current tasks (use after bulk operations)
+   */
+  private rebuildHeap(): void {
+    this.taskHeap = new MinHeap(this.db.tasks);
   }
 
   async getAll(): Promise<ProgressDatabase> {
@@ -120,29 +168,54 @@ export class JsonStorage implements StorageInterface {
     return true;
   }
 
-  // Tasks
-  async getTasks(): Promise<Task[]> {
-    // Sort by priority (P0 first)
-    const priorityOrder: Record<Priority, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
-    return [...this.db.tasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  // Tasks - V2 with heap-based ordering
+  async getTasks(): Promise<WeightedTask[]> {
+    // Return sorted by priority score (lowest first = highest priority)
+    return this.taskHeap.toSortedArray();
   }
 
-  async getTask(id: string): Promise<Task | null> {
-    return this.db.tasks.find(t => t.id === id) || null;
+  async getTask(id: string): Promise<WeightedTask | null> {
+    return this.taskHeap.get(id);
   }
 
-  async getTasksByPriority(priority: Priority): Promise<Task[]> {
-    return this.db.tasks.filter(t => t.priority === priority);
+  async getTasksByPriority(priority: Priority): Promise<WeightedTask[]> {
+    return this.db.tasks.filter(t => t.priority === priority)
+      .sort((a, b) => a.priorityScore - b.priorityScore);
   }
 
-  async getTasksByProject(projectId: string): Promise<Task[]> {
-    return this.db.tasks.filter(t => t.project === projectId);
+  async getTasksByProject(projectId: string): Promise<WeightedTask[]> {
+    return this.db.tasks.filter(t => t.project === projectId)
+      .sort((a, b) => a.priorityScore - b.priorityScore);
   }
 
-  async createTask(data: CreateTaskDTO): Promise<Task> {
+  /**
+   * V2: Get the single highest priority task
+   */
+  async getTopPriority(): Promise<WeightedTask | null> {
+    return this.taskHeap.peek();
+  }
+
+  /**
+   * V2: Pop the highest priority task (removes from queue)
+   */
+  async popTopPriority(): Promise<WeightedTask | null> {
+    const task = this.taskHeap.pop();
+    if (task) {
+      const idx = this.db.tasks.findIndex(t => t.id === task.id);
+      if (idx !== -1) {
+        this.db.tasks.splice(idx, 1);
+        await this.save();
+      }
+    }
+    return task;
+  }
+
+  async createTask(data: CreateTaskDTO): Promise<WeightedTask> {
     const now = new Date().toISOString();
-    const task: Task = {
-      id: uuidv4(),
+    
+    // Create base task
+    const baseTask: Task = {
+      id: data.id || uuidv4(),
       priority: data.priority,
       task: data.task,
       project: data.project,
@@ -153,31 +226,101 @@ export class JsonStorage implements StorageInterface {
       createdAt: now,
       updatedAt: now,
     };
-    this.db.tasks.push(task);
+
+    // Convert to weighted task with computed scores
+    const weightedTask = toWeightedTask(
+      {
+        ...baseTask,
+        deadline: data.deadline,
+        effort: data.effort,
+        weights: data.weights ? { ...getDefaultWeights(), ...data.weights } : undefined,
+      } as WeightedTask,
+      this.db.tasks,
+      this.db.heuristicWeights
+    );
+
+    // Add to database and heap
+    this.db.tasks.push(weightedTask);
+    this.taskHeap.push(weightedTask);
+    
     await this.save();
-    return task;
+    return weightedTask;
   }
 
-  async updateTask(id: string, data: UpdateTaskDTO): Promise<Task | null> {
+  async updateTask(id: string, data: UpdateTaskDTO): Promise<WeightedTask | null> {
     const idx = this.db.tasks.findIndex(t => t.id === id);
     if (idx === -1) return null;
     
-    this.db.tasks[idx] = {
-      ...this.db.tasks[idx],
+    const existingTask = this.db.tasks[idx];
+    
+    // Merge updates
+    const updatedBase: WeightedTask = {
+      ...existingTask,
       ...data,
+      weights: data.weights 
+        ? { ...existingTask.weights, ...data.weights }
+        : existingTask.weights,
       updatedAt: new Date().toISOString(),
     };
+
+    // Recalculate priority score
+    const updatedTask = toWeightedTask(
+      updatedBase,
+      this.db.tasks,
+      this.db.heuristicWeights
+    );
+
+    // Update in database and heap
+    this.db.tasks[idx] = updatedTask;
+    this.taskHeap.update(id, updatedTask);
+    
     await this.save();
-    return this.db.tasks[idx];
+    return updatedTask;
   }
 
   async deleteTask(id: string): Promise<boolean> {
     const idx = this.db.tasks.findIndex(t => t.id === id);
     if (idx === -1) return false;
+    
     this.db.tasks.splice(idx, 1);
+    this.taskHeap.remove(id);
     contextSwitchCounts.delete(id);
+    
     await this.save();
     return true;
+  }
+
+  /**
+   * V2: Recalculate all priority scores
+   * Useful after changing heuristic weights or bulk updates
+   */
+  async recalculateAllPriorities(): Promise<WeightedTask[]> {
+    this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+    this.rebuildHeap();
+    await this.save();
+    return this.taskHeap.toSortedArray();
+  }
+
+  /**
+   * V2: Update heuristic weights and recalculate all scores
+   */
+  async updateHeuristicWeights(weights: UpdateHeuristicWeightsDTO): Promise<HeuristicWeights> {
+    this.db.heuristicWeights = {
+      ...this.db.heuristicWeights,
+      ...weights,
+    };
+    
+    // Recalculate all task scores with new weights
+    await this.recalculateAllPriorities();
+    
+    return this.db.heuristicWeights;
+  }
+
+  /**
+   * V2: Get current heuristic weights
+   */
+  async getHeuristicWeights(): Promise<HeuristicWeights> {
+    return this.db.heuristicWeights;
   }
 
   // Data Gaps

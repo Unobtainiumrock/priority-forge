@@ -1,0 +1,47 @@
+{
+  "version": "v2",
+  "lastUpdated": "2026-01-01T00:00:00.000Z",
+  "projects": [
+    {
+      "id": "example-uuid",
+      "name": "my-project",
+      "path": "~/projects/my-project",
+      "status": "active",
+      "primaryFocus": "Description of what this project does",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "priority": "P0",
+      "task": "Example critical task",
+      "project": "my-project",
+      "status": "not_started",
+      "blocking": "What this blocks",
+      "notes": "Additional context",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z",
+      "priorityScore": -50,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
+    }
+  ],
+  "dataGaps": [],
+  "decisions": [],
+  "completionRecords": [],
+  "heuristicWeights": {
+    "blocking": 10,
+    "crossProject": 5,
+    "timeSensitive": 8,
+    "effortValue": 3,
+    "dependency": 2
+  }
+}
+
