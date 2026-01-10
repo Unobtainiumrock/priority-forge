@@ -2,6 +2,25 @@
 
 HTTP-based MCP server for cross-project task prioritization with heap-based priority scoring and auto-generated markdown output.
 
+---
+
+## What is this and why should I use it?
+
+**The Problem:** When you're working with AI coding assistants (Claude, Cursor, etc.) across multiple projects, things slip through the cracks. You mention "we should fix that bug" in passing, but nobody tracks it. You finish a task but forget to mark it done. You have three projects with scattered TODO lists and no unified view of what's most important.
+
+**The Solution:** Priority Forge is a task tracking server that your AI assistant connects to. Once connected, the AI:
+
+- **Proactively captures tasks** from your conversations—you don't have to say "add this to the tracker"
+- **Always knows what's most important** via a smart priority queue that weighs blocking dependencies, deadlines, and cross-project impact
+- **Tracks task completion** so you build a history of how long things actually take (used to train smarter prioritization later)
+- **Works across all your projects** with a single source of truth, while optionally syncing to per-project markdown files
+
+**Why this approach?** Traditional task trackers require you to context-switch: stop coding, open Jira/Linear/Notion, write a ticket, go back to coding. With Priority Forge, the AI does the tracking *while* you work. It's ambient task management—always on, never in the way.
+
+**Works everywhere:** Because it uses the open MCP protocol, it works with Cursor, Claude Desktop, Droid, Claude Code, and any other MCP-compatible tool. No vendor lock-in.
+
+---
+
 ## Features
 
 - **V2 Heap-Based Priority Queue**: Weighted priority scoring with tunable heuristics
