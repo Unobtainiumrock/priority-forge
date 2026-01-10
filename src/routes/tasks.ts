@@ -4,7 +4,7 @@ import { CreateTaskDTO, UpdateTaskDTO, Priority } from '../types/schema';
 
 const router = Router();
 
-// GET /tasks - List all tasks (sorted by priority)
+// GET /tasks - List all tasks (sorted by priority score in V2)
 router.get('/', async (_req: Request, res: Response) => {
   try {
     const tasks = await storage.getTasks();
@@ -35,6 +35,19 @@ router.get('/project/:projectId', async (req: Request, res: Response) => {
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+});
+
+// GET /tasks/top - V2: Get top priority task
+router.get('/top', async (_req: Request, res: Response) => {
+  try {
+    const task = await storage.getTopPriority();
+    if (!task) {
+      return res.json({ message: 'No tasks in queue' });
+    }
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch top priority task' });
   }
 });
 
