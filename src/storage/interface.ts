@@ -29,7 +29,9 @@ export interface StorageInterface {
   deleteProject(id: string): Promise<boolean>;
   
   // Tasks - V2 with heap-based ordering
-  getTasks(): Promise<WeightedTask[]>;
+  getTasks(includeCompleted?: boolean): Promise<WeightedTask[]>;
+  getAllTasks(): Promise<WeightedTask[]>;
+  getCompletedTasks(): Promise<WeightedTask[]>;
   getTask(id: string): Promise<WeightedTask | null>;
   getTasksByPriority(priority: Priority): Promise<WeightedTask[]>;
   getTasksByProject(projectId: string): Promise<WeightedTask[]>;

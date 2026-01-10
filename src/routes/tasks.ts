@@ -4,13 +4,25 @@ import { CreateTaskDTO, UpdateTaskDTO, Priority } from '../types/schema';
 
 const router = Router();
 
-// GET /tasks - List all tasks (sorted by priority score in V2)
-router.get('/', async (_req: Request, res: Response) => {
+// GET /tasks - List active tasks (sorted by priority score in V2)
+// Use ?all=true to include completed tasks
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const tasks = await storage.getTasks();
+    const includeCompleted = req.query.all === 'true';
+    const tasks = await storage.getTasks(includeCompleted);
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+});
+
+// GET /tasks/completed - List completed tasks only
+router.get('/completed', async (_req: Request, res: Response) => {
+  try {
+    const tasks = await storage.getCompletedTasks();
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch completed tasks' });
   }
 });
 

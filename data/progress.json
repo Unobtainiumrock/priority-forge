@@ -1,6 +1,6 @@
 {
   "version": "v2",
-  "lastUpdated": "2026-01-10T19:50:56.143Z",
+  "lastUpdated": "2026-01-10T23:10:10.806Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -312,14 +312,14 @@
     },
     {
       "id": "ESMM-001",
-      "priority": "P0",
+      "priority": "P2",
       "task": "Implement ESMMWithAttention PyTorch model",
       "project": "esmm",
       "status": "not_started",
       "blocking": "All downstream pipeline stages",
-      "notes": "Core model from ESMM_MODEL.md - embeddings, attention, CTR/CVR towers",
+      "notes": "Deferred - can build pipeline without full ESMM model first",
       "createdAt": "2026-01-10T19:50:56.031Z",
-      "updatedAt": "2026-01-10T19:50:56.031Z",
+      "updatedAt": "2026-01-10T23:09:46.433Z",
       "effort": "high",
       "weights": {
         "blockingCount": 0,
@@ -328,11 +328,11 @@
         "effortValueRatio": 3,
         "dependencyDepth": 0
       },
-      "priorityScore": -41
+      "priorityScore": 159
     },
     {
       "id": "ESMM-002",
-      "priority": "P0",
+      "priority": "P2",
       "task": "Implement multi-task loss function with attribution weighting",
       "project": "esmm",
       "status": "not_started",
@@ -341,7 +341,7 @@
         "ESMM-001"
       ],
       "createdAt": "2026-01-10T19:50:56.035Z",
-      "updatedAt": "2026-01-10T19:50:56.035Z",
+      "updatedAt": "2026-01-10T23:09:48.219Z",
       "effort": "medium",
       "weights": {
         "blockingCount": 0,
@@ -350,7 +350,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": -52
+      "priorityScore": 148,
+      "notes": "Deferred - depends on ESMM-001"
     },
     {
       "id": "ESMM-003",
@@ -361,9 +362,9 @@
       "dependencies": [
         "ESMM-001"
       ],
-      "notes": "Calibrate raw ESMM outputs to true probabilities",
+      "notes": "Isotonic Regression calibration - can implement standalone",
       "createdAt": "2026-01-10T19:50:56.067Z",
-      "updatedAt": "2026-01-10T19:50:56.067Z",
+      "updatedAt": "2026-01-10T23:09:50.316Z",
       "effort": "low",
       "weights": {
         "blockingCount": 0,
@@ -383,9 +384,9 @@
       "dependencies": [
         "ESMM-001"
       ],
-      "notes": "Uncertainty quantification via multiple forward passes",
+      "notes": "MC Dropout for Thompson Sampling - can implement standalone",
       "createdAt": "2026-01-10T19:50:56.101Z",
-      "updatedAt": "2026-01-10T19:50:56.101Z",
+      "updatedAt": "2026-01-10T23:09:56.385Z",
       "effort": "medium",
       "weights": {
         "blockingCount": 0,
@@ -440,6 +441,26 @@
         "dependencyDepth": 1
       },
       "priorityScore": 180
+    },
+    {
+      "id": "ECPM-001",
+      "priority": "P0",
+      "task": "Implement naive eCPM formula with conservative CVR placeholder",
+      "project": "marketplace-design",
+      "status": "complete",
+      "blocking": "INT-001 (v̂ᵢₜ wiring)",
+      "notes": "CVR params: mean=1%, std=0.3%, floor=0.1%. Payout from historic bid × scale.",
+      "createdAt": "2026-01-10T22:40:52.526Z",
+      "updatedAt": "2026-01-10T22:42:14.350Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": -50
     }
   ],
   "dataGaps": [
@@ -540,9 +561,41 @@
       "decision": "Adopt ESMM over separate CTR/CVR models",
       "rationale": "Eliminates Sample Selection Bias by training CVR on entire impression space via pCTCVR loss trick",
       "createdAt": "2026-01-10T19:50:56.142Z"
+    },
+    {
+      "id": "329f7b70-42da-41ee-86da-4f062293e9a8",
+      "date": "2026-01-10",
+      "decision": "Conservative CVR placeholder: Gaussian(mean=1%, std=0.3%, floor=0.1%)",
+      "rationale": "Industry programmatic display CVR is 0.5-2%. Conservative to avoid overbidding/budget exhaustion. Payout uses historic bid × 1000 scale factor.",
+      "createdAt": "2026-01-10T22:42:12.169Z"
+    },
+    {
+      "id": "03e0883d-f0ae-4e79-8b94-f341f516e3f8",
+      "date": "2026-01-10",
+      "decision": "CVR parameters from real data: mean=2.39%, std=1.82%, floor=0.34%",
+      "rationale": "Domain CVR statistics from 42 campaigns provided by colleague (Myles). Replaces conservative 1% estimate.",
+      "createdAt": "2026-01-10T23:10:05.499Z"
+    },
+    {
+      "id": "1cdea60d-7654-4009-a001-f5da7a70ddaa",
+      "date": "2026-01-10",
+      "decision": "ESMM model deferred to P2, pipeline components (Isotonic, MC Dropout) promoted to P1",
+      "rationale": "Can build functional pipeline without full ESMM model. Calibration and exploration components work standalone.",
+      "createdAt": "2026-01-10T23:10:07.397Z"
     }
   ],
-  "completionRecords": [],
+  "completionRecords": [
+    {
+      "id": "36067543-0f0d-4c1e-af06-5bbee8256344",
+      "taskId": "ECPM-001",
+      "actualCompletionTime": 0.02,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-10T22:42:14.350Z"
+    }
+  ],
   "heuristicWeights": {
     "blocking": 10,
     "crossProject": 5,
