@@ -1,6 +1,5 @@
 import express from 'express';
 import { storage } from './storage/jsonStorage';
-import { writeMarkdown } from './markdown/generator';
 import { mcpHandler } from './mcp/handler';
 import projectsRouter from './routes/projects';
 import tasksRouter from './routes/tasks';
@@ -22,12 +21,6 @@ app.use((_req, res, next) => {
     return res.sendStatus(200);
   }
   next();
-});
-
-// Register markdown regeneration callback
-storage.setOnWriteCallback(async () => {
-  const db = await storage.getAll();
-  await writeMarkdown(db);
 });
 
 // Health check
@@ -175,12 +168,6 @@ When ANY task is finished (even partially):
 
 // MCP endpoint (JSON-RPC 2.0)
 app.post('/mcp', mcpHandler);
-
-// Generate initial markdown on startup
-(async () => {
-  const db = await storage.getAll();
-  await writeMarkdown(db);
-})();
 
 app.listen(PORT, () => {
   console.log(`
