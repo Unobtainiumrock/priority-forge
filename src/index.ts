@@ -13,6 +13,17 @@ const PORT = process.env.PORT || 3456;
 // Middleware
 app.use(express.json());
 
+// CORS middleware for frontend
+app.use((_req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (_req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Register markdown regeneration callback
 storage.setOnWriteCallback(async () => {
   const db = await storage.getAll();
