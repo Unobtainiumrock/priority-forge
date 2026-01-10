@@ -248,6 +248,17 @@ Once connected, your AI assistant has access to tools, resources, and prompts:
 | `get_data_gaps` | Get all identified data collection gaps |
 | `log_decision` | Record an architectural or design decision |
 
+### Project Sync Tools
+
+| Tool | Description |
+|------|-------------|
+| `create_project` | Register a new project with the task tracker |
+| `check_project_tracker` | Check if PROGRESS_TRACKER.md exists in a project directory |
+| `import_project_tracker` | Import tasks from an existing PROGRESS_TRACKER.md into MCP |
+| `sync_to_project` | **Sync MCP tasks to a project's local PROGRESS_TRACKER.md** |
+
+> **Important:** Always call `sync_to_project` after creating/updating tasks to keep per-project markdown files in sync with the centralized MCP database.
+
 ### V2 Tools
 
 | Tool | Description |
@@ -310,6 +321,56 @@ Where `basePriority` is: P0=0, P1=100, P2=200, P3=300
 | `data/PROGRESS_TRACKER.md` | Auto-generated markdown - **gitignored** |
 
 > Each user maintains their own task database. The example file shows the expected structure.
+
+## Project Sync Workflow
+
+Priority Forge maintains a **centralized database** while optionally syncing to **per-project PROGRESS_TRACKER.md files**. This gives you the best of both worlds: unified prioritization across projects, plus human-readable task lists in each repo.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MCP Server (Centralized)                     │
+│                     data/progress.json                          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ sync_to_project
+                              ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│   Project A     │  │   Project B     │  │   Project C     │
+│ PROGRESS_       │  │ PROGRESS_       │  │ PROGRESS_       │
+│ TRACKER.md      │  │ TRACKER.md      │  │ TRACKER.md      │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+### Sync Commands
+
+**Export from MCP to project:**
+```bash
+# Via MCP tool
+sync_to_project(projectName: "my-project", projectPath: "/path/to/my-project")
+
+# Via REST API
+curl -X POST http://localhost:3456/sync/my-project \
+  -H "Content-Type: application/json" \
+  -d '{"projectPath": "/path/to/my-project"}'
+```
+
+**Import from project to MCP:**
+```bash
+# Via MCP tool
+import_project_tracker(projectPath: "/path/to/my-project", projectName: "my-project")
+```
+
+### When to Sync
+
+AI assistants should call `sync_to_project` after:
+- Creating one or more tasks (`create_task`)
+- Updating tasks (`update_task`)
+- Completing tasks (`complete_task`)
+- Registering a new project with initial tasks (`create_project`)
+
+This ensures the per-project markdown files stay in sync with the centralized database.
 
 ## Scripts
 
