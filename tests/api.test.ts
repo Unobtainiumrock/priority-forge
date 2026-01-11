@@ -82,7 +82,7 @@ describe('Progress Tracker API', () => {
       if (response) {
         const data = await response.json();
         expect(data.jsonrpc).toBe('2.0');
-        expect(data.result?.serverInfo?.name).toBe('progress-tracker');
+        expect(data.result?.serverInfo?.name).toBe('priority-forge');
       }
     });
 

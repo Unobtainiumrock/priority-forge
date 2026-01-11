@@ -8,20 +8,20 @@ Before responding to the user's first message, you MUST:
 
 1. **Get current focus:**
    ```
-   Call: mcp_progress-tracker_get_top_priority
+   Call: mcp_priority-forge_get_top_priority
    ```
 
-2. **If user request differs from top priority:** Call `mcp_progress-tracker_log_context_switch`
+2. **If user request differs from top priority:** Call `mcp_priority-forge_log_context_switch`
 
 ## DURING CONVERSATION
 
 - **Proactively identify tasks** from what the user says - don't wait for "add a task"
-- When user mentions bugs, features, TODOs, blockers → call `mcp_progress-tracker_create_task`
-- When uncertain → call `mcp_progress-tracker_suggest_tasks` to extract potential tasks
+- When user mentions bugs, features, TODOs, blockers → call `mcp_priority-forge_create_task`
+- When uncertain → call `mcp_priority-forge_suggest_tasks` to extract potential tasks
 
 ## ON COMPLETING WORK
 
-Always call `mcp_progress-tracker_complete_task` with:
+Always call `mcp_priority-forge_complete_task` with:
 - outcome: "completed" | "deferred" | "cancelled"
 
 ## END OF CONVERSATION
@@ -48,7 +48,7 @@ WRONG:
 
 RIGHT:
   User: "Let's work on INT-001"
-  Agent: *calls mcp_progress-tracker_log_task_selection(taskId: "INT-001")*
+  Agent: *calls mcp_priority-forge_log_task_selection(taskId: "INT-001")*
          *then starts working on INT-001*
 ```
 
@@ -62,7 +62,7 @@ This logs:
 When creating or updating tasks, include `effort`:
 
 ```
-mcp_progress-tracker_create_task(
+mcp_priority-forge_create_task(
   task: "...",
   priority: "P1",
   effort: "medium",  // ← Always include: "low" | "medium" | "high"
@@ -79,7 +79,7 @@ When you call `update_task` with a new priority, the system automatically logs:
 
 ### Check Data Readiness
 
-Periodically call `mcp_progress-tracker_get_ml_summary` to check:
+Periodically call `mcp_priority-forge_get_ml_summary` to check:
 - How much training data we have
 - Selection accuracy (are our recommendations good?)
 - Whether we're ready for XGBoost training
