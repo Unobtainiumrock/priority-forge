@@ -94,11 +94,41 @@ export interface TaskCompletionRecord {
   contextSwitchCount: number;
   outcome: TaskOutcome;
   completedAt: string;
+  // V3 additions
+  initialPriorityScore?: number;  // Score when task was created
+  finalPriorityScore?: number;    // Score at completion
 }
 
-// V2 Database schema
+// V3: Priority change event (for learning from user overrides)
+export interface PriorityChangeEvent {
+  id: string;
+  taskId: string;
+  oldPriority: Priority;
+  newPriority: Priority;
+  oldScore: number;
+  newScore: number;
+  timestamp: string;
+  // Context: what was the queue state when user made this change?
+  queuePositionBefore: number;  // Rank in queue before change
+  queuePositionAfter: number;   // Rank in queue after change
+}
+
+// V3: Task selection event (for learning user preferences)
+export interface TaskSelectionEvent {
+  id: string;
+  selectedTaskId: string;
+  selectedTaskScore: number;
+  selectedTaskRank: number;      // Where was it in the queue?
+  topTaskId: string;             // What did we recommend?
+  topTaskScore: number;
+  queueSize: number;             // How many tasks were available?
+  wasTopSelected: boolean;       // Did user follow our recommendation?
+  timestamp: string;
+}
+
+// V2/V3 Database schema
 export interface ProgressDatabase {
-  version: 'v1' | 'v2';
+  version: 'v1' | 'v2' | 'v3';
   lastUpdated: string;
   projects: Project[];
   tasks: WeightedTask[];
@@ -107,6 +137,9 @@ export interface ProgressDatabase {
   completionRecords: TaskCompletionRecord[];
   // V2: Tunable heuristic weights
   heuristicWeights: HeuristicWeights;
+  // V3: ML training data
+  priorityChangeEvents?: PriorityChangeEvent[];
+  taskSelectionEvents?: TaskSelectionEvent[];
 }
 
 // API response types

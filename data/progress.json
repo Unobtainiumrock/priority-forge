@@ -1,6 +1,6 @@
 {
-  "version": "v2",
-  "lastUpdated": "2026-01-10T23:24:09.003Z",
+  "version": "v3",
+  "lastUpdated": "2026-01-11T01:54:23.524Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -461,6 +461,48 @@
         "dependencyDepth": 0
       },
       "priorityScore": -50
+    },
+    {
+      "id": "V3-001",
+      "priority": "P2",
+      "task": "Implement Learning-to-Rank (Phase 3) for priority queue optimization",
+      "project": "mcp-progress-tracker",
+      "status": "not_started",
+      "dependencies": [
+        "V3-DATA"
+      ],
+      "notes": "Deferred. Currently using XGBoost (Phase 2). LTR would use pairwise/listwise loss for direct ranking optimization.",
+      "createdAt": "2026-01-11T01:50:53.472Z",
+      "updatedAt": "2026-01-11T01:50:53.472Z",
+      "effort": "high",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 3,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 191
+    },
+    {
+      "id": "V3-DATA",
+      "priority": "P1",
+      "task": "Complete V3 ML data collection pipeline (priority changes, task selections)",
+      "project": "mcp-progress-tracker",
+      "status": "not_started",
+      "blocking": "V3-001, XGBoost training",
+      "notes": "Track: priority override events, task selection events, queue state snapshots",
+      "createdAt": "2026-01-11T01:50:57.235Z",
+      "updatedAt": "2026-01-11T01:50:57.235Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 1,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 40
     }
   ],
   "dataGaps": [
@@ -589,6 +631,13 @@
       "decision": "Completed tasks hidden from priority queue by default, toggle to show",
       "rationale": "Cleaner active queue while preserving completed tasks for history and V3 training. Use includeCompleted=true or ?all=true to see all.",
       "createdAt": "2026-01-10T23:24:09.003Z"
+    },
+    {
+      "id": "bd8da931-e8c4-42ff-87c3-5178584b1699",
+      "date": "2026-01-11",
+      "decision": "V3 ML: Start with XGBoost (Phase 2), defer Learning-to-Rank (Phase 3)",
+      "rationale": "XGBoost handles tabular data well with small datasets. LTR requires more data and pairwise comparisons. Data collection now tracks: priority changes, task selections, queue state.",
+      "createdAt": "2026-01-11T01:54:23.524Z"
     }
   ],
   "completionRecords": [
@@ -609,5 +658,7 @@
     "timeSensitive": 8,
     "effortValue": 3,
     "dependency": 2
-  }
+  },
+  "priorityChangeEvents": [],
+  "taskSelectionEvents": []
 }
