@@ -570,6 +570,7 @@ export class JsonStorage implements StorageInterface {
   /**
    * V3: Export training data for XGBoost
    * Returns structured data ready for ML training
+   * Handles null values with sensible defaults for backward compatibility
    */
   async exportTrainingData(): Promise<{
     completionRecords: TaskCompletionRecord[];
@@ -581,7 +582,37 @@ export class JsonStorage implements StorageInterface {
       totalCompletions: number;
       totalPriorityChanges: number;
       totalSelections: number;
-      selectionAccuracy: number;  // % of times user followed top recommendation
+      selectionAccuracy: number;
+      dataQuality: {
+        completionsWithScores: number;
+        tasksWithEffort: number;
+        tasksWithDependencies: number;
+      };
+    };
+    // ML-ready format with nulls handled
+    mlReady: {
+      completions: Array<{
+        taskId: string;
+        completionTimeHours: number;
+        wasBlocking: number;  // 0 or 1
+        outcome: string;
+        initialScore: number;
+        finalScore: number;
+        scoreDelta: number;
+      }>;
+      tasks: Array<{
+        id: string;
+        priority: number;  // P0=0, P1=1, P2=2, P3=3
+        priorityScore: number;
+        effort: number;  // low=1, medium=2, high=3, unknown=2
+        blockingCount: number;
+        crossProjectImpact: number;
+        timeSensitivity: number;
+        effortValueRatio: number;
+        dependencyDepth: number;
+        hasDependencies: number;  // 0 or 1
+        hasBlocking: number;  // 0 or 1
+      }>;
     };
   }> {
     const completionRecords = this.db.completionRecords;
@@ -592,6 +623,50 @@ export class JsonStorage implements StorageInterface {
     const selectionAccuracy = taskSelectionEvents.length > 0
       ? (topSelections / taskSelectionEvents.length) * 100
       : 0;
+
+    // Data quality metrics
+    const completionsWithScores = completionRecords.filter(
+      r => r.initialPriorityScore !== undefined
+    ).length;
+    const tasksWithEffort = this.db.tasks.filter(t => t.effort).length;
+    const tasksWithDependencies = this.db.tasks.filter(
+      t => t.dependencies && t.dependencies.length > 0
+    ).length;
+
+    // Priority mapping
+    const priorityMap: Record<string, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
+    const effortMap: Record<string, number> = { low: 1, medium: 2, high: 3 };
+
+    // ML-ready completions with defaults for missing values
+    const mlCompletions = completionRecords.map(r => {
+      const task = this.db.tasks.find(t => t.id === r.taskId);
+      const initialScore = r.initialPriorityScore ?? task?.priorityScore ?? 0;
+      const finalScore = r.finalPriorityScore ?? task?.priorityScore ?? 0;
+      return {
+        taskId: r.taskId,
+        completionTimeHours: r.actualCompletionTime,
+        wasBlocking: r.wasBlocking ? 1 : 0,
+        outcome: r.outcome,
+        initialScore,
+        finalScore,
+        scoreDelta: finalScore - initialScore,
+      };
+    });
+
+    // ML-ready tasks with defaults for missing values
+    const mlTasks = this.db.tasks.map(t => ({
+      id: t.id,
+      priority: priorityMap[t.priority] ?? 1,
+      priorityScore: t.priorityScore,
+      effort: effortMap[t.effort || 'medium'] ?? 2,  // Default: medium
+      blockingCount: t.weights?.blockingCount ?? 0,
+      crossProjectImpact: t.weights?.crossProjectImpact ?? 0,
+      timeSensitivity: t.weights?.timeSensitivity ?? 0,
+      effortValueRatio: t.weights?.effortValueRatio ?? 5,
+      dependencyDepth: t.weights?.dependencyDepth ?? 0,
+      hasDependencies: (t.dependencies && t.dependencies.length > 0) ? 1 : 0,
+      hasBlocking: t.blocking ? 1 : 0,
+    }));
 
     return {
       completionRecords,
@@ -604,6 +679,15 @@ export class JsonStorage implements StorageInterface {
         totalPriorityChanges: priorityChangeEvents.length,
         totalSelections: taskSelectionEvents.length,
         selectionAccuracy,
+        dataQuality: {
+          completionsWithScores,
+          tasksWithEffort,
+          tasksWithDependencies,
+        },
+      },
+      mlReady: {
+        completions: mlCompletions,
+        tasks: mlTasks,
       },
     };
   }

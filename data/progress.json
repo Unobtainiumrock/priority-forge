@@ -1,6 +1,6 @@
 {
   "version": "v3",
-  "lastUpdated": "2026-01-11T01:54:23.524Z",
+  "lastUpdated": "2026-01-11T01:56:01.552Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -489,11 +489,11 @@
       "priority": "P1",
       "task": "Complete V3 ML data collection pipeline (priority changes, task selections)",
       "project": "mcp-progress-tracker",
-      "status": "not_started",
+      "status": "complete",
       "blocking": "V3-001, XGBoost training",
-      "notes": "Track: priority override events, task selection events, queue state snapshots",
+      "notes": "Implemented: PriorityChangeEvent tracking, TaskSelectionEvent tracking, export_training_data endpoint, get_ml_summary endpoint. Database migrated to V3.",
       "createdAt": "2026-01-11T01:50:57.235Z",
-      "updatedAt": "2026-01-11T01:50:57.235Z",
+      "updatedAt": "2026-01-11T01:56:01.552Z",
       "effort": "medium",
       "weights": {
         "blockingCount": 1,
@@ -650,6 +650,16 @@
       "contextSwitchCount": 0,
       "outcome": "completed",
       "completedAt": "2026-01-10T22:42:14.350Z"
+    },
+    {
+      "id": "638dacea-95bb-4e2f-92cf-3c4a6e8387e8",
+      "taskId": "V3-DATA",
+      "actualCompletionTime": 0.08,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T01:56:01.552Z"
     }
   ],
   "heuristicWeights": {

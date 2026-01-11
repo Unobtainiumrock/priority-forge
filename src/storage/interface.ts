@@ -81,6 +81,35 @@ export interface StorageInterface {
       totalPriorityChanges: number;
       totalSelections: number;
       selectionAccuracy: number;
+      dataQuality: {
+        completionsWithScores: number;
+        tasksWithEffort: number;
+        tasksWithDependencies: number;
+      };
+    };
+    mlReady: {
+      completions: Array<{
+        taskId: string;
+        completionTimeHours: number;
+        wasBlocking: number;
+        outcome: string;
+        initialScore: number;
+        finalScore: number;
+        scoreDelta: number;
+      }>;
+      tasks: Array<{
+        id: string;
+        priority: number;
+        priorityScore: number;
+        effort: number;
+        blockingCount: number;
+        crossProjectImpact: number;
+        timeSensitivity: number;
+        effortValueRatio: number;
+        dependencyDepth: number;
+        hasDependencies: number;
+        hasBlocking: number;
+      }>;
     };
   }>;
 }
