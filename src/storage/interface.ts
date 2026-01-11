@@ -4,6 +4,8 @@ import {
   DataGap,
   Decision,
   TaskCompletionRecord,
+  PriorityChangeEvent,
+  TaskSelectionEvent,
   ProgressDatabase,
   CreateProjectDTO,
   UpdateProjectDTO,
@@ -63,4 +65,22 @@ export interface StorageInterface {
   logContextSwitch(taskId: string): Promise<void>;
   completeTask(taskId: string, outcome: 'completed' | 'cancelled' | 'deferred'): Promise<TaskCompletionRecord | null>;
   getCompletionRecords(): Promise<TaskCompletionRecord[]>;
+  
+  // V3: ML Training Data
+  logTaskSelection(selectedTaskId: string): Promise<TaskSelectionEvent | null>;
+  getPriorityChangeEvents(): Promise<PriorityChangeEvent[]>;
+  getTaskSelectionEvents(): Promise<TaskSelectionEvent[]>;
+  exportTrainingData(): Promise<{
+    completionRecords: TaskCompletionRecord[];
+    priorityChangeEvents: PriorityChangeEvent[];
+    taskSelectionEvents: TaskSelectionEvent[];
+    tasks: WeightedTask[];
+    heuristicWeights: HeuristicWeights;
+    summary: {
+      totalCompletions: number;
+      totalPriorityChanges: number;
+      totalSelections: number;
+      selectionAccuracy: number;
+    };
+  }>;
 }

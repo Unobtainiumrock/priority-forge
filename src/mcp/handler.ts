@@ -700,6 +700,36 @@ const tools = [
       required: ['text'],
     },
   },
+  // ====== V3: ML Training Data Tools ======
+  {
+    name: 'log_task_selection',
+    description: 'V3: Log when user selects a task to work on (for ML training). Call this when user starts working on a task.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID of the task being selected' },
+      },
+      required: ['taskId'],
+    },
+  },
+  {
+    name: 'export_training_data',
+    description: 'V3: Export all ML training data (completions, priority changes, selections) for XGBoost training.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'get_ml_summary',
+    description: 'V3: Get summary statistics of collected ML training data.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
 ];
 
 async function handleToolCall(name: string, params: Record<string, unknown>): Promise<unknown> {
@@ -882,6 +912,40 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
           ? 'Review these suggestions and call create_task for any you want to track.'
           : 'No clear tasks identified. Consider asking user for clarification.',
         autoCreateThreshold: 'Tasks with high confidence about bugs/blockers should be auto-created.',
+      };
+    }
+
+    // ====== V3: ML Training Data Tools ======
+    case 'log_task_selection': {
+      const event = await storage.logTaskSelection(params.taskId as string);
+      if (!event) {
+        return { error: 'Task not found' };
+      }
+      return {
+        event,
+        message: `Logged selection of task ${params.taskId}`,
+        wasTopRecommendation: event.wasTopSelected,
+      };
+    }
+
+    case 'export_training_data': {
+      return storage.exportTrainingData();
+    }
+
+    case 'get_ml_summary': {
+      const data = await storage.exportTrainingData();
+      return {
+        summary: data.summary,
+        currentWeights: data.heuristicWeights,
+        recommendation: data.summary.selectionAccuracy < 70
+          ? 'Selection accuracy below 70% - consider retraining weights with XGBoost'
+          : 'Selection accuracy is good - current weights are performing well',
+        dataReadiness: {
+          hasEnoughCompletions: data.summary.totalCompletions >= 10,
+          hasEnoughSelections: data.summary.totalSelections >= 20,
+          hasPriorityFeedback: data.summary.totalPriorityChanges > 0,
+          readyForTraining: data.summary.totalCompletions >= 10 && data.summary.totalSelections >= 20,
+        },
       };
     }
 

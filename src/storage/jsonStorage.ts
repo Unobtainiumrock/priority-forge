@@ -8,6 +8,8 @@ import {
   DataGap,
   Decision,
   TaskCompletionRecord,
+  PriorityChangeEvent,
+  TaskSelectionEvent,
   ProgressDatabase,
   CreateProjectDTO,
   UpdateProjectDTO,
@@ -29,7 +31,7 @@ const DB_FILE = path.join(DATA_DIR, 'progress.json');
 
 function getEmptyDatabase(): ProgressDatabase {
   return {
-    version: 'v2',
+    version: 'v3',
     lastUpdated: new Date().toISOString(),
     projects: [],
     tasks: [],
@@ -37,6 +39,9 @@ function getEmptyDatabase(): ProgressDatabase {
     decisions: [],
     completionRecords: [],
     heuristicWeights: { ...DEFAULT_HEURISTIC_WEIGHTS },
+    // V3: ML training data
+    priorityChangeEvents: [],
+    taskSelectionEvents: [],
   };
 }
 
@@ -71,7 +76,12 @@ export class JsonStorage implements StorageInterface {
     
     // Migrate V1 to V2 if needed
     if (db.version === 'v1' || !db.heuristicWeights) {
-      return this.migrateToV2(db);
+      return this.migrateToV3(this.migrateToV2(db));
+    }
+    
+    // Migrate V2 to V3 if needed
+    if (db.version === 'v2' || !db.priorityChangeEvents) {
+      return this.migrateToV3(db);
     }
     
     return db;
@@ -101,6 +111,27 @@ export class JsonStorage implements StorageInterface {
     console.log('✅ Migration complete! Database is now V2.');
     
     return v2Db;
+  }
+
+  /**
+   * Migrate V2 database to V3 format (adds ML training data arrays)
+   */
+  private migrateToV3(db: ProgressDatabase): ProgressDatabase {
+    console.log('🔄 Migrating database from V2 to V3...');
+    
+    const v3Db: ProgressDatabase = {
+      ...db,
+      version: 'v3',
+      priorityChangeEvents: db.priorityChangeEvents || [],
+      taskSelectionEvents: db.taskSelectionEvents || [],
+      lastUpdated: new Date().toISOString(),
+    };
+    
+    // Save migrated database
+    fs.writeFileSync(DB_FILE, JSON.stringify(v3Db, null, 2));
+    console.log('✅ Migration complete! Database is now V3.');
+    
+    return v3Db;
   }
 
   private async save(): Promise<void> {
@@ -273,6 +304,12 @@ export class JsonStorage implements StorageInterface {
     if (idx === -1) return null;
     
     const existingTask = this.db.tasks[idx];
+    const oldPriority = existingTask.priority;
+    const oldScore = existingTask.priorityScore;
+    
+    // Get queue position before update
+    const sortedBefore = this.taskHeap.toSortedArray();
+    const queuePositionBefore = sortedBefore.findIndex(t => t.id === id);
     
     // Merge updates
     const updatedBase: WeightedTask = {
@@ -294,6 +331,31 @@ export class JsonStorage implements StorageInterface {
     // Update in database and heap
     this.db.tasks[idx] = updatedTask;
     this.taskHeap.update(id, updatedTask);
+    
+    // V3: Log priority change event if priority changed
+    if (data.priority && data.priority !== oldPriority) {
+      const sortedAfter = this.taskHeap.toSortedArray();
+      const queuePositionAfter = sortedAfter.findIndex(t => t.id === id);
+      
+      const changeEvent: PriorityChangeEvent = {
+        id: uuidv4(),
+        taskId: id,
+        oldPriority,
+        newPriority: data.priority,
+        oldScore,
+        newScore: updatedTask.priorityScore,
+        timestamp: new Date().toISOString(),
+        queuePositionBefore,
+        queuePositionAfter,
+      };
+      
+      if (!this.db.priorityChangeEvents) {
+        this.db.priorityChangeEvents = [];
+      }
+      this.db.priorityChangeEvents.push(changeEvent);
+      
+      console.log(`📊 V3: Logged priority change for ${id}: ${oldPriority} → ${data.priority}`);
+    }
     
     await this.save();
     return updatedTask;
@@ -452,6 +514,98 @@ export class JsonStorage implements StorageInterface {
 
   async getCompletionRecords(): Promise<TaskCompletionRecord[]> {
     return this.db.completionRecords;
+  }
+
+  // ========== V3: ML Training Data Methods ==========
+
+  /**
+   * V3: Log when user selects a task to work on
+   * This captures user preference signals for training
+   */
+  async logTaskSelection(selectedTaskId: string): Promise<TaskSelectionEvent | null> {
+    const selectedTask = await this.getTask(selectedTaskId);
+    if (!selectedTask) return null;
+
+    const sorted = this.taskHeap.toSortedArray().filter(t => t.status !== 'complete');
+    const topTask = sorted[0];
+    const selectedRank = sorted.findIndex(t => t.id === selectedTaskId);
+
+    const event: TaskSelectionEvent = {
+      id: uuidv4(),
+      selectedTaskId,
+      selectedTaskScore: selectedTask.priorityScore,
+      selectedTaskRank: selectedRank,
+      topTaskId: topTask?.id || selectedTaskId,
+      topTaskScore: topTask?.priorityScore || selectedTask.priorityScore,
+      queueSize: sorted.length,
+      wasTopSelected: selectedTaskId === topTask?.id,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (!this.db.taskSelectionEvents) {
+      this.db.taskSelectionEvents = [];
+    }
+    this.db.taskSelectionEvents.push(event);
+    
+    console.log(`📊 V3: Logged task selection: ${selectedTaskId} (rank ${selectedRank + 1}/${sorted.length}, was_top: ${event.wasTopSelected})`);
+    
+    await this.save();
+    return event;
+  }
+
+  /**
+   * V3: Get all priority change events
+   */
+  async getPriorityChangeEvents(): Promise<PriorityChangeEvent[]> {
+    return this.db.priorityChangeEvents || [];
+  }
+
+  /**
+   * V3: Get all task selection events
+   */
+  async getTaskSelectionEvents(): Promise<TaskSelectionEvent[]> {
+    return this.db.taskSelectionEvents || [];
+  }
+
+  /**
+   * V3: Export training data for XGBoost
+   * Returns structured data ready for ML training
+   */
+  async exportTrainingData(): Promise<{
+    completionRecords: TaskCompletionRecord[];
+    priorityChangeEvents: PriorityChangeEvent[];
+    taskSelectionEvents: TaskSelectionEvent[];
+    tasks: WeightedTask[];
+    heuristicWeights: HeuristicWeights;
+    summary: {
+      totalCompletions: number;
+      totalPriorityChanges: number;
+      totalSelections: number;
+      selectionAccuracy: number;  // % of times user followed top recommendation
+    };
+  }> {
+    const completionRecords = this.db.completionRecords;
+    const priorityChangeEvents = this.db.priorityChangeEvents || [];
+    const taskSelectionEvents = this.db.taskSelectionEvents || [];
+    
+    const topSelections = taskSelectionEvents.filter(e => e.wasTopSelected).length;
+    const selectionAccuracy = taskSelectionEvents.length > 0
+      ? (topSelections / taskSelectionEvents.length) * 100
+      : 0;
+
+    return {
+      completionRecords,
+      priorityChangeEvents,
+      taskSelectionEvents,
+      tasks: this.db.tasks,
+      heuristicWeights: this.db.heuristicWeights,
+      summary: {
+        totalCompletions: completionRecords.length,
+        totalPriorityChanges: priorityChangeEvents.length,
+        totalSelections: taskSelectionEvents.length,
+        selectionAccuracy,
+      },
+    };
   }
 }
 
