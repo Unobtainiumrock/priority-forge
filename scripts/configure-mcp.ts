@@ -34,7 +34,7 @@ const TOOLS: Record<string, ToolConfig> = {
     agentRulesPath: path.join(HOME, '.cursorrules'),
     mcpConfigFormat: (url: string) => ({
       mcpServers: {
-        'progress-tracker': { url }
+        'priority-forge': { url }
       }
     }),
     agentRulesHeader: '# Priority Forge Configuration (auto-generated)\n\n'
@@ -45,7 +45,7 @@ const TOOLS: Record<string, ToolConfig> = {
     agentRulesPath: path.join(HOME, '.factory', 'AGENTS.md'),
     mcpConfigFormat: (url: string) => ({
       mcpServers: {
-        'progress-tracker': { type: 'http', url }
+        'priority-forge': { type: 'http', url }
       }
     }),
     agentRulesHeader: '<!-- Priority Forge Configuration (auto-generated) -->\n\n'
@@ -56,7 +56,7 @@ const TOOLS: Record<string, ToolConfig> = {
     agentRulesPath: path.join(HOME, '.claude', 'AGENTS.md'),
     mcpConfigFormat: (url: string) => ({
       mcpServers: {
-        'progress-tracker': { type: 'http', url }
+        'priority-forge': { type: 'http', url }
       }
     }),
     agentRulesHeader: '<!-- Priority Forge Configuration (auto-generated) -->\n\n'
@@ -120,8 +120,8 @@ function configureMCP(tool: ToolConfig): boolean {
   const newConfig = tool.mcpConfigFormat(SERVER_URL);
   
   // Check if already configured
-  if (existingConfig?.mcpServers?.['progress-tracker']) {
-    const existingUrl = existingConfig.mcpServers['progress-tracker'].url;
+  if (existingConfig?.mcpServers?.['priority-forge']) {
+    const existingUrl = existingConfig.mcpServers['priority-forge'].url;
     if (existingUrl === SERVER_URL) {
       console.log('  MCP already configured (skipping)');
       return true;

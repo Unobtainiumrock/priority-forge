@@ -1000,7 +1000,7 @@ export async function mcpHandler(req: Request, res: Response): Promise<void> {
             },
           },
           serverInfo: {
-            name: 'progress-tracker',
+            name: 'priority-forge',
             version: '2.2.0',  // Auto-capture, project sync, onboarding
           },
           // Include instructions that clients should show to AI

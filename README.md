@@ -143,7 +143,7 @@ Add to `~/.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "progress-tracker": {
+    "priority-forge": {
       "url": "http://localhost:3456/mcp"
     }
   }
@@ -159,7 +159,7 @@ Add to `~/.factory/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "progress-tracker": {
+    "priority-forge": {
       "type": "http",
       "url": "http://localhost:3456/mcp"
     }
@@ -176,7 +176,7 @@ Add to `~/.claude/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "progress-tracker": {
+    "priority-forge": {
       "type": "http",
       "url": "http://localhost:3456/mcp"
     }
@@ -399,7 +399,7 @@ For team use with shared tasks, deploy to a shared server:
 ```json
 {
   "mcpServers": {
-    "progress-tracker": {
+    "priority-forge": {
       "type": "http",
       "url": "https://your-server.example.com/mcp"
     }
