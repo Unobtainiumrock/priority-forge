@@ -1,5 +1,15 @@
 # Priority Forge
 
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Node.js 20+](https://img.shields.io/badge/node-20+-blue.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+[![GitHub release](https://img.shields.io/github/v/release/Unobtainiumrock/priority-forge?include_prereleases&sort=semver)](https://github.com/Unobtainiumrock/priority-forge/releases)
+[![GitHub Actions CI](https://img.shields.io/github/actions/workflow/status/Unobtainiumrock/priority-forge/coverage.yml?branch=main&label=CI)](https://github.com/Unobtainiumrock/priority-forge/actions/workflows/coverage.yml)
+[![codecov](https://codecov.io/gh/Unobtainiumrock/priority-forge/branch/main/graph/badge.svg)](https://codecov.io/gh/Unobtainiumrock/priority-forge)
+[![Maintained](https://img.shields.io/badge/Maintained-yes-green.svg)](https://github.com/Unobtainiumrock/priority-forge/graphs/commit-activity)
+[![GitHub issues](https://img.shields.io/github/issues/Unobtainiumrock/priority-forge.svg)](https://github.com/Unobtainiumrock/priority-forge/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/Unobtainiumrock/priority-forge.svg)](https://github.com/Unobtainiumrock/priority-forge/pulls)
+
 HTTP-based MCP server for cross-project task prioritization with heap-based priority scoring and auto-generated markdown output.
 
 ---
@@ -410,4 +420,4 @@ For individual use, each team member runs their own local instance with their ow
 
 ## License
 
-MIT
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See the [LICENSE](LICENSE) file for details.
