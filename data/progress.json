@@ -1,6 +1,6 @@
 {
   "version": "v3",
-  "lastUpdated": "2026-01-11T01:56:01.552Z",
+  "lastUpdated": "2026-01-11T07:38:55.879Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -55,6 +55,15 @@
       "primaryFocus": "ESMM (Entire Space Multi-Task Model) implementation for recommendation system with 4-stage pipeline integration",
       "createdAt": "2026-01-10T19:50:38.872Z",
       "updatedAt": "2026-01-10T19:50:38.872Z"
+    },
+    {
+      "id": "5549c0cc-eb9f-4ce6-8c5a-86ee6ad3f587",
+      "name": "personal",
+      "path": "~/personal",
+      "status": "active",
+      "primaryFocus": "Personal tasks and reminders",
+      "createdAt": "2026-01-11T07:38:34.491Z",
+      "updatedAt": "2026-01-11T07:38:34.491Z"
     }
   ],
   "tasks": [
@@ -503,6 +512,25 @@
         "dependencyDepth": 0
       },
       "priorityScore": 40
+    },
+    {
+      "id": "PERSONAL-001",
+      "priority": "P1",
+      "task": "Buy socks",
+      "project": "personal",
+      "status": "not_started",
+      "createdAt": "2026-01-11T07:38:55.878Z",
+      "updatedAt": "2026-01-11T07:38:55.878Z",
+      "deadline": "2026-01-11",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 10,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": -7
     }
   ],
   "dataGaps": [
