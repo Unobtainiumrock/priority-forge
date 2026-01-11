@@ -1,6 +1,6 @@
 {
-  "name": "mcp-progress-tracker",
-  "version": "2.2.0",
+  "name": "priority-forge",
+  "version": "2.3.0",
   "description": "MCP server for cross-project task prioritization",
   "main": "dist/index.js",
   "scripts": {
@@ -8,7 +8,11 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "setup": "./setup.sh",
+    "setup:mcp": "tsx scripts/configure-mcp.ts",
+    "verify": "tsx scripts/verify.ts",
+    "seed": "tsx scripts/seed.ts"
   },
   "keywords": ["mcp", "progress-tracker", "task-management"],
   "author": "",

@@ -72,6 +72,28 @@ This ensures 100% coverage regardless of which MCP client you use (Cursor, Droid
 
 ## Quick Start
 
+### One-Command Setup (Recommended)
+
+```bash
+# Clone the repo
+git clone git@github.com:Unobtainiumrock/priority-forge.git
+cd priority-forge
+
+# Run the setup script - handles everything!
+bash setup.sh
+```
+
+The setup script will:
+1. Check for and install prerequisites (Node.js via Homebrew or nvm)
+2. Install npm dependencies
+3. Initialize your task database
+4. **Interactively configure your AI tool** (Cursor, Droid, or Claude Code)
+5. Verify everything works
+
+### Manual Setup
+
+If you prefer manual control:
+
 ```bash
 # Clone the repo
 git clone git@github.com:Unobtainiumrock/priority-forge.git
@@ -81,10 +103,16 @@ cd priority-forge
 npm install
 
 # Initialize your database (creates example project/task)
-npx tsx scripts/seed.ts
+npm run seed
+
+# Configure MCP for your AI tool (interactive)
+npm run setup:mcp
 
 # Start the server
 npm run dev
+
+# Verify everything works (optional)
+npm run verify
 ```
 
 Server runs at `http://localhost:3456`
@@ -93,7 +121,10 @@ Server runs at `http://localhost:3456`
 
 ## MCP Integration
 
-Configure your AI tools to connect to the MCP server:
+If you used `./setup.sh` or `npm run setup:mcp`, MCP is already configured! Otherwise, configure manually:
+
+<details>
+<summary>Manual MCP Configuration (click to expand)</summary>
 
 ### Cursor
 
@@ -128,9 +159,9 @@ Add to `~/.factory/mcp.json`:
 
 Then restart Droid or use `/mcp` to verify the connection.
 
-### Claude Desktop
+### Claude Code CLI
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+Add to `~/.claude/mcp.json`:
 
 ```json
 {
@@ -143,19 +174,28 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-Then restart Claude Desktop.
+Then restart Claude Code.
 
-## Agent Rules (Critical)
+</details>
 
-Connecting the MCP server is only half the setup. You also need to configure your AI assistant to **proactively check the tracker at session start**. Without this, the AI won't use the tracker unless you explicitly ask.
+## Agent Rules
 
-👉 **Copy the contents of [`AGENT_RULES.md`](./AGENT_RULES.md) to the appropriate location:**
+If you used `./setup.sh` or `npm run setup:mcp`, agent rules are already configured!
+
+The setup script automatically copies the agent rules to the correct location for your AI tool. This is **critical** - without agent rules, the AI won't proactively check the tracker at session start.
+
+<details>
+<summary>Manual Agent Rules Configuration (click to expand)</summary>
+
+Copy the contents of [`AGENT_RULES.md`](./AGENT_RULES.md) to:
 
 | Client | Where to copy it |
 |--------|------------------|
-| **Cursor** | `.cursorrules` in your project root (or `~/.cursorrules` for global) |
+| **Cursor** | `~/.cursorrules` (global) or `.cursorrules` (project) |
 | **Droid** | `~/.factory/AGENTS.md` |
-| **Claude Desktop / Code** | Paste at start of conversation, or use a custom prompt template |
+| **Claude Code** | `~/.claude/AGENTS.md` |
+
+</details>
 
 ## REST API Endpoints
 
@@ -315,14 +355,26 @@ Where `basePriority` is: P0=0, P1=100, P2=200, P3=300
 ## Scripts
 
 ```bash
-npm run dev      # Development with hot reload
-npm run build    # Compile TypeScript
-npm start        # Production (requires build first)
-npm test         # Run tests
+# Setup & Configuration
+bash setup.sh       # Full setup (prerequisites, deps, MCP config)
+npm run setup:mcp   # Configure MCP for your AI tool (interactive)
+npm run seed        # Initialize/reset database
+npm run verify      # Verify setup is working
 
-# Initialize new database
-npx tsx scripts/seed.ts
+# Development
+npm run dev         # Development with hot reload
+npm run build       # Compile TypeScript
+npm start           # Production (requires build first)
+npm test            # Run tests
 ```
+
+## Windows Support
+
+Windows is not directly supported. Please use **WSL (Windows Subsystem for Linux)**:
+
+1. Install WSL: https://docs.microsoft.com/en-us/windows/wsl/install
+2. Open a WSL terminal
+3. Clone and run setup from WSL
 
 ## Environment Variables
 
