@@ -409,6 +409,41 @@ For team use with shared tasks, deploy to a shared server:
 
 For individual use, each team member runs their own local instance with their own tasks.
 
+## Troubleshooting
+
+### MCP errors after renaming/moving the directory
+
+If you rename or move the `priority-forge` directory while the server is running, you'll get errors like:
+
+```
+ENOENT: no such file or directory, open '.../data/progress.json'
+```
+
+**Solution:** Restart the server from the new location:
+
+```bash
+# Kill any running server processes
+pkill -f "priority-forge" || true
+
+# Start fresh from the new directory
+cd /path/to/priority-forge
+npm run dev
+```
+
+### Server not responding
+
+If `curl http://localhost:3456/health` returns nothing:
+
+1. Check if the server is running: `ps aux | grep priority-forge`
+2. Check if port 3456 is in use: `lsof -i :3456`
+3. Restart the server: `npm run dev`
+
+### MCP tools not appearing in AI assistant
+
+1. Verify MCP config exists in the correct location for your tool
+2. Restart your AI assistant completely (not just reload)
+3. Run `npm run verify` to check server health
+
 ## Roadmap
 
 | Version | Status | Description |
