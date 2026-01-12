@@ -2,7 +2,6 @@ import { Header } from './components/Header';
 import { StatsBar } from './components/StatsBar';
 import { ProjectFilter } from './components/ProjectFilter';
 import { PriorityQueueList } from './components/PriorityQueueList';
-import { DataGapsPanel } from './components/DataGapsPanel';
 import { DecisionsPanel } from './components/DecisionsPanel';
 import { HeuristicWeightTuner } from './components/HeuristicWeightTuner';
 import { useGetStatusQuery } from './store';
@@ -82,7 +81,6 @@ function App() {
               {/* Sidebar - Filters & Info */}
               <div className="space-y-6">
                 <ProjectFilter />
-                <DataGapsPanel />
                 <DecisionsPanel />
               </div>
 
