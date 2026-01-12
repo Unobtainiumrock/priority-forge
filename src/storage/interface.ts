@@ -23,6 +23,9 @@ import {
   TaskCompletionRecord,
   PriorityChangeEvent,
   TaskSelectionEvent,
+  QueueRebalanceEvent,
+  DragReorderEvent,
+  OnlineLearnerState,
   ProgressDatabase,
   CreateProjectDTO,
   UpdateProjectDTO,
@@ -34,6 +37,8 @@ import {
   Priority,
   HeuristicWeights,
   UpdateHeuristicWeightsDTO,
+  LogDragReorderDTO,
+  UpdateOnlineLearnerDTO,
 } from '../types/schema';
 
 export interface StorageInterface {
@@ -87,21 +92,25 @@ export interface StorageInterface {
   logTaskSelection(selectedTaskId: string): Promise<TaskSelectionEvent | null>;
   getPriorityChangeEvents(): Promise<PriorityChangeEvent[]>;
   getTaskSelectionEvents(): Promise<TaskSelectionEvent[]>;
+  getQueueRebalanceEvents(): Promise<QueueRebalanceEvent[]>;
   exportTrainingData(): Promise<{
     completionRecords: TaskCompletionRecord[];
     priorityChangeEvents: PriorityChangeEvent[];
     taskSelectionEvents: TaskSelectionEvent[];
+    queueRebalanceEvents: QueueRebalanceEvent[];
     tasks: WeightedTask[];
     heuristicWeights: HeuristicWeights;
     summary: {
       totalCompletions: number;
       totalPriorityChanges: number;
       totalSelections: number;
+      totalRebalances: number;
       selectionAccuracy: number;
       dataQuality: {
         completionsWithScores: number;
         tasksWithEffort: number;
         tasksWithDependencies: number;
+        rebalancesWithSignificantChanges: number;
       };
     };
     mlReady: {
@@ -127,6 +136,29 @@ export interface StorageInterface {
         hasDependencies: number;
         hasBlocking: number;
       }>;
+      rebalances: Array<{
+        trigger: string;
+        queueSizeBefore: number;
+        queueSizeAfter: number;
+        significantChangeCount: number;
+        topTaskChanged: number;
+      }>;
     };
+  }>;
+
+  // V3.2: Online Learning from Drag-and-Drop
+  logDragReorder(dto: LogDragReorderDTO): Promise<DragReorderEvent>;
+  getDragReorderEvents(): Promise<DragReorderEvent[]>;
+  getOnlineLearnerState(): Promise<OnlineLearnerState>;
+  updateOnlineLearnerConfig(config: UpdateOnlineLearnerDTO): Promise<OnlineLearnerState>;
+  getOnlineLearnerMetrics(): Promise<{
+    totalUpdates: number;
+    totalPairs: number;
+    correctPredictions: number;
+    accuracy: number;
+    cumulativeLoss: number;
+    currentWeights: HeuristicWeights;
+    learningRate: number;
+    enabled: boolean;
   }>;
 }

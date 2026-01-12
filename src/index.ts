@@ -134,6 +134,69 @@ app.get('/completion-records', async (_req, res) => {
   }
 });
 
+// V3.2: Online Learning - Drag Reorder
+app.post('/drag-reorder', async (req, res) => {
+  try {
+    const { taskId, fromRank, toRank } = req.body;
+    const event = await storage.logDragReorder({ taskId, fromRank, toRank });
+    res.json({
+      event,
+      message: `Logged drag reorder: ${event.taskId} moved from rank ${event.fromRank} to ${event.toRank}`,
+      pairsGenerated: event.implicitPreferences.length,
+      weightUpdateApplied: !!event.appliedWeightDelta,
+      appliedDelta: event.appliedWeightDelta,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to log drag reorder' });
+  }
+});
+
+// V3.2: Get Online Learner State
+app.get('/online-learner', async (_req, res) => {
+  try {
+    const metrics = await storage.getOnlineLearnerMetrics();
+    res.json({
+      ...metrics,
+      status: metrics.enabled ? 'active' : 'disabled',
+      description: 'Online learning adapts heuristic weights based on your drag-and-drop reordering in the UI.',
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch online learner state' });
+  }
+});
+
+// V3.2: Update Online Learner Config
+app.put('/online-learner', async (req, res) => {
+  try {
+    const config = await storage.updateOnlineLearnerConfig(req.body);
+    res.json({
+      message: 'Online learner configuration updated',
+      config,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update online learner config' });
+  }
+});
+
+// V3.2: Get Drag Reorder Events
+app.get('/drag-reorder-events', async (_req, res) => {
+  try {
+    const events = await storage.getDragReorderEvents();
+    res.json({
+      events,
+      count: events.length,
+      summary: {
+        totalPromotions: events.filter(e => e.direction === 'promoted').length,
+        totalDemotions: events.filter(e => e.direction === 'demoted').length,
+        totalPairsGenerated: events.reduce((sum, e) => sum + e.implicitPreferences.length, 0),
+        eventsWithWeightUpdates: events.filter(e => e.appliedWeightDelta).length,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch drag reorder events' });
+  }
+});
+
 // V2.1: Resource endpoints (REST access to MCP resources)
 app.get('/resources/current-focus', async (_req, res) => {
   try {
@@ -189,14 +252,22 @@ app.post('/mcp', mcpHandler);
 app.listen(PORT, () => {
   console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
-║       Priority Forge v3.0                                     ║
-║       Cross-Project Task Prioritization with ML Training      ║
+║       Priority Forge v3.2                                     ║
+║       Online Learning from Drag-and-Drop Reordering           ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  REST API:  http://localhost:${PORT}                             ║
 ║  MCP:       http://localhost:${PORT}/mcp                         ║
 ║  Health:    http://localhost:${PORT}/health                      ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  V3 NEW - Dynamic Rebalancing + ML Training:                  ║
+║  V3.2 NEW - Online Learning from UI:                          ║
+║    • Drag-and-drop tasks to reorder → generates pairwise      ║
+║      preferences → SGD updates weights → all scores recalc    ║
+║    • POST /drag-reorder      - Log drag event + learn         ║
+║    • GET  /online-learner    - View learning state/accuracy   ║
+║    • PUT  /online-learner    - Configure learning rate, etc.  ║
+║    • GET  /drag-reorder-events - View all drag history        ║
+╠═══════════════════════════════════════════════════════════════╣
+║  V3 - Dynamic Rebalancing + ML Training:                      ║
 ║    • Queue auto-rebalances on dependency graph changes        ║
 ║    • Logs QueueRebalanceEvents for trajectory learning        ║
 ║    • Collects PriorityChangeEvents & TaskSelectionEvents      ║

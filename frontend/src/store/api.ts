@@ -114,6 +114,54 @@ export const priorityApi = createApi({
       }),
       invalidatesTags: ['Status', 'Tasks'],
     }),
+
+    // V3.2: Online Learning - Log drag reorder
+    logDragReorder: builder.mutation<
+      {
+        event: {
+          id: string;
+          taskId: string;
+          fromRank: number;
+          toRank: number;
+          direction: 'promoted' | 'demoted';
+          implicitPreferences: Array<{
+            preferredTaskId: string;
+            demotedTaskId: string;
+            scoreDiff: number;
+          }>;
+          appliedWeightDelta?: Partial<HeuristicWeights>;
+        };
+        pairsGenerated: number;
+        weightUpdateApplied: boolean;
+      },
+      { taskId: string; fromRank: number; toRank: number }
+    >({
+      query: (params) => ({
+        url: '/drag-reorder',
+        method: 'POST',
+        body: params,
+      }),
+      // Invalidate to refetch updated weights and scores
+      invalidatesTags: ['Status', 'Tasks', 'Weights'],
+    }),
+
+    // V3.2: Get online learner state
+    getOnlineLearnerState: builder.query<
+      {
+        totalUpdates: number;
+        totalPairs: number;
+        correctPredictions: number;
+        accuracy: number;
+        cumulativeLoss: number;
+        currentWeights: HeuristicWeights;
+        learningRate: number;
+        enabled: boolean;
+      },
+      void
+    >({
+      query: () => '/online-learner',
+      providesTags: ['Weights'],
+    }),
   }),
 });
 
@@ -127,5 +175,6 @@ export const {
   useUpdateTaskMutation,
   useCreateTaskMutation,
   useDeleteTaskMutation,
+  useLogDragReorderMutation,
+  useGetOnlineLearnerStateQuery,
 } = priorityApi;
-

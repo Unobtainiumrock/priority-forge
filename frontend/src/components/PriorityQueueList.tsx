@@ -1,8 +1,10 @@
+import { useState, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectFilteredTasks, selectSortedTasks } from '../store/selectors';
 import { setFilterPriority, setFilterStatus, setSearchQuery, resetFilters } from '../store';
+import { useLogDragReorderMutation } from '../store/api';
 import { TaskCard } from './TaskCard';
-import { ListFilter, Search, X } from 'lucide-react';
+import { ListFilter, Search, X, Brain, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { Priority, TaskStatus } from '../types';
 
@@ -19,6 +21,65 @@ export function PriorityQueueList() {
   const searchQuery = useAppSelector((state) => state.ui.searchQuery);
 
   const hasFilters = filterProject !== 'all' || filterPriority !== 'all' || filterStatus !== 'all' || searchQuery;
+
+  // V3.2: Drag-and-drop state
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [draggedFromIndex, setDraggedFromIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [lastReorderResult, setLastReorderResult] = useState<{
+    pairsGenerated: number;
+    weightUpdateApplied: boolean;
+    direction: string;
+  } | null>(null);
+
+  const [logDragReorder, { isLoading: isReordering }] = useLogDragReorderMutation();
+
+  // V3.2: Drag handlers
+  const handleDragStart = useCallback((e: React.DragEvent, taskId: string, index: number) => {
+    setDraggedTaskId(taskId);
+    setDraggedFromIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', taskId);
+  }, []);
+
+  const handleDragOver = useCallback((_e: React.DragEvent, index: number) => {
+    setDragOverIndex(index);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedTaskId(null);
+    setDraggedFromIndex(null);
+    setDragOverIndex(null);
+  }, []);
+
+  const handleDrop = useCallback(async (_e: React.DragEvent, toIndex: number) => {
+    if (draggedTaskId === null || draggedFromIndex === null || draggedFromIndex === toIndex) {
+      handleDragEnd();
+      return;
+    }
+
+    try {
+      const result = await logDragReorder({
+        taskId: draggedTaskId,
+        fromRank: draggedFromIndex,
+        toRank: toIndex,
+      }).unwrap();
+
+      // Show feedback
+      setLastReorderResult({
+        pairsGenerated: result.pairsGenerated,
+        weightUpdateApplied: result.weightUpdateApplied,
+        direction: result.event.direction,
+      });
+
+      // Clear feedback after 3 seconds
+      setTimeout(() => setLastReorderResult(null), 3000);
+    } catch (error) {
+      console.error('Failed to log drag reorder:', error);
+    }
+
+    handleDragEnd();
+  }, [draggedTaskId, draggedFromIndex, logDragReorder, handleDragEnd]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -84,16 +145,41 @@ export function PriorityQueueList() {
         </div>
       </div>
 
-      {/* Results Count */}
+      {/* Results Count + Online Learning Feedback */}
       <div className="mb-3 flex items-center justify-between">
         <span className="text-xs text-surface-500">
           Showing {filteredTasks.length} of {allTasks.length} tasks
         </span>
-        {filteredTasks.length > 0 && (
-          <span className="text-xs text-surface-500">
-            Sorted by priority score (lower = higher priority)
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {/* Online learning feedback */}
+          {lastReorderResult && (
+            <div className={cn(
+              'flex items-center gap-2 px-3 py-1 rounded-full text-xs animate-fade-in',
+              lastReorderResult.weightUpdateApplied 
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+            )}>
+              <Brain className="w-3 h-3" />
+              <span>
+                {lastReorderResult.direction === 'promoted' ? '↑' : '↓'} {lastReorderResult.pairsGenerated} pairs
+                {lastReorderResult.weightUpdateApplied && (
+                  <>
+                    <Sparkles className="w-3 h-3 inline ml-1" />
+                    <span className="ml-1">weights updated</span>
+                  </>
+                )}
+              </span>
+            </div>
+          )}
+          {isReordering && (
+            <span className="text-xs text-surface-400 animate-pulse">Learning...</span>
+          )}
+          {filteredTasks.length > 0 && !lastReorderResult && (
+            <span className="text-xs text-surface-500">
+              Drag to reorder • System learns from your preferences
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Task List */}
@@ -110,7 +196,19 @@ export function PriorityQueueList() {
           </div>
         ) : (
           filteredTasks.map((task, index) => (
-            <TaskCard key={task.id} task={task} index={index} />
+            <TaskCard 
+              key={task.id} 
+              task={task} 
+              index={index}
+              // V3.2: Drag-and-drop props
+              isDragging={draggedTaskId === task.id}
+              isDragOver={dragOverIndex === index && draggedTaskId !== task.id}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+              onDrop={handleDrop}
+              draggable={!hasFilters} // Disable drag when filtered
+            />
           ))
         )}
       </div>
