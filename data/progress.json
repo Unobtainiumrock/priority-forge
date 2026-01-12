@@ -1,6 +1,6 @@
 {
   "version": "v3",
-  "lastUpdated": "2026-01-12T02:04:23.723Z",
+  "lastUpdated": "2026-01-12T03:29:49.336Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -560,7 +560,7 @@
       "project": "gravity-main",
       "status": "complete",
       "createdAt": "2026-01-11T21:17:01.941Z",
-      "updatedAt": "2026-01-12T00:15:00.790Z",
+      "updatedAt": "2026-01-12T03:29:47.659Z",
       "effort": "low",
       "weights": {
         "blockingCount": 0,
@@ -578,7 +578,7 @@
       "project": "gravity-main",
       "status": "complete",
       "createdAt": "2026-01-11T21:17:01.942Z",
-      "updatedAt": "2026-01-12T00:15:04.196Z",
+      "updatedAt": "2026-01-12T03:29:49.336Z",
       "effort": "low",
       "weights": {
         "blockingCount": 0,
@@ -631,80 +631,6 @@
         "dependencyDepth": 2
       },
       "priorityScore": 69
-    },
-    {
-      "id": "MIGRATE-001",
-      "priority": "P0",
-      "task": "Clone stag-hunt and rtb-auction repos locally",
-      "project": "gravity-main",
-      "status": "not_started",
-      "createdAt": "2026-01-11T21:19:47.578Z",
-      "updatedAt": "2026-01-11T21:19:47.578Z",
-      "effort": "low",
-      "weights": {
-        "blockingCount": 1,
-        "crossProjectImpact": 0,
-        "timeSensitivity": 0,
-        "effortValueRatio": 9,
-        "dependencyDepth": 0
-      },
-      "priorityScore": -37
-    },
-    {
-      "id": "MIGRATE-002",
-      "priority": "P0",
-      "task": "Pull latest for overlap-resolution and stable-marriage",
-      "project": "gravity-main",
-      "status": "not_started",
-      "notes": "stable-marriage up to date; overlap-resolution has local divergent commits (kept local)",
-      "createdAt": "2026-01-11T21:19:47.586Z",
-      "updatedAt": "2026-01-11T21:19:47.586Z",
-      "effort": "low",
-      "weights": {
-        "blockingCount": 1,
-        "crossProjectImpact": 0,
-        "timeSensitivity": 0,
-        "effortValueRatio": 9,
-        "dependencyDepth": 0
-      },
-      "priorityScore": -37
-    },
-    {
-      "id": "MIGRATE-003",
-      "priority": "P1",
-      "task": "Move all 4 repos into gravity-main directory",
-      "project": "gravity-main",
-      "status": "not_started",
-      "createdAt": "2026-01-11T21:19:47.600Z",
-      "updatedAt": "2026-01-11T21:19:47.600Z",
-      "effort": "low",
-      "weights": {
-        "blockingCount": 1,
-        "crossProjectImpact": 0,
-        "timeSensitivity": 0,
-        "effortValueRatio": 9,
-        "dependencyDepth": 0
-      },
-      "priorityScore": 63
-    },
-    {
-      "id": "MIGRATE-004",
-      "priority": "P1",
-      "task": "Push repos to gravity.ai remote",
-      "project": "gravity-main",
-      "status": "not_started",
-      "notes": "Awaiting gravity.ai remote URL from user",
-      "createdAt": "2026-01-11T21:19:47.608Z",
-      "updatedAt": "2026-01-11T21:19:47.608Z",
-      "effort": "low",
-      "weights": {
-        "blockingCount": 0,
-        "crossProjectImpact": 0,
-        "timeSensitivity": 0,
-        "effortValueRatio": 9,
-        "dependencyDepth": 0
-      },
-      "priorityScore": 73
     },
     {
       "id": "ONBOARD-001",
@@ -1666,6 +1592,30 @@
       "completedAt": "2026-01-12T01:20:37.670Z",
       "initialPriorityScore": -61,
       "finalPriorityScore": -61
+    },
+    {
+      "id": "afd68590-418f-4465-81a4-ad90f9eb1761",
+      "taskId": "MIGRATE-001",
+      "actualCompletionTime": 6.17,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-12T03:29:47.658Z",
+      "initialPriorityScore": -37,
+      "finalPriorityScore": -37
+    },
+    {
+      "id": "b4c85f00-f413-4c16-bfbd-05df965e4b5a",
+      "taskId": "MIGRATE-002",
+      "actualCompletionTime": 6.21,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-12T03:29:49.336Z",
+      "initialPriorityScore": -27,
+      "finalPriorityScore": -27
     }
   ],
   "heuristicWeights": {
