@@ -327,6 +327,7 @@ Once connected, your AI assistant has access to tools, resources, and prompts:
 | `get_data_gaps` | Get all identified data collection gaps |
 | `log_decision` | Record an architectural or design decision |
 | `create_project` | Register a new project with the task tracker |
+| `suggest_tasks` | Analyze text and suggest potential tasks to create |
 
 ### V2 Tools
 
@@ -494,6 +495,59 @@ If `curl http://localhost:3456/health` returns nothing:
 1. Verify MCP config exists in the correct location for your tool
 2. Restart your AI assistant completely (not just reload)
 3. Run `npm run verify` to check server health
+
+### MCP server showing wrong name or "Loading tools" stuck
+
+If you previously configured the MCP server with a different name (e.g., `progress-tracker` instead of `priority-forge`), update your config to use the canonical name:
+
+**Cursor** (`~/.cursor/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "priority-forge": {
+      "url": "http://localhost:3456/mcp"
+    }
+  }
+}
+```
+
+**Droid** (`~/.factory/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "priority-forge": {
+      "type": "http",
+      "url": "http://localhost:3456/mcp"
+    }
+  }
+}
+```
+
+**Claude Code** (`~/.claude/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "priority-forge": {
+      "type": "http",
+      "url": "http://localhost:3456/mcp"
+    }
+  }
+}
+```
+
+After updating, restart your AI tool completely.
+
+> **Note**: The server name in the config (e.g., `"priority-forge"`) is just a display label—it doesn't affect functionality. However, using the canonical name ensures consistency and makes troubleshooting easier.
+
+### MCP Configuration Differences by Tool
+
+| Tool | Config Location | Format | Notes |
+|------|-----------------|--------|-------|
+| **Cursor** | `~/.cursor/mcp.json` | `{ url }` | No `type` field needed for HTTP |
+| **Droid** | `~/.factory/mcp.json` | `{ type, url }` | Requires `"type": "http"` |
+| **Claude Code** | `~/.claude/mcp.json` | `{ type, url }` | Requires `"type": "http"` |
+
+Droid and Claude Code require the explicit `"type": "http"` field because they support multiple transport types (HTTP, stdio, etc.). Cursor infers HTTP from the URL.
 
 ## V3 ML Training Data
 
