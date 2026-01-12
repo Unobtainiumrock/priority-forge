@@ -68,12 +68,66 @@ const contextSwitchCounts: Map<string, number> = new Map();
 
 export class JsonStorage implements StorageInterface {
   private db: ProgressDatabase;
+  
+  /**
+   * V3.1: Map-based task storage for O(1) lookups and guaranteed uniqueness
+   * The Map is the source of truth; db.tasks is only used for JSON serialization
+   */
+  private taskMap: Map<string, WeightedTask> = new Map();
+  
   private taskHeap: MinHeap<WeightedTask>;
   private onWrite: (() => Promise<void>) | null = null;
 
   constructor() {
     this.db = this.load();
-    this.taskHeap = new MinHeap(this.db.tasks);
+    // Initialize Map from loaded tasks (with deduplication)
+    this.initializeTaskMap();
+    this.taskHeap = new MinHeap(this.getTaskArray());
+  }
+
+  /**
+   * Initialize the task Map from db.tasks array
+   * Deduplicates by keeping the most "complete" version of each task
+   */
+  private initializeTaskMap(): void {
+    this.taskMap.clear();
+    let duplicatesFound = 0;
+    
+    for (const task of this.db.tasks) {
+      const existing = this.taskMap.get(task.id);
+      if (!existing) {
+        this.taskMap.set(task.id, task);
+      } else {
+        duplicatesFound++;
+        // Keep the completed one, or the newer one if same status
+        if (task.status === 'complete' && existing.status !== 'complete') {
+          this.taskMap.set(task.id, task);
+        } else if (existing.status !== 'complete' && new Date(task.updatedAt) > new Date(existing.updatedAt)) {
+          this.taskMap.set(task.id, task);
+        }
+        // Otherwise keep existing (first one wins)
+      }
+    }
+    
+    if (duplicatesFound > 0) {
+      console.log(`🔧 V3.1: Deduplicated ${duplicatesFound} tasks during load`);
+      // Sync db.tasks with deduplicated Map
+      this.syncTasksArray();
+    }
+  }
+
+  /**
+   * Sync db.tasks array from taskMap (for JSON serialization)
+   */
+  private syncTasksArray(): void {
+    this.db.tasks = Array.from(this.taskMap.values());
+  }
+
+  /**
+   * Get tasks as array (from Map)
+   */
+  private getTaskArray(): WeightedTask[] {
+    return Array.from(this.taskMap.values());
   }
 
   setOnWriteCallback(callback: () => Promise<void>) {
@@ -227,6 +281,8 @@ export class JsonStorage implements StorageInterface {
   }
 
   private async save(): Promise<void> {
+    // Sync array from Map before saving
+    this.syncTasksArray();
     this.db.lastUpdated = new Date().toISOString();
     fs.writeFileSync(DB_FILE, JSON.stringify(this.db, null, 2));
     if (this.onWrite) {
@@ -235,13 +291,15 @@ export class JsonStorage implements StorageInterface {
   }
 
   /**
-   * Rebuild heap from current tasks (use after bulk operations)
+   * Rebuild heap from current task Map (use after bulk operations)
    */
   private rebuildHeap(): void {
-    this.taskHeap = new MinHeap(this.db.tasks);
+    this.taskHeap = new MinHeap(this.getTaskArray());
   }
 
   async getAll(): Promise<ProgressDatabase> {
+    // Sync before returning
+    this.syncTasksArray();
     return this.db;
   }
 
@@ -291,7 +349,7 @@ export class JsonStorage implements StorageInterface {
     return true;
   }
 
-  // Tasks - V2 with heap-based ordering
+  // Tasks - V3.1 with Map-based storage
   async getTasks(includeCompleted: boolean = false): Promise<WeightedTask[]> {
     // Return sorted by priority score (lowest first = highest priority)
     const all = this.taskHeap.toSortedArray();
@@ -317,16 +375,19 @@ export class JsonStorage implements StorageInterface {
   }
 
   async getTask(id: string): Promise<WeightedTask | null> {
-    return this.taskHeap.get(id);
+    // O(1) lookup via Map
+    return this.taskMap.get(id) || null;
   }
 
   async getTasksByPriority(priority: Priority): Promise<WeightedTask[]> {
-    return this.db.tasks.filter(t => t.priority === priority)
+    return this.getTaskArray()
+      .filter(t => t.priority === priority)
       .sort((a, b) => a.priorityScore - b.priorityScore);
   }
 
   async getTasksByProject(projectId: string): Promise<WeightedTask[]> {
-    return this.db.tasks.filter(t => t.project === projectId)
+    return this.getTaskArray()
+      .filter(t => t.project === projectId)
       .sort((a, b) => a.priorityScore - b.priorityScore);
   }
 
@@ -345,24 +406,27 @@ export class JsonStorage implements StorageInterface {
   async popTopPriority(): Promise<WeightedTask | null> {
     const task = this.taskHeap.pop();
     if (task) {
-      const idx = this.db.tasks.findIndex(t => t.id === task.id);
-      if (idx !== -1) {
-        this.db.tasks.splice(idx, 1);
-        await this.save();
-      }
+      this.taskMap.delete(task.id);
+      await this.save();
     }
     return task;
   }
 
   async createTask(data: CreateTaskDTO): Promise<WeightedTask> {
     const now = new Date().toISOString();
+    const taskId = data.id || uuidv4();
+    
+    // V3.1: Check for duplicate ID - Map enforces uniqueness
+    if (this.taskMap.has(taskId)) {
+      throw new Error(`Task with ID "${taskId}" already exists. Use updateTask to modify existing tasks.`);
+    }
     
     // Snapshot before state for rebalance logging
-    const tasksBefore = [...this.db.tasks];
+    const tasksBefore = this.getTaskArray();
     
     // Create base task
     const baseTask: Task = {
-      id: data.id || uuidv4(),
+      id: taskId,
       priority: data.priority,
       task: data.task,
       project: data.project,
@@ -382,39 +446,42 @@ export class JsonStorage implements StorageInterface {
         effort: data.effort,
         weights: data.weights ? { ...getDefaultWeights(), ...data.weights } : undefined,
       } as WeightedTask,
-      this.db.tasks,
+      this.getTaskArray(),
       this.db.heuristicWeights
     );
 
-    // Add to database
-    this.db.tasks.push(weightedTask);
+    // Add to Map (guaranteed unique due to check above)
+    this.taskMap.set(weightedTask.id, weightedTask);
     
     // IMPORTANT: Recalculate ALL task weights since dependencies/blocking may have changed
     // e.g., if new task depends on existing task, that task's blockingCount increases
     if (data.dependencies?.length || data.blocking) {
-      this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+      const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+      // Update Map with recalculated tasks
+      for (const task of recalculated) {
+        this.taskMap.set(task.id, task);
+      }
       this.rebuildHeap();
       
       // Log rebalance event
-      this.logRebalanceEvent('task_created', tasksBefore, this.db.tasks, weightedTask.id);
+      this.logRebalanceEvent('task_created', tasksBefore, this.getTaskArray(), weightedTask.id);
     } else {
       this.taskHeap.push(weightedTask);
     }
     
     await this.save();
     
-    // Return the updated version from db (may have been recalculated)
-    return this.db.tasks.find(t => t.id === weightedTask.id) || weightedTask;
+    // Return the updated version from Map (may have been recalculated)
+    return this.taskMap.get(weightedTask.id) || weightedTask;
   }
 
   async updateTask(id: string, data: UpdateTaskDTO): Promise<WeightedTask | null> {
-    const idx = this.db.tasks.findIndex(t => t.id === id);
-    if (idx === -1) return null;
+    const existingTask = this.taskMap.get(id);
+    if (!existingTask) return null;
     
     // Snapshot before state for rebalance logging
-    const tasksBefore = [...this.db.tasks];
+    const tasksBefore = this.getTaskArray();
     
-    const existingTask = this.db.tasks[idx];
     const oldPriority = existingTask.priority;
     const oldScore = existingTask.priorityScore;
     const oldDependencies = existingTask.dependencies || [];
@@ -439,29 +506,32 @@ export class JsonStorage implements StorageInterface {
       JSON.stringify(data.dependencies) !== JSON.stringify(oldDependencies) ||
       data.blocking !== oldBlocking;
 
-    // Update in database first
-    this.db.tasks[idx] = updatedBase;
+    // Update in Map
+    this.taskMap.set(id, updatedBase);
 
     // Recalculate scores
     if (dependenciesChanged) {
       // Full recalculation needed - dependency graph changed
-      this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+      const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+      for (const task of recalculated) {
+        this.taskMap.set(task.id, task);
+      }
       this.rebuildHeap();
       
       // Log rebalance event
-      this.logRebalanceEvent('task_updated', tasksBefore, this.db.tasks, id);
+      this.logRebalanceEvent('task_updated', tasksBefore, this.getTaskArray(), id);
     } else {
       // Just recalculate this task
       const updatedTask = toWeightedTask(
         updatedBase,
-        this.db.tasks,
+        this.getTaskArray(),
         this.db.heuristicWeights
       );
-      this.db.tasks[idx] = updatedTask;
+      this.taskMap.set(id, updatedTask);
       this.taskHeap.update(id, updatedTask);
     }
 
-    const finalTask = this.db.tasks[idx];
+    const finalTask = this.taskMap.get(id)!;
     
     // V3: Log priority change event if priority changed
     if (data.priority && data.priority !== oldPriority) {
@@ -493,27 +563,31 @@ export class JsonStorage implements StorageInterface {
   }
 
   async deleteTask(id: string): Promise<boolean> {
-    const idx = this.db.tasks.findIndex(t => t.id === id);
-    if (idx === -1) return false;
+    if (!this.taskMap.has(id)) return false;
     
     // Snapshot before state for rebalance logging
-    const tasksBefore = [...this.db.tasks];
+    const tasksBefore = this.getTaskArray();
     
-    const deletedTask = this.db.tasks[idx];
-    const hadDependents = this.db.tasks.some(t => 
+    const deletedTask = this.taskMap.get(id)!;
+    const hadDependents = this.getTaskArray().some(t => 
       t.dependencies?.includes(id) || t.blocking === id
     );
     
-    this.db.tasks.splice(idx, 1);
+    // Remove from Map
+    this.taskMap.delete(id);
     contextSwitchCounts.delete(id);
     
     // Recalculate if deleted task was blocking others
     if (hadDependents || deletedTask.blocking || deletedTask.dependencies?.length) {
-      this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+      const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+      this.taskMap.clear();
+      for (const task of recalculated) {
+        this.taskMap.set(task.id, task);
+      }
       this.rebuildHeap();
       
       // Log rebalance event
-      this.logRebalanceEvent('task_deleted', tasksBefore, this.db.tasks, id);
+      this.logRebalanceEvent('task_deleted', tasksBefore, this.getTaskArray(), id);
     } else {
       this.taskHeap.remove(id);
     }
@@ -528,13 +602,17 @@ export class JsonStorage implements StorageInterface {
    */
   async recalculateAllPriorities(): Promise<WeightedTask[]> {
     // Snapshot before state for rebalance logging
-    const tasksBefore = [...this.db.tasks];
+    const tasksBefore = this.getTaskArray();
     
-    this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+    const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+    this.taskMap.clear();
+    for (const task of recalculated) {
+      this.taskMap.set(task.id, task);
+    }
     this.rebuildHeap();
     
     // Log rebalance event
-    this.logRebalanceEvent('weights_changed', tasksBefore, this.db.tasks);
+    this.logRebalanceEvent('weights_changed', tasksBefore, this.getTaskArray());
     
     await this.save();
     return this.taskHeap.toSortedArray();
@@ -545,7 +623,7 @@ export class JsonStorage implements StorageInterface {
    */
   async updateHeuristicWeights(weights: UpdateHeuristicWeightsDTO): Promise<HeuristicWeights> {
     // Snapshot before state for rebalance logging
-    const tasksBefore = [...this.db.tasks];
+    const tasksBefore = this.getTaskArray();
     
     this.db.heuristicWeights = {
       ...this.db.heuristicWeights,
@@ -553,11 +631,15 @@ export class JsonStorage implements StorageInterface {
     };
     
     // Recalculate all task scores with new weights
-    this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+    const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+    this.taskMap.clear();
+    for (const task of recalculated) {
+      this.taskMap.set(task.id, task);
+    }
     this.rebuildHeap();
     
     // Log rebalance event (weights changed always logs)
-    this.logRebalanceEvent('weights_changed', tasksBefore, this.db.tasks);
+    this.logRebalanceEvent('weights_changed', tasksBefore, this.getTaskArray());
     
     await this.save();
     
@@ -649,11 +731,11 @@ export class JsonStorage implements StorageInterface {
     taskId: string,
     outcome: 'completed' | 'cancelled' | 'deferred'
   ): Promise<TaskCompletionRecord | null> {
-    const task = await this.getTask(taskId);
+    const task = this.taskMap.get(taskId);
     if (!task) return null;
 
     // Snapshot before state for rebalance logging
-    const tasksBefore = [...this.db.tasks];
+    const tasksBefore = this.getTaskArray();
 
     const completedAt = new Date().toISOString();
     const createdAt = new Date(task.createdAt).getTime();
@@ -681,24 +763,26 @@ export class JsonStorage implements StorageInterface {
     this.db.completionRecords.push(record);
     contextSwitchCounts.delete(taskId);
 
-    // Update task status (this will trigger recalculation if task was blocking others)
-    const idx = this.db.tasks.findIndex(t => t.id === taskId);
-    if (idx !== -1) {
-      this.db.tasks[idx] = {
-        ...this.db.tasks[idx],
-        status: 'complete',
-        updatedAt: new Date().toISOString(),
-      };
-    }
+    // Update task status in Map
+    const updatedTask: WeightedTask = {
+      ...task,
+      status: 'complete',
+      updatedAt: new Date().toISOString(),
+    };
+    this.taskMap.set(taskId, updatedTask);
 
     // Recalculate all tasks - completing a task changes dependency graph
     // Tasks that depended on this one now have lower dependencyDepth
     // Tasks blocked by this one now have different blocking relationships
-    this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+    const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+    this.taskMap.clear();
+    for (const t of recalculated) {
+      this.taskMap.set(t.id, t);
+    }
     this.rebuildHeap();
     
     // Log rebalance event
-    this.logRebalanceEvent('task_completed', tasksBefore, this.db.tasks, taskId);
+    this.logRebalanceEvent('task_completed', tasksBefore, this.getTaskArray(), taskId);
     
     await this.save();
     return record;
@@ -715,7 +799,7 @@ export class JsonStorage implements StorageInterface {
    * This captures user preference signals for training
    */
   async logTaskSelection(selectedTaskId: string): Promise<TaskSelectionEvent | null> {
-    const selectedTask = await this.getTask(selectedTaskId);
+    const selectedTask = this.taskMap.get(selectedTaskId);
     if (!selectedTask) return null;
 
     const sorted = this.taskHeap.toSortedArray().filter(t => t.status !== 'complete');
@@ -829,6 +913,7 @@ export class JsonStorage implements StorageInterface {
     const priorityChangeEvents = this.db.priorityChangeEvents || [];
     const taskSelectionEvents = this.db.taskSelectionEvents || [];
     const queueRebalanceEvents = this.db.queueRebalanceEvents || [];
+    const tasks = this.getTaskArray();
     
     const topSelections = taskSelectionEvents.filter(e => e.wasTopSelected).length;
     const selectionAccuracy = taskSelectionEvents.length > 0
@@ -839,8 +924,8 @@ export class JsonStorage implements StorageInterface {
     const completionsWithScores = completionRecords.filter(
       r => r.initialPriorityScore !== undefined
     ).length;
-    const tasksWithEffort = this.db.tasks.filter(t => t.effort).length;
-    const tasksWithDependencies = this.db.tasks.filter(
+    const tasksWithEffort = tasks.filter(t => t.effort).length;
+    const tasksWithDependencies = tasks.filter(
       t => t.dependencies && t.dependencies.length > 0
     ).length;
 
@@ -850,7 +935,7 @@ export class JsonStorage implements StorageInterface {
 
     // ML-ready completions with defaults for missing values
     const mlCompletions = completionRecords.map(r => {
-      const task = this.db.tasks.find(t => t.id === r.taskId);
+      const task = this.taskMap.get(r.taskId);
       const initialScore = r.initialPriorityScore ?? task?.priorityScore ?? 0;
       const finalScore = r.finalPriorityScore ?? task?.priorityScore ?? 0;
       return {
@@ -865,7 +950,7 @@ export class JsonStorage implements StorageInterface {
     });
 
     // ML-ready tasks with defaults for missing values
-    const mlTasks = this.db.tasks.map(t => ({
+    const mlTasks = tasks.map(t => ({
       id: t.id,
       priority: priorityMap[t.priority] ?? 1,
       priorityScore: t.priorityScore,
@@ -898,7 +983,7 @@ export class JsonStorage implements StorageInterface {
       priorityChangeEvents,
       taskSelectionEvents,
       queueRebalanceEvents,
-      tasks: this.db.tasks,
+      tasks,
       heuristicWeights: this.db.heuristicWeights,
       summary: {
         totalCompletions: completionRecords.length,
