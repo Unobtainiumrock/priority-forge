@@ -8,6 +8,7 @@ import {
   Hourglass,
   CheckCircle2,
   Circle,
+  GripVertical,
 } from 'lucide-react';
 import type { WeightedTask } from '../types';
 import { 
@@ -25,9 +26,28 @@ interface TaskCardProps {
   task: WeightedTask;
   index: number;
   isCompact?: boolean;
+  // V3.2: Drag-and-drop props
+  isDragging?: boolean;
+  isDragOver?: boolean;
+  onDragStart?: (e: React.DragEvent, taskId: string, index: number) => void;
+  onDragOver?: (e: React.DragEvent, index: number) => void;
+  onDragEnd?: () => void;
+  onDrop?: (e: React.DragEvent, index: number) => void;
+  draggable?: boolean;
 }
 
-export function TaskCard({ task, index, isCompact = false }: TaskCardProps) {
+export function TaskCard({ 
+  task, 
+  index, 
+  isCompact = false,
+  isDragging = false,
+  isDragOver = false,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
+  onDrop,
+  draggable = true,
+}: TaskCardProps) {
   const dispatch = useAppDispatch();
   const selectedTaskId = useAppSelector((state) => state.ui.selectedTaskId);
   const isSelected = selectedTaskId === task.id;
@@ -44,6 +64,27 @@ export function TaskCard({ task, index, isCompact = false }: TaskCardProps) {
 
   const handleClick = () => {
     dispatch(setSelectedTask(isSelected ? null : task.id));
+  };
+
+  // V3.2: Drag handlers
+  const handleDragStart = (e: React.DragEvent) => {
+    if (onDragStart) {
+      onDragStart(e, task.id, index);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // Required to allow drop
+    if (onDragOver) {
+      onDragOver(e, index);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (onDrop) {
+      onDrop(e, index);
+    }
   };
 
   if (isCompact) {
@@ -73,20 +114,33 @@ export function TaskCard({ task, index, isCompact = false }: TaskCardProps) {
   }
 
   return (
-    <button
+    <div
+      draggable={draggable}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={onDragEnd}
+      onDrop={handleDrop}
       onClick={handleClick}
       className={cn(
-        'task-card w-full text-left p-4 rounded-xl border transition-all',
+        'task-card w-full text-left p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing',
         'animate-slide-in-left',
         isSelected 
           ? 'bg-surface-800 border-green-500/50 ring-2 ring-green-500/30' 
           : 'bg-surface-800/50 border-surface-700 hover:border-surface-600',
         urgency === 'critical' && 'border-l-4 border-l-red-500',
         urgency === 'high' && 'border-l-4 border-l-amber-500',
+        // V3.2: Drag states
+        isDragging && 'opacity-50 scale-[0.98] ring-2 ring-blue-500/50',
+        isDragOver && 'ring-2 ring-green-500/70 bg-green-500/10 border-green-500/50',
       )}
       style={{ animationDelay: `${index * 0.03}s`, animationFillMode: 'forwards' }}
     >
       <div className="flex items-start gap-4">
+        {/* Drag Handle */}
+        <div className="flex items-center justify-center w-6 h-full text-surface-600 hover:text-surface-400 transition-colors">
+          <GripVertical className="w-4 h-4" />
+        </div>
+
         {/* Priority Score Orb */}
         <div className={cn(
           'flex flex-col items-center justify-center w-14 h-14 rounded-xl',
@@ -195,7 +249,7 @@ export function TaskCard({ task, index, isCompact = false }: TaskCardProps) {
           </div>
         </div>
       )}
-    </button>
+    </div>
   );
 }
 

@@ -165,6 +165,86 @@ export interface QueueRebalanceEvent {
   topTasksAfter: string[];
 }
 
+// V3.2: Drag reorder event (for online learning from UI interactions)
+export interface DragReorderEvent {
+  id: string;
+  taskId: string;                // The task being dragged
+  fromRank: number;              // Original position (0-indexed)
+  toRank: number;                // New position after drop
+  direction: 'promoted' | 'demoted';
+  timestamp: string;
+  
+  // Pairwise preferences generated (the ML gold!)
+  // If task A dragged from rank 5 to rank 2, generates:
+  //   A > task_at_rank_2, A > task_at_rank_3, A > task_at_rank_4
+  implicitPreferences: Array<{
+    preferredTaskId: string;     // Task that should rank higher
+    demotedTaskId: string;       // Task that should rank lower
+    scoreDiff: number;           // current_score(preferred) - current_score(demoted)
+                                 // Negative means heuristics got it wrong
+  }>;
+  
+  // Snapshot of task features at drag time (for offline retraining)
+  draggedTaskFeatures: {
+    priority: Priority;
+    priorityScore: number;
+    weights: TaskWeights;
+    effort?: Effort;
+    hasDeadline: boolean;
+    hasBlocking: boolean;
+    hasDependencies: boolean;
+  };
+  
+  // Weight update applied (if online learning is enabled)
+  appliedWeightDelta?: Partial<HeuristicWeights>;
+  
+  // Queue context
+  queueSize: number;
+  tasksPassedIds: string[];      // IDs of tasks that were leapfrogged
+}
+
+// V3.2: Online learner persistent state
+export interface OnlineLearnerState {
+  enabled: boolean;              // Master switch for online updates
+  learningRate: number;          // SGD learning rate (default: 0.01)
+  momentum: number;              // Momentum coefficient (default: 0.9)
+  totalUpdates: number;          // How many drag events processed
+  lastUpdateTimestamp?: string;
+  
+  // Exponential moving average of gradients (for momentum-based SGD)
+  momentumBuffer: HeuristicWeights;
+  
+  // Safeguards
+  maxWeightChange: number;       // Max single-update delta (default: 0.5)
+  minWeight: number;             // Floor for any weight (default: 0.1)
+  maxWeight: number;             // Ceiling for any weight (default: 50.0)
+  
+  // Training metrics
+  cumulativeLoss: number;        // Sum of pairwise ranking losses
+  correctPredictions: number;    // Pairs where heuristics agreed with user
+  totalPairs: number;            // Total pairwise comparisons seen
+}
+
+export const DEFAULT_ONLINE_LEARNER_STATE: OnlineLearnerState = {
+  enabled: true,
+  learningRate: 0.01,
+  momentum: 0.9,
+  totalUpdates: 0,
+  momentumBuffer: {
+    blocking: 0,
+    crossProject: 0,
+    timeSensitive: 0,
+    effortValue: 0,
+    dependency: 0,
+  },
+  maxWeightChange: 0.5,
+  minWeight: 0.1,
+  maxWeight: 50.0,
+  cumulativeLoss: 0,
+  correctPredictions: 0,
+  totalPairs: 0,
+};
+
 // V4 Prep: Objective/Goal for goal-conditioned learning
 export interface Objective {
   id: string;
@@ -207,7 +287,7 @@ export interface ObjectiveProgressEvent {
 
 // V2/V3/V4 Database schema
 export interface ProgressDatabase {
-  version: 'v1' | 'v2' | 'v3' | 'v4';
+  version: 'v1' | 'v2' | 'v3' | 'v3.2' | 'v4';
   lastUpdated: string;
   projects: Project[];
   tasks: WeightedTask[];
@@ -220,6 +300,9 @@ export interface ProgressDatabase {
   priorityChangeEvents?: PriorityChangeEvent[];
   taskSelectionEvents?: TaskSelectionEvent[];
   queueRebalanceEvents?: QueueRebalanceEvent[];
+  // V3.2: Online learning from drag-and-drop
+  dragReorderEvents?: DragReorderEvent[];
+  onlineLearnerState?: OnlineLearnerState;
   // V4: Goal-conditioned learning
   objectives?: Objective[];
   objectiveProgressEvents?: ObjectiveProgressEvent[];
@@ -314,4 +397,21 @@ export interface UpdateHeuristicWeightsDTO {
   timeSensitive?: number;
   effortValue?: number;
   dependency?: number;
+}
+
+// V3.2: Drag reorder DTO (from frontend)
+export interface LogDragReorderDTO {
+  taskId: string;
+  fromRank: number;
+  toRank: number;
+}
+
+// V3.2: Online learner config update DTO
+export interface UpdateOnlineLearnerDTO {
+  enabled?: boolean;
+  learningRate?: number;
+  momentum?: number;
+  maxWeightChange?: number;
+  minWeight?: number;
+  maxWeight?: number;
 }

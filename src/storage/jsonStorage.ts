@@ -28,6 +28,8 @@ import {
   PriorityChangeEvent,
   TaskSelectionEvent,
   QueueRebalanceEvent,
+  DragReorderEvent,
+  OnlineLearnerState,
   ProgressDatabase,
   CreateProjectDTO,
   UpdateProjectDTO,
@@ -39,7 +41,12 @@ import {
   Priority,
   HeuristicWeights,
   DEFAULT_HEURISTIC_WEIGHTS,
+  DEFAULT_ONLINE_LEARNER_STATE,
   UpdateHeuristicWeightsDTO,
+  LogDragReorderDTO,
+  UpdateOnlineLearnerDTO,
+  TaskWeights,
+  Effort,
 } from '../types/schema';
 import { StorageInterface } from './interface';
 import { MinHeap, toWeightedTask, recalculateAllScores, getDefaultWeights } from '../heap';
@@ -49,7 +56,7 @@ const DB_FILE = path.join(DATA_DIR, 'progress.json');
 
 function getEmptyDatabase(): ProgressDatabase {
   return {
-    version: 'v3',
+    version: 'v3.2',
     lastUpdated: new Date().toISOString(),
     projects: [],
     tasks: [],
@@ -60,6 +67,10 @@ function getEmptyDatabase(): ProgressDatabase {
     // V3: ML training data
     priorityChangeEvents: [],
     taskSelectionEvents: [],
+    queueRebalanceEvents: [],
+    // V3.2: Online learning
+    dragReorderEvents: [],
+    onlineLearnerState: { ...DEFAULT_ONLINE_LEARNER_STATE },
   };
 }
 
@@ -220,17 +231,25 @@ export class JsonStorage implements StorageInterface {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
     const db = JSON.parse(raw) as ProgressDatabase;
     
+    // Migration chain: V1 → V2 → V3 → V3.2
+    let migratedDb = db;
+    
     // Migrate V1 to V2 if needed
-    if (db.version === 'v1' || !db.heuristicWeights) {
-      return this.migrateToV3(this.migrateToV2(db));
+    if (migratedDb.version === 'v1' || !migratedDb.heuristicWeights) {
+      migratedDb = this.migrateToV2(migratedDb);
     }
     
     // Migrate V2 to V3 if needed
-    if (db.version === 'v2' || !db.priorityChangeEvents) {
-      return this.migrateToV3(db);
+    if (migratedDb.version === 'v2' || !migratedDb.priorityChangeEvents) {
+      migratedDb = this.migrateToV3(migratedDb);
     }
     
-    return db;
+    // Migrate V3 to V3.2 if needed (online learning support)
+    if (migratedDb.version === 'v3' || !migratedDb.dragReorderEvents) {
+      migratedDb = this.migrateToV32(migratedDb);
+    }
+    
+    return migratedDb;
   }
 
   /**
@@ -278,6 +297,106 @@ export class JsonStorage implements StorageInterface {
     console.log('✅ Migration complete! Database is now V3.');
     
     return v3Db;
+  }
+
+  /**
+   * Migrate V3 database to V3.2 format (adds online learning support)
+   * Includes data imputation for existing events to ensure consistent shapes
+   */
+  private migrateToV32(db: ProgressDatabase): ProgressDatabase {
+    console.log('🔄 Migrating database from V3 to V3.2 (Online Learning)...');
+    
+    // Data imputation: Ensure all existing events have required fields
+    const imputedPriorityChangeEvents = (db.priorityChangeEvents || []).map(event => ({
+      ...event,
+      // Impute missing fields with sensible defaults
+      queuePositionBefore: event.queuePositionBefore ?? -1,
+      queuePositionAfter: event.queuePositionAfter ?? -1,
+    }));
+    
+    const imputedTaskSelectionEvents = (db.taskSelectionEvents || []).map(event => ({
+      ...event,
+      // Impute missing fields
+      selectedTaskRank: event.selectedTaskRank ?? 0,
+      queueSize: event.queueSize ?? 1,
+    }));
+    
+    const imputedQueueRebalanceEvents = (db.queueRebalanceEvents || []).map(event => ({
+      ...event,
+      // Ensure arrays exist
+      significantChanges: event.significantChanges || [],
+      topTasksBefore: event.topTasksBefore || [],
+      topTasksAfter: event.topTasksAfter || [],
+    }));
+    
+    // Impute completion records for ML training
+    const imputedCompletionRecords = db.completionRecords.map(record => ({
+      ...record,
+      // Impute missing score fields (use 0 as neutral default)
+      initialPriorityScore: record.initialPriorityScore ?? 0,
+      finalPriorityScore: record.finalPriorityScore ?? 0,
+    }));
+    
+    // Synthesize drag events from existing priority changes (for training continuity)
+    // Each priority change can be interpreted as an implicit reorder preference
+    const syntheticDragEvents: DragReorderEvent[] = imputedPriorityChangeEvents
+      .filter(e => e.queuePositionBefore >= 0 && e.queuePositionAfter >= 0)
+      .map(event => {
+        const fromRank = event.queuePositionBefore;
+        const toRank = event.queuePositionAfter;
+        const direction = toRank < fromRank ? 'promoted' : 'demoted';
+        
+        return {
+          id: `synthetic-${event.id}`,
+          taskId: event.taskId,
+          fromRank,
+          toRank,
+          direction,
+          timestamp: event.timestamp,
+          implicitPreferences: [], // Can't reconstruct without full queue state
+          draggedTaskFeatures: {
+            priority: event.newPriority,
+            priorityScore: event.newScore,
+            weights: {
+              blockingCount: 0,
+              crossProjectImpact: 0,
+              timeSensitivity: 0,
+              effortValueRatio: 5,
+              dependencyDepth: 0,
+            },
+            hasDeadline: false,
+            hasBlocking: false,
+            hasDependencies: false,
+          },
+          queueSize: 0,
+          tasksPassedIds: [],
+        } as DragReorderEvent;
+      });
+    
+    console.log(`  📊 Imputed ${imputedPriorityChangeEvents.length} priority change events`);
+    console.log(`  📊 Imputed ${imputedTaskSelectionEvents.length} task selection events`);
+    console.log(`  📊 Imputed ${imputedQueueRebalanceEvents.length} queue rebalance events`);
+    console.log(`  📊 Imputed ${imputedCompletionRecords.length} completion records`);
+    console.log(`  📊 Synthesized ${syntheticDragEvents.length} drag events from priority changes`);
+    
+    const v32Db: ProgressDatabase = {
+      ...db,
+      version: 'v3.2',
+      priorityChangeEvents: imputedPriorityChangeEvents,
+      taskSelectionEvents: imputedTaskSelectionEvents,
+      queueRebalanceEvents: imputedQueueRebalanceEvents,
+      completionRecords: imputedCompletionRecords,
+      // New V3.2 fields
+      dragReorderEvents: syntheticDragEvents,
+      onlineLearnerState: { ...DEFAULT_ONLINE_LEARNER_STATE },
+      lastUpdated: new Date().toISOString(),
+    };
+    
+    // Save migrated database
+    fs.writeFileSync(DB_FILE, JSON.stringify(v32Db, null, 2));
+    console.log('✅ Migration complete! Database is now V3.2 with Online Learning support.');
+    
+    return v32Db;
   }
 
   private async save(): Promise<void> {
@@ -1003,6 +1122,301 @@ export class JsonStorage implements StorageInterface {
         tasks: mlTasks,
         rebalances: mlRebalances,
       },
+    };
+  }
+
+  // ========== V3.2: Online Learning Methods ==========
+
+  /**
+   * V3.2: Log a drag-and-drop reorder event and optionally update weights
+   * This is the core entry point for the online learning system.
+   * 
+   * @param dto - The drag reorder data from the frontend
+   * @returns The created DragReorderEvent with applied weight updates
+   */
+  async logDragReorder(dto: LogDragReorderDTO): Promise<DragReorderEvent> {
+    const { taskId, fromRank, toRank } = dto;
+    
+    // Get current sorted queue (non-completed tasks only)
+    const sortedTasks = this.taskHeap.toSortedArray().filter(t => t.status !== 'complete');
+    const draggedTask = sortedTasks.find(t => t.id === taskId);
+    
+    if (!draggedTask) {
+      throw new Error(`Task ${taskId} not found in queue`);
+    }
+    
+    const direction = toRank < fromRank ? 'promoted' : 'demoted';
+    
+    // Generate implicit pairwise preferences
+    // If promoted (moved up), we prefer dragged task over tasks it passed
+    // If demoted (moved down), tasks it passed are preferred over it
+    const implicitPreferences: DragReorderEvent['implicitPreferences'] = [];
+    const tasksPassedIds: string[] = [];
+    
+    if (direction === 'promoted') {
+      // Task moved from rank 5 to rank 2 → prefers over tasks at 2, 3, 4
+      for (let i = toRank; i < fromRank; i++) {
+        if (i < sortedTasks.length) {
+          const passedTask = sortedTasks[i];
+          tasksPassedIds.push(passedTask.id);
+          implicitPreferences.push({
+            preferredTaskId: taskId,
+            demotedTaskId: passedTask.id,
+            scoreDiff: draggedTask.priorityScore - passedTask.priorityScore,
+          });
+        }
+      }
+    } else {
+      // Task moved from rank 2 to rank 5 → tasks at 3, 4, 5 preferred over it
+      for (let i = fromRank + 1; i <= toRank; i++) {
+        if (i < sortedTasks.length) {
+          const passedTask = sortedTasks[i];
+          tasksPassedIds.push(passedTask.id);
+          implicitPreferences.push({
+            preferredTaskId: passedTask.id,
+            demotedTaskId: taskId,
+            scoreDiff: passedTask.priorityScore - draggedTask.priorityScore,
+          });
+        }
+      }
+    }
+    
+    // Compute weight update if online learning is enabled
+    let appliedWeightDelta: Partial<HeuristicWeights> | undefined;
+    const learnerState = this.db.onlineLearnerState || { ...DEFAULT_ONLINE_LEARNER_STATE };
+    
+    if (learnerState.enabled && implicitPreferences.length > 0) {
+      appliedWeightDelta = await this.computeOnlineWeightUpdate(
+        implicitPreferences,
+        sortedTasks,
+        learnerState
+      );
+    }
+    
+    // Create the drag event
+    const event: DragReorderEvent = {
+      id: uuidv4(),
+      taskId,
+      fromRank,
+      toRank,
+      direction,
+      timestamp: new Date().toISOString(),
+      implicitPreferences,
+      draggedTaskFeatures: {
+        priority: draggedTask.priority,
+        priorityScore: draggedTask.priorityScore,
+        weights: draggedTask.weights,
+        effort: draggedTask.effort,
+        hasDeadline: !!draggedTask.deadline,
+        hasBlocking: !!draggedTask.blocking,
+        hasDependencies: !!(draggedTask.dependencies && draggedTask.dependencies.length > 0),
+      },
+      appliedWeightDelta,
+      queueSize: sortedTasks.length,
+      tasksPassedIds,
+    };
+    
+    // Store the event
+    if (!this.db.dragReorderEvents) {
+      this.db.dragReorderEvents = [];
+    }
+    this.db.dragReorderEvents.push(event);
+    
+    // Update learner state
+    if (!this.db.onlineLearnerState) {
+      this.db.onlineLearnerState = { ...DEFAULT_ONLINE_LEARNER_STATE };
+    }
+    this.db.onlineLearnerState.totalUpdates++;
+    this.db.onlineLearnerState.lastUpdateTimestamp = new Date().toISOString();
+    this.db.onlineLearnerState.totalPairs += implicitPreferences.length;
+    
+    // Count correct predictions (where heuristics agreed with user)
+    const correctCount = implicitPreferences.filter(p => p.scoreDiff < 0).length;
+    this.db.onlineLearnerState.correctPredictions += correctCount;
+    
+    console.log(`📊 V3.2: Logged drag reorder: ${taskId} ${fromRank} → ${toRank} (${direction})`);
+    console.log(`  ↳ Generated ${implicitPreferences.length} pairwise preferences`);
+    if (appliedWeightDelta) {
+      console.log(`  ↳ Applied weight update:`, appliedWeightDelta);
+    }
+    
+    await this.save();
+    return event;
+  }
+
+  /**
+   * V3.2: Compute and apply weight updates using SGD with momentum
+   * 
+   * The loss function is pairwise ranking loss (hinge loss):
+   *   L = Σ max(0, margin - (score_preferred - score_demoted))
+   * 
+   * Gradient update moves weights to increase score of preferred task
+   * relative to demoted task.
+   */
+  private async computeOnlineWeightUpdate(
+    preferences: DragReorderEvent['implicitPreferences'],
+    sortedTasks: WeightedTask[],
+    learnerState: OnlineLearnerState
+  ): Promise<Partial<HeuristicWeights>> {
+    const { learningRate, momentum, maxWeightChange, minWeight, maxWeight } = learnerState;
+    const taskMap = new Map(sortedTasks.map(t => [t.id, t]));
+    
+    // Accumulate gradients across all preferences
+    const gradient: HeuristicWeights = {
+      blocking: 0,
+      crossProject: 0,
+      timeSensitive: 0,
+      effortValue: 0,
+      dependency: 0,
+    };
+    
+    const margin = 1.0; // Hinge loss margin
+    let totalLoss = 0;
+    
+    for (const pref of preferences) {
+      const preferred = taskMap.get(pref.preferredTaskId);
+      const demoted = taskMap.get(pref.demotedTaskId);
+      
+      if (!preferred || !demoted) continue;
+      
+      // Current score difference (should be negative for correct prediction)
+      const scoreDiff = preferred.priorityScore - demoted.priorityScore;
+      
+      // Hinge loss: max(0, margin + scoreDiff)
+      // We want preferred.score < demoted.score (lower score = higher priority)
+      const loss = Math.max(0, margin + scoreDiff);
+      totalLoss += loss;
+      
+      if (loss > 0) {
+        // Gradient: ∂L/∂w_i = (feature_preferred - feature_demoted)
+        // We want to DECREASE score of preferred and INCREASE score of demoted
+        // Since score = base - weighted_sum, we need to INCREASE features of preferred
+        const prefWeights = preferred.weights;
+        const demWeights = demoted.weights;
+        
+        gradient.blocking += (prefWeights.blockingCount - demWeights.blockingCount);
+        gradient.crossProject += (prefWeights.crossProjectImpact - demWeights.crossProjectImpact);
+        gradient.timeSensitive += (prefWeights.timeSensitivity - demWeights.timeSensitivity);
+        gradient.effortValue += (prefWeights.effortValueRatio - demWeights.effortValueRatio);
+        gradient.dependency += (prefWeights.dependencyDepth - demWeights.dependencyDepth);
+      }
+    }
+    
+    // Normalize gradient by number of preferences
+    const n = preferences.length || 1;
+    gradient.blocking /= n;
+    gradient.crossProject /= n;
+    gradient.timeSensitive /= n;
+    gradient.effortValue /= n;
+    gradient.dependency /= n;
+    
+    // Apply momentum
+    const momentumBuffer = learnerState.momentumBuffer;
+    momentumBuffer.blocking = momentum * momentumBuffer.blocking + gradient.blocking;
+    momentumBuffer.crossProject = momentum * momentumBuffer.crossProject + gradient.crossProject;
+    momentumBuffer.timeSensitive = momentum * momentumBuffer.timeSensitive + gradient.timeSensitive;
+    momentumBuffer.effortValue = momentum * momentumBuffer.effortValue + gradient.effortValue;
+    momentumBuffer.dependency = momentum * momentumBuffer.dependency + gradient.dependency;
+    
+    // Compute weight delta (clamped)
+    const clamp = (val: number) => Math.max(-maxWeightChange, Math.min(maxWeightChange, val));
+    const weightDelta: Partial<HeuristicWeights> = {
+      blocking: clamp(learningRate * momentumBuffer.blocking),
+      crossProject: clamp(learningRate * momentumBuffer.crossProject),
+      timeSensitive: clamp(learningRate * momentumBuffer.timeSensitive),
+      effortValue: clamp(learningRate * momentumBuffer.effortValue),
+      dependency: clamp(learningRate * momentumBuffer.dependency),
+    };
+    
+    // Apply to weights (with min/max bounds)
+    const bound = (val: number) => Math.max(minWeight, Math.min(maxWeight, val));
+    const newWeights: HeuristicWeights = {
+      blocking: bound(this.db.heuristicWeights.blocking + (weightDelta.blocking || 0)),
+      crossProject: bound(this.db.heuristicWeights.crossProject + (weightDelta.crossProject || 0)),
+      timeSensitive: bound(this.db.heuristicWeights.timeSensitive + (weightDelta.timeSensitive || 0)),
+      effortValue: bound(this.db.heuristicWeights.effortValue + (weightDelta.effortValue || 0)),
+      dependency: bound(this.db.heuristicWeights.dependency + (weightDelta.dependency || 0)),
+    };
+    
+    // Only update if there's meaningful change
+    const hasChange = Object.values(weightDelta).some(v => v && Math.abs(v) > 0.001);
+    if (hasChange) {
+      this.db.heuristicWeights = newWeights;
+      
+      // Recalculate all task scores with new weights
+      const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+      this.taskMap.clear();
+      for (const task of recalculated) {
+        this.taskMap.set(task.id, task);
+      }
+      this.rebuildHeap();
+      
+      // Track cumulative loss
+      this.db.onlineLearnerState!.cumulativeLoss += totalLoss;
+    }
+    
+    return weightDelta;
+  }
+
+  /**
+   * V3.2: Get current online learner state
+   */
+  async getOnlineLearnerState(): Promise<OnlineLearnerState> {
+    return this.db.onlineLearnerState || { ...DEFAULT_ONLINE_LEARNER_STATE };
+  }
+
+  /**
+   * V3.2: Update online learner configuration
+   */
+  async updateOnlineLearnerConfig(config: UpdateOnlineLearnerDTO): Promise<OnlineLearnerState> {
+    if (!this.db.onlineLearnerState) {
+      this.db.onlineLearnerState = { ...DEFAULT_ONLINE_LEARNER_STATE };
+    }
+    
+    this.db.onlineLearnerState = {
+      ...this.db.onlineLearnerState,
+      ...config,
+    };
+    
+    await this.save();
+    console.log('📊 V3.2: Updated online learner config:', config);
+    return this.db.onlineLearnerState;
+  }
+
+  /**
+   * V3.2: Get all drag reorder events
+   */
+  async getDragReorderEvents(): Promise<DragReorderEvent[]> {
+    return this.db.dragReorderEvents || [];
+  }
+
+  /**
+   * V3.2: Get online learning accuracy metrics
+   */
+  async getOnlineLearnerMetrics(): Promise<{
+    totalUpdates: number;
+    totalPairs: number;
+    correctPredictions: number;
+    accuracy: number;
+    cumulativeLoss: number;
+    currentWeights: HeuristicWeights;
+    learningRate: number;
+    enabled: boolean;
+  }> {
+    const state = this.db.onlineLearnerState || { ...DEFAULT_ONLINE_LEARNER_STATE };
+    const accuracy = state.totalPairs > 0 
+      ? (state.correctPredictions / state.totalPairs) * 100 
+      : 0;
+    
+    return {
+      totalUpdates: state.totalUpdates,
+      totalPairs: state.totalPairs,
+      correctPredictions: state.correctPredictions,
+      accuracy: Math.round(accuracy * 100) / 100,
+      cumulativeLoss: Math.round(state.cumulativeLoss * 100) / 100,
+      currentWeights: this.db.heuristicWeights,
+      learningRate: state.learningRate,
+      enabled: state.enabled,
     };
   }
 }

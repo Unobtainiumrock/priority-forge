@@ -747,6 +747,52 @@ const tools = [
       required: [],
     },
   },
+  // ====== V3.2: Online Learning Tools ======
+  {
+    name: 'log_drag_reorder',
+    description: 'V3.2: Log when user drag-and-drops to reorder tasks in the UI. Generates pairwise preferences for online learning.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID of the task being dragged' },
+        fromRank: { type: 'number', description: 'Original position (0-indexed)' },
+        toRank: { type: 'number', description: 'New position after drop' },
+      },
+      required: ['taskId', 'fromRank', 'toRank'],
+    },
+  },
+  {
+    name: 'get_online_learner_state',
+    description: 'V3.2: Get current state of the online learning system including weights, accuracy, and config.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'update_online_learner_config',
+    description: 'V3.2: Update online learning configuration (learning rate, enabled, etc.).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        enabled: { type: 'boolean', description: 'Enable/disable online weight updates' },
+        learningRate: { type: 'number', description: 'SGD learning rate (default: 0.01)' },
+        momentum: { type: 'number', description: 'Momentum coefficient (default: 0.9)' },
+        maxWeightChange: { type: 'number', description: 'Max single-update delta (default: 0.5)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_drag_reorder_events',
+    description: 'V3.2: Get all recorded drag reorder events (for analysis/debugging).',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
 ];
 
 async function handleToolCall(name: string, params: Record<string, unknown>): Promise<unknown> {
@@ -966,6 +1012,58 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
       };
     }
 
+    // ====== V3.2: Online Learning Tools ======
+    case 'log_drag_reorder': {
+      const event = await storage.logDragReorder({
+        taskId: params.taskId as string,
+        fromRank: params.fromRank as number,
+        toRank: params.toRank as number,
+      });
+      return {
+        event,
+        message: `Logged drag reorder: ${event.taskId} moved from rank ${event.fromRank} to ${event.toRank}`,
+        pairsGenerated: event.implicitPreferences.length,
+        weightUpdateApplied: !!event.appliedWeightDelta,
+        appliedDelta: event.appliedWeightDelta,
+      };
+    }
+
+    case 'get_online_learner_state': {
+      const metrics = await storage.getOnlineLearnerMetrics();
+      return {
+        ...metrics,
+        status: metrics.enabled ? 'active' : 'disabled',
+        description: 'Online learning adapts heuristic weights based on your drag-and-drop reordering in the UI.',
+      };
+    }
+
+    case 'update_online_learner_config': {
+      const newConfig = await storage.updateOnlineLearnerConfig({
+        enabled: params.enabled as boolean | undefined,
+        learningRate: params.learningRate as number | undefined,
+        momentum: params.momentum as number | undefined,
+        maxWeightChange: params.maxWeightChange as number | undefined,
+      });
+      return {
+        message: 'Online learner configuration updated',
+        config: newConfig,
+      };
+    }
+
+    case 'get_drag_reorder_events': {
+      const events = await storage.getDragReorderEvents();
+      return {
+        events,
+        count: events.length,
+        summary: {
+          totalPromotions: events.filter(e => e.direction === 'promoted').length,
+          totalDemotions: events.filter(e => e.direction === 'demoted').length,
+          totalPairsGenerated: events.reduce((sum, e) => sum + e.implicitPreferences.length, 0),
+          eventsWithWeightUpdates: events.filter(e => e.appliedWeightDelta).length,
+        },
+      };
+    }
+
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
@@ -1001,7 +1099,7 @@ export async function mcpHandler(req: Request, res: Response): Promise<void> {
           },
           serverInfo: {
             name: 'priority-forge',
-            version: '2.2.0',  // Auto-capture, project sync, onboarding
+            version: '3.2.0',  // Online learning from drag-and-drop reordering
           },
           // Include instructions that clients should show to AI
           instructions: `You are connected to a task prioritization system (Priority Forge v2.2).
