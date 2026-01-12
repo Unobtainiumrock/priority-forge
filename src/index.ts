@@ -189,23 +189,27 @@ app.post('/mcp', mcpHandler);
 app.listen(PORT, () => {
   console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
-║       MCP Progress Tracker Server v2.1                        ║
-║       Universal Task Tracking Protocol                        ║
+║       Priority Forge v3.0                                     ║
+║       Cross-Project Task Prioritization with ML Training      ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  REST API:  http://localhost:${PORT}                             ║
 ║  MCP:       http://localhost:${PORT}/mcp                         ║
 ║  Health:    http://localhost:${PORT}/health                      ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  V2.1 NEW - MCP Resources & Prompts (Universal Coverage):     ║
+║  V3 NEW - Dynamic Rebalancing + ML Training:                  ║
+║    • Queue auto-rebalances on dependency graph changes        ║
+║    • Logs QueueRebalanceEvents for trajectory learning        ║
+║    • Collects PriorityChangeEvents & TaskSelectionEvents      ║
+║    • export_training_data    - Export for XGBoost training    ║
+║    • get_ml_summary          - Training data statistics       ║
+╠═══════════════════════════════════════════════════════════════╣
+║  MCP Resources & Prompts:                                     ║
 ║    resources/list            - List available resources       ║
 ║    resources/read            - Read resource content          ║
 ║    prompts/list              - List workflow templates        ║
 ║    prompts/get               - Get prompt with arguments      ║
-║  REST Access:                                                 ║
-║    GET  /resources/current-focus  - Top priority + status     ║
-║    GET  /resources/protocol       - Task management protocol  ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  V2 Endpoints:                                                ║
+║  Priority Endpoints:                                          ║
 ║    GET  /status              - Full system status             ║
 ║    GET  /top-priority        - Single highest priority task   ║
 ║    POST /recalculate         - Recalculate all priorities     ║
