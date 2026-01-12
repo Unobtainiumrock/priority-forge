@@ -14,6 +14,33 @@ HTTP-based MCP server for cross-project task prioritization with heap-based prio
 
 ---
 
+## Table of Contents
+
+- [What is this and why should I use it?](#what-is-this-and-why-should-i-use-it)
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Universal Task Tracking (V2.1)](#universal-task-tracking-v21)
+- [MCP Integration](#mcp-integration)
+- [Agent Rules](#agent-rules)
+- [REST API Endpoints](#rest-api-endpoints)
+- [MCP Protocol Support](#mcp-protocol-support)
+- [V2 Priority Scoring](#v2-priority-scoring)
+  - [Dynamic Rebalancing (V3)](#dynamic-rebalancing-v3)
+- [Data Storage](#data-storage)
+- [Scripts](#scripts)
+- [Windows Support](#windows-support)
+- [Environment Variables](#environment-variables)
+- [Team Deployment](#team-deployment)
+- [Troubleshooting](#troubleshooting)
+- [V3 ML Training Data](#v3-ml-training-data)
+- [Roadmap](#roadmap)
+- [License](#license)
+
+**📚 Additional Documentation:**
+- [ML Architecture & Training Pipeline](docs/ML_ARCHITECTURE.md) — Detailed guide to the learning system, data collection, and model architecture
+
+---
+
 ## What is this and why should I use it?
 
 **The Problem:** When you're working with AI coding assistants (Claude, Cursor, etc.) across multiple projects, things slip through the cracks. You mention "we should fix that bug" in passing, but nobody tracks it. You finish a task but forget to mark it done. You have three projects with scattered TODO lists and no unified view of what's most important.
@@ -470,7 +497,13 @@ If `curl http://localhost:3456/health` returns nothing:
 
 ## V3 ML Training Data
 
-Priority Forge collects training data for learning optimal priority weights:
+Priority Forge collects training data for learning optimal priority weights. The system uses a **three-layer intelligence chain**:
+
+```
+LLM (semantic understanding) → Priority Forge (mathematical scoring) → User feedback (learning signal)
+```
+
+> 📚 **For comprehensive ML documentation, see [docs/ML_ARCHITECTURE.md](docs/ML_ARCHITECTURE.md)**
 
 ### Data Collected
 
@@ -504,7 +537,11 @@ The exported data includes:
 | Task completion time | Regression | ~100+ completion records |
 | Queue dynamics | Sequence model | ~200+ rebalance events |
 
-See [docs/ML_ARCHITECTURE.md](docs/ML_ARCHITECTURE.md) for detailed ML pipeline documentation.
+### Key Insight
+
+The system **doesn't learn WHICH tasks should block others** — that semantic understanding stays with the LLM. It **learns HOW MUCH to weight blocking relationships** relative to other factors (deadlines, effort, cross-project impact).
+
+> 📚 **Full details:** [ML Architecture & Training Pipeline](docs/ML_ARCHITECTURE.md)
 
 ## Roadmap
 
