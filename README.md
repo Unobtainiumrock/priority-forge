@@ -31,55 +31,6 @@ HTTP-based MCP server for cross-project task prioritization with heap-based prio
 
 ---
 
-## Features
-
-- **V2 Heap-Based Priority Queue**: Weighted priority scoring with tunable heuristics
-- **V2.1 Universal Coverage**: MCP Resources + Prompts work with ANY MCP client (Cursor, Droid, Claude Desktop, Claude Code)
-- **Priority Factors**: Blocking count, cross-project impact, time sensitivity, effort/value ratio, dependency depth
-- **Auto-generated Markdown**: Human-readable `PROGRESS_TRACKER.md` regenerated on every write
-- **MCP Protocol**: JSON-RPC 2.0 endpoint for AI assistant integration
-- **REST API**: Full CRUD operations for all entities
-- **V3 Ready**: Context switch tracking for future ML-based priority optimization
-
-##  Universal Task Tracking (V2.1)
-
-The server provides **automatic context injection** via MCP Resources and Prompts that work with ANY MCP-compliant client:
-
-### MCP Resources (Automatic Context)
-
-| Resource URI | Purpose |
-|--------------|---------|
-| `progress://current-focus` | **READ FIRST** - Top priority task + active/blocked items |
-| `progress://task-protocol` | Required protocol for task lifecycle management |
-| `progress://full-queue` | Complete sorted task list (JSON) |
-
-### MCP Prompts (Workflow Templates)
-
-| Prompt | Purpose |
-|--------|---------|
-| `start_session` | Initialize work with proper task tracking |
-| `complete_work` | Close out task with completion tracking |
-| `switch_context` | Properly handle task switching |
-
-### How Universal Coverage Works
-
-1. **Initialize Response**: Server returns `instructions` field that guides AI behavior
-2. **Resources**: Any client can call `resources/list` and `resources/read` to get context
-3. **Tool Response Enhancement**: Every tool response includes protocol reminders
-4. **Prompts**: Clients can use workflow templates via `prompts/list` and `prompts/get`
-
-### REST Access (for testing)
-
-```bash
-# See current focus
-curl http://localhost:3456/resources/current-focus
-
-# Read protocol
-curl http://localhost:3456/resources/protocol
-```
-
-This ensures 100% coverage regardless of which MCP client you use (Cursor, Droid, Claude Code, Claude Desktop, etc.).
-
 ## Quick Start
 
 ### One-Command Setup (Recommended)
@@ -128,6 +79,57 @@ npm run verify
 Server runs at `http://localhost:3456`
 
 > **Note**: The `data/progress.json` file is gitignored - each user maintains their own task database. Run the seed script to create your initial database.
+
+---
+
+## Features
+
+- **V2 Heap-Based Priority Queue**: Weighted priority scoring with tunable heuristics
+- **V2.1 Universal Coverage**: MCP Resources + Prompts work with ANY MCP client (Cursor, Droid, Claude Desktop, Claude Code)
+- **Priority Factors**: Blocking count, cross-project impact, time sensitivity, effort/value ratio, dependency depth
+- **Auto-generated Markdown**: Human-readable `PROGRESS_TRACKER.md` regenerated on every write
+- **MCP Protocol**: JSON-RPC 2.0 endpoint for AI assistant integration
+- **REST API**: Full CRUD operations for all entities
+- **V3 Ready**: Context switch tracking for future ML-based priority optimization
+
+##  Universal Task Tracking (V2.1)
+
+The server provides **automatic context injection** via MCP Resources and Prompts that work with ANY MCP-compliant client:
+
+### MCP Resources (Automatic Context)
+
+| Resource URI | Purpose |
+|--------------|---------|
+| `progress://current-focus` | **READ FIRST** - Top priority task + active/blocked items |
+| `progress://task-protocol` | Required protocol for task lifecycle management |
+| `progress://full-queue` | Complete sorted task list (JSON) |
+
+### MCP Prompts (Workflow Templates)
+
+| Prompt | Purpose |
+|--------|---------|
+| `start_session` | Initialize work with proper task tracking |
+| `complete_work` | Close out task with completion tracking |
+| `switch_context` | Properly handle task switching |
+
+### How Universal Coverage Works
+
+1. **Initialize Response**: Server returns `instructions` field that guides AI behavior
+2. **Resources**: Any client can call `resources/list` and `resources/read` to get context
+3. **Tool Response Enhancement**: Every tool response includes protocol reminders
+4. **Prompts**: Clients can use workflow templates via `prompts/list` and `prompts/get`
+
+### REST Access (for testing)
+
+```bash
+# See current focus
+curl http://localhost:3456/resources/current-focus
+
+# Read protocol
+curl http://localhost:3456/resources/protocol
+```
+
+This ensures 100% coverage regardless of which MCP client you use (Cursor, Droid, Claude Code, Claude Desktop, etc.).
 
 ## MCP Integration
 
