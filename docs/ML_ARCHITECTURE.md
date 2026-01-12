@@ -2,22 +2,134 @@
 
 This document describes the machine learning architecture for Priority Forge's learned priority scoring.
 
-## Current State (V3)
+---
 
-### Data Collection
+## Table of Contents
+
+1. [System Architecture: The Intelligence Chain](#system-architecture-the-intelligence-chain)
+2. [How the Learning Loop Works](#how-the-learning-loop-works)
+3. [Data Collection (V3)](#data-collection-v3)
+   - [Priority Change Events](#1-priority-change-events)
+   - [Task Selection Events](#2-task-selection-events)
+   - [Queue Rebalance Events](#3-queue-rebalance-events)
+   - [Task Completion Records](#4-task-completion-records)
+4. [Learning Targets](#learning-targets)
+   - [Optimal Heuristic Weights (XGBoost)](#target-1-optimal-heuristic-weights-xgboost)
+   - [Completion Time Prediction](#target-2-completion-time-prediction-regression)
+   - [Queue Trajectory Learning (V4+)](#target-3-queue-trajectory-learning-future---v4)
+5. [Model Architecture Comparison](#model-architecture-comparison)
+   - [XGBoost Limitations](#xgboost-limitations)
+   - [When to Switch to Neural Models](#when-to-switch-to-neural-models)
+6. [Goal-Conditioned Learning (V4 Prep)](#goal-conditioned-learning-v4-prep)
+7. [Training Pipeline](#training-pipeline)
+8. [Data Quality Requirements](#data-quality-requirements)
+9. [Transition Plan: XGBoost → Neural](#transition-plan-xgboost--neural)
+10. [API Reference](#api-reference)
+
+---
+
+## System Architecture: The Intelligence Chain
+
+Priority Forge is a **scoring engine**, not a semantic planner. The "intelligence" of task prioritization comes from a collaboration between three layers:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    LLM (Semantic Understanding)                 │
+│         Creates tasks with dependencies and blocking info       │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                Priority Forge (Mathematical Scoring)            │
+│       Computes optimal ordering from dependency graph           │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                   User Feedback (Learning Signal)               │
+│           Corrections tune the heuristic weights                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### What Each Layer Does
+
+| Layer | Responsibility | Example |
+|-------|----------------|---------|
+| **LLM** | Identifies task relationships | "Implement auth" → creates task with `blocking: "all-protected-routes"` |
+| **Priority Forge** | Computes scores from graph | Sees 5 tasks depend on auth → `blockingCount = 5` → high priority |
+| **User** | Corrects mistakes | Bumps task from P2→P0 → logged as training signal |
+
+### Where the "Smartness" Comes From
+
+1. **The LLM's semantic understanding** when it calls `create_task` with appropriate `dependencies` and `blocking` fields
+2. **The auto-capture guidelines** (`progress://auto-capture` resource) that instruct the LLM how to identify blockers
+3. **User corrections** that train better weights over time
+
+### What Priority Forge Actually Computes
+
+Priority Forge takes whatever dependency graph it's given and computes optimal ordering. The quality of that ordering depends on:
+
+- ✅ LLM correctly identifies "X blocks Y" relationships
+- ✅ LLM uses `dependencies` field appropriately  
+- ✅ User provides feedback when ordering is wrong
+
+### Key Insight
+
+**The system doesn't learn WHICH tasks should block others** — that semantic understanding stays with the LLM. 
+
+**It learns HOW MUCH to weight blocking relationships** relative to other factors (deadlines, effort, cross-project impact, etc.).
+
+---
+
+## How the Learning Loop Works
+
+```
+┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+│  LLM creates task    │ ──→ │   Queue rebalances   │ ──→ │ User works on task   │
+│  with dependencies   │     │   automatically      │     │ (maybe not top one)  │
+└──────────────────────┘     └──────────────────────┘     └──────────┬───────────┘
+                                                                     │
+                                                                     ↓
+┌──────────────────────┐     ┌──────────────────────┐     ┌──────────────────────┐
+│  Future scoring      │ ←── │  Train XGBoost on    │ ←── │ TaskSelectionEvent   │
+│  reflects user prefs │     │  collected signals   │     │ logged (disagreed)   │
+└──────────────────────┘     └──────────────────────┘     └──────────────────────┘
+```
+
+### Example Flow
+
+1. **LLM creates tasks:**
+   - Task A: "Set up database" (P1)
+   - Task B: "Build API endpoints" with `dependencies: ["task-a"]` (P1)
+   - Task C: "Create frontend" with `dependencies: ["task-b"]` (P1)
+
+2. **Priority Forge computes:**
+   - Task A: `blockingCount = 2` (blocks B and C) → score = 70
+   - Task B: `blockingCount = 1`, `dependencyDepth = 1` → score = 85
+   - Task C: `blockingCount = 0`, `dependencyDepth = 2` → score = 95
+
+3. **Queue shows:** A → B → C (correct topological order!)
+
+4. **User completes Task A:**
+   - `QueueRebalanceEvent` logged
+   - Task B's `dependencyDepth` drops to 0
+   - Queue reorders automatically
+
+---
+
+## Data Collection (V3)
 
 Priority Forge collects four types of training events:
 
-#### 1. Priority Change Events
+### 1. Priority Change Events
+
 When a user manually changes a task's priority level (e.g., P2 → P0).
 
 ```typescript
 interface PriorityChangeEvent {
   taskId: string;
-  oldPriority: Priority;      // P0-P3
+  oldPriority: Priority;       // P0-P3
   newPriority: Priority;
-  oldScore: number;           // Computed score before
-  newScore: number;           // Computed score after
+  oldScore: number;            // Computed score before
+  newScore: number;            // Computed score after
   queuePositionBefore: number; // Rank in queue before
   queuePositionAfter: number;  // Rank in queue after
   timestamp: string;
@@ -26,7 +138,8 @@ interface PriorityChangeEvent {
 
 **Training Signal:** User disagreed with current scoring → learn to adjust weights.
 
-#### 2. Task Selection Events
+### 2. Task Selection Events
+
 When a user selects a task to work on (especially if not the top recommendation).
 
 ```typescript
@@ -42,7 +155,8 @@ interface TaskSelectionEvent {
 
 **Training Signal:** User preference between competing tasks.
 
-#### 3. Queue Rebalance Events
+### 3. Queue Rebalance Events
+
 When the queue reorders due to dependency graph changes.
 
 ```typescript
@@ -63,7 +177,8 @@ interface QueueRebalanceEvent {
 
 **Training Signal:** How queue dynamics evolve over time.
 
-#### 4. Task Completion Records
+### 4. Task Completion Records
+
 When a task is marked complete.
 
 ```typescript
@@ -339,4 +454,3 @@ Returns:
   }
 }
 ```
-
