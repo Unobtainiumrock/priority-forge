@@ -315,6 +315,9 @@ Once connected, your AI assistant has access to tools, resources, and prompts:
 | Tool | Description |
 |------|-------------|
 | `log_context_switch` | Log when switching away from a task (training data) |
+| `log_task_selection` | Log when user selects a task to work on |
+| `export_training_data` | Export all ML training data for XGBoost |
+| `get_ml_summary` | Get summary statistics of collected training data |
 
 ## V2 Priority Scoring
 
@@ -353,6 +356,25 @@ priorityScore = basePriority - (
 ```
 
 Where `basePriority` is: P0=0, P1=100, P2=200, P3=300
+
+### Dynamic Rebalancing (V3)
+
+**The queue automatically rebalances when the dependency graph changes:**
+
+| Trigger | What Happens |
+|---------|--------------|
+| Task created with dependencies | All tasks recalculated (blocked tasks get higher priority) |
+| Task completed | Dependent tasks' `dependencyDepth` decreases, queue reorders |
+| Task deleted | If had dependents, all tasks recalculated |
+| Task updated (deps changed) | Full recalculation of affected tasks |
+| Heuristic weights changed | All tasks recalculated with new weights |
+
+**Example:** If Task B depends on Task A, and Task C is added which also depends on A:
+- Task A's `blockingCount` increases from 1 → 2
+- Task A's priority score decreases (higher priority)
+- Queue automatically reorders
+
+All rebalancing events are logged for ML training (see V3 Training Data below)
 
 ## Data Storage
 
@@ -446,14 +468,53 @@ If `curl http://localhost:3456/health` returns nothing:
 2. Restart your AI assistant completely (not just reload)
 3. Run `npm run verify` to check server health
 
+## V3 ML Training Data
+
+Priority Forge collects training data for learning optimal priority weights:
+
+### Data Collected
+
+| Event Type | What It Captures | Training Signal |
+|------------|------------------|-----------------|
+| `PriorityChangeEvent` | User changes task priority (P2→P0) | User override = disagreement with current scoring |
+| `TaskSelectionEvent` | User picks a task to work on | Selection ≠ top recommendation = preference signal |
+| `QueueRebalanceEvent` | Queue reorders after dependency change | How queue evolves over time |
+| `TaskCompletionRecord` | Task completed with outcome | Actual completion time vs estimates |
+
+### Using Training Data
+
+```bash
+# Export training data via API
+curl http://localhost:3456/ml/export
+
+# Or via MCP tool
+# Call: export_training_data
+```
+
+The exported data includes:
+- Raw events for custom analysis
+- ML-ready format with nulls handled and features encoded
+- Summary statistics (selection accuracy, data quality metrics)
+
+### What Can Be Learned
+
+| Learning Target | Model Type | Data Needed |
+|-----------------|------------|-------------|
+| Optimal heuristic weights | XGBoost | ~50+ selection events |
+| Task completion time | Regression | ~100+ completion records |
+| Queue dynamics | Sequence model | ~200+ rebalance events |
+
+See [docs/ML_ARCHITECTURE.md](docs/ML_ARCHITECTURE.md) for detailed ML pipeline documentation.
+
 ## Roadmap
 
 | Version | Status | Description |
 |---------|--------|-------------|
 | V1 | ✅ Complete | JSON storage, REST API, MCP endpoint, static P0-P3 |
 | V2 | ✅ Complete | Heap-based priority queue with weighted scoring |
-| V2.1 | ✅ Current | Universal coverage via MCP Resources + Prompts |
-| V3 | 🔲 Planned | Neural network tunes priority weights from completion data |
+| V2.1 | ✅ Complete | Universal coverage via MCP Resources + Prompts |
+| V3 | ✅ Current | Dynamic rebalancing + ML training data collection |
+| V4 | 🔲 Planned | Goal-conditioned learning with objectives |
 
 ## License
 
