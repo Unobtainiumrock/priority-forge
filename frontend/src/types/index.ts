@@ -48,17 +48,6 @@ export interface WeightedTask {
   effort?: Effort;
 }
 
-export interface DataGap {
-  id: string;
-  element: string;
-  coverage: string;
-  priority: Priority;
-  impact: string;
-  effort: Effort;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface Decision {
   id: string;
   date: string;
@@ -73,7 +62,6 @@ export interface UnifiedProgress {
   lastUpdated: string;
   projects: Project[];
   priorityQueue: WeightedTask[];
-  dataGaps: DataGap[];
   decisions: Decision[];
   topPriority?: WeightedTask;
   heuristicWeights?: HeuristicWeights;

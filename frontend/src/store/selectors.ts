@@ -10,7 +10,7 @@
 
 import { createSelector } from '@reduxjs/toolkit';
 import { priorityApi } from './api';
-import type { WeightedTask, Project, DataGap, Decision, HeuristicWeights, Priority, TaskStatus } from '../types';
+import type { WeightedTask, Project, Decision, HeuristicWeights, Priority, TaskStatus } from '../types';
 
 // ============================================================================
 // RTK Query Cache Selectors
@@ -34,11 +34,6 @@ export const selectPriorityQueue = createSelector(
 export const selectProjects = createSelector(
   selectStatusData,
   (data): Project[] => data?.projects ?? []
-);
-
-export const selectDataGaps = createSelector(
-  selectStatusData,
-  (data): DataGap[] => data?.dataGaps ?? []
 );
 
 export const selectDecisions = createSelector(
