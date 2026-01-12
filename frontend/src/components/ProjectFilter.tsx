@@ -60,13 +60,13 @@ export function ProjectFilter() {
               )}
             >
               <StatusIcon className={cn(
-                'w-4 h-4',
+                'w-4 h-4 shrink-0',
                 project.status === 'complete' && 'text-blue-400',
                 project.status === 'blocked' && 'text-red-400',
                 project.status === 'active' && 'text-green-400',
               )} />
-              <div className="flex-1 text-left">
-                <span className="text-sm block">{project.name}</span>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="text-sm block truncate">{project.name}</span>
                 <span className="text-[10px] text-surface-500 block truncate">
                   {project.primaryFocus}
                 </span>
