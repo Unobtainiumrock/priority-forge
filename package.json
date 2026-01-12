@@ -1,6 +1,6 @@
 {
   "name": "priority-forge",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "MCP server for cross-project task prioritization",
   "main": "dist/index.js",
   "scripts": {
