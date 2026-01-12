@@ -27,6 +27,7 @@ import {
   TaskCompletionRecord,
   PriorityChangeEvent,
   TaskSelectionEvent,
+  QueueRebalanceEvent,
   ProgressDatabase,
   CreateProjectDTO,
   UpdateProjectDTO,
@@ -77,6 +78,80 @@ export class JsonStorage implements StorageInterface {
 
   setOnWriteCallback(callback: () => Promise<void>) {
     this.onWrite = callback;
+  }
+
+  /**
+   * V3: Log a queue rebalance event for ML training
+   * Captures before/after state when dependency graph changes
+   */
+  private logRebalanceEvent(
+    trigger: QueueRebalanceEvent['trigger'],
+    tasksBefore: WeightedTask[],
+    tasksAfter: WeightedTask[],
+    triggerTaskId?: string
+  ): void {
+    // Build rank maps
+    const rankBefore = new Map<string, { rank: number; score: number }>();
+    const rankAfter = new Map<string, { rank: number; score: number }>();
+    
+    tasksBefore
+      .filter(t => t.status !== 'complete')
+      .sort((a, b) => a.priorityScore - b.priorityScore)
+      .forEach((t, idx) => rankBefore.set(t.id, { rank: idx, score: t.priorityScore }));
+    
+    tasksAfter
+      .filter(t => t.status !== 'complete')
+      .sort((a, b) => a.priorityScore - b.priorityScore)
+      .forEach((t, idx) => rankAfter.set(t.id, { rank: idx, score: t.priorityScore }));
+
+    // Find significant changes (rank changed by more than 2)
+    const significantChanges: QueueRebalanceEvent['significantChanges'] = [];
+    for (const [taskId, before] of rankBefore) {
+      const after = rankAfter.get(taskId);
+      if (after && Math.abs(before.rank - after.rank) > 2) {
+        significantChanges.push({
+          taskId,
+          rankBefore: before.rank,
+          rankAfter: after.rank,
+          scoreBefore: before.score,
+          scoreAfter: after.score,
+        });
+      }
+    }
+
+    // Only log if there were significant changes
+    if (significantChanges.length === 0 && trigger !== 'weights_changed') {
+      return;
+    }
+
+    const topBefore = [...rankBefore.entries()]
+      .sort((a, b) => a[1].rank - b[1].rank)
+      .slice(0, 3)
+      .map(([id]) => id);
+    
+    const topAfter = [...rankAfter.entries()]
+      .sort((a, b) => a[1].rank - b[1].rank)
+      .slice(0, 3)
+      .map(([id]) => id);
+
+    const event: QueueRebalanceEvent = {
+      id: uuidv4(),
+      trigger,
+      triggerTaskId,
+      timestamp: new Date().toISOString(),
+      queueSizeBefore: rankBefore.size,
+      queueSizeAfter: rankAfter.size,
+      significantChanges,
+      topTasksBefore: topBefore,
+      topTasksAfter: topAfter,
+    };
+
+    if (!this.db.queueRebalanceEvents) {
+      this.db.queueRebalanceEvents = [];
+    }
+    this.db.queueRebalanceEvents.push(event);
+    
+    console.log(`📊 V3: Logged rebalance event (${trigger}): ${significantChanges.length} significant changes`);
   }
 
   private load(): ProgressDatabase {
@@ -282,6 +357,9 @@ export class JsonStorage implements StorageInterface {
   async createTask(data: CreateTaskDTO): Promise<WeightedTask> {
     const now = new Date().toISOString();
     
+    // Snapshot before state for rebalance logging
+    const tasksBefore = [...this.db.tasks];
+    
     // Create base task
     const baseTask: Task = {
       id: data.id || uuidv4(),
@@ -308,21 +386,39 @@ export class JsonStorage implements StorageInterface {
       this.db.heuristicWeights
     );
 
-    // Add to database and heap
+    // Add to database
     this.db.tasks.push(weightedTask);
-    this.taskHeap.push(weightedTask);
+    
+    // IMPORTANT: Recalculate ALL task weights since dependencies/blocking may have changed
+    // e.g., if new task depends on existing task, that task's blockingCount increases
+    if (data.dependencies?.length || data.blocking) {
+      this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+      this.rebuildHeap();
+      
+      // Log rebalance event
+      this.logRebalanceEvent('task_created', tasksBefore, this.db.tasks, weightedTask.id);
+    } else {
+      this.taskHeap.push(weightedTask);
+    }
     
     await this.save();
-    return weightedTask;
+    
+    // Return the updated version from db (may have been recalculated)
+    return this.db.tasks.find(t => t.id === weightedTask.id) || weightedTask;
   }
 
   async updateTask(id: string, data: UpdateTaskDTO): Promise<WeightedTask | null> {
     const idx = this.db.tasks.findIndex(t => t.id === id);
     if (idx === -1) return null;
     
+    // Snapshot before state for rebalance logging
+    const tasksBefore = [...this.db.tasks];
+    
     const existingTask = this.db.tasks[idx];
     const oldPriority = existingTask.priority;
     const oldScore = existingTask.priorityScore;
+    const oldDependencies = existingTask.dependencies || [];
+    const oldBlocking = existingTask.blocking;
     
     // Get queue position before update
     const sortedBefore = this.taskHeap.toSortedArray();
@@ -338,16 +434,34 @@ export class JsonStorage implements StorageInterface {
       updatedAt: new Date().toISOString(),
     };
 
-    // Recalculate priority score
-    const updatedTask = toWeightedTask(
-      updatedBase,
-      this.db.tasks,
-      this.db.heuristicWeights
-    );
+    // Check if dependency graph changed (requires full recalculation)
+    const dependenciesChanged = 
+      JSON.stringify(data.dependencies) !== JSON.stringify(oldDependencies) ||
+      data.blocking !== oldBlocking;
 
-    // Update in database and heap
-    this.db.tasks[idx] = updatedTask;
-    this.taskHeap.update(id, updatedTask);
+    // Update in database first
+    this.db.tasks[idx] = updatedBase;
+
+    // Recalculate scores
+    if (dependenciesChanged) {
+      // Full recalculation needed - dependency graph changed
+      this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+      this.rebuildHeap();
+      
+      // Log rebalance event
+      this.logRebalanceEvent('task_updated', tasksBefore, this.db.tasks, id);
+    } else {
+      // Just recalculate this task
+      const updatedTask = toWeightedTask(
+        updatedBase,
+        this.db.tasks,
+        this.db.heuristicWeights
+      );
+      this.db.tasks[idx] = updatedTask;
+      this.taskHeap.update(id, updatedTask);
+    }
+
+    const finalTask = this.db.tasks[idx];
     
     // V3: Log priority change event if priority changed
     if (data.priority && data.priority !== oldPriority) {
@@ -360,7 +474,7 @@ export class JsonStorage implements StorageInterface {
         oldPriority,
         newPriority: data.priority,
         oldScore,
-        newScore: updatedTask.priorityScore,
+        newScore: finalTask.priorityScore,
         timestamp: new Date().toISOString(),
         queuePositionBefore,
         queuePositionAfter,
@@ -375,16 +489,34 @@ export class JsonStorage implements StorageInterface {
     }
     
     await this.save();
-    return updatedTask;
+    return finalTask;
   }
 
   async deleteTask(id: string): Promise<boolean> {
     const idx = this.db.tasks.findIndex(t => t.id === id);
     if (idx === -1) return false;
     
+    // Snapshot before state for rebalance logging
+    const tasksBefore = [...this.db.tasks];
+    
+    const deletedTask = this.db.tasks[idx];
+    const hadDependents = this.db.tasks.some(t => 
+      t.dependencies?.includes(id) || t.blocking === id
+    );
+    
     this.db.tasks.splice(idx, 1);
-    this.taskHeap.remove(id);
     contextSwitchCounts.delete(id);
+    
+    // Recalculate if deleted task was blocking others
+    if (hadDependents || deletedTask.blocking || deletedTask.dependencies?.length) {
+      this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+      this.rebuildHeap();
+      
+      // Log rebalance event
+      this.logRebalanceEvent('task_deleted', tasksBefore, this.db.tasks, id);
+    } else {
+      this.taskHeap.remove(id);
+    }
     
     await this.save();
     return true;
@@ -395,8 +527,15 @@ export class JsonStorage implements StorageInterface {
    * Useful after changing heuristic weights or bulk updates
    */
   async recalculateAllPriorities(): Promise<WeightedTask[]> {
+    // Snapshot before state for rebalance logging
+    const tasksBefore = [...this.db.tasks];
+    
     this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
     this.rebuildHeap();
+    
+    // Log rebalance event
+    this.logRebalanceEvent('weights_changed', tasksBefore, this.db.tasks);
+    
     await this.save();
     return this.taskHeap.toSortedArray();
   }
@@ -405,13 +544,22 @@ export class JsonStorage implements StorageInterface {
    * V2: Update heuristic weights and recalculate all scores
    */
   async updateHeuristicWeights(weights: UpdateHeuristicWeightsDTO): Promise<HeuristicWeights> {
+    // Snapshot before state for rebalance logging
+    const tasksBefore = [...this.db.tasks];
+    
     this.db.heuristicWeights = {
       ...this.db.heuristicWeights,
       ...weights,
     };
     
     // Recalculate all task scores with new weights
-    await this.recalculateAllPriorities();
+    this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+    this.rebuildHeap();
+    
+    // Log rebalance event (weights changed always logs)
+    this.logRebalanceEvent('weights_changed', tasksBefore, this.db.tasks);
+    
+    await this.save();
     
     return this.db.heuristicWeights;
   }
@@ -504,28 +652,55 @@ export class JsonStorage implements StorageInterface {
     const task = await this.getTask(taskId);
     if (!task) return null;
 
+    // Snapshot before state for rebalance logging
+    const tasksBefore = [...this.db.tasks];
+
     const completedAt = new Date().toISOString();
     const createdAt = new Date(task.createdAt).getTime();
     const completedTime = new Date(completedAt).getTime();
     const hoursElapsed = (completedTime - createdAt) / (1000 * 60 * 60);
+
+    // Count priority changes for this task
+    const priorityChangeCount = (this.db.priorityChangeEvents || [])
+      .filter(e => e.taskId === taskId).length;
 
     const record: TaskCompletionRecord = {
       id: uuidv4(),
       taskId,
       actualCompletionTime: Math.round(hoursElapsed * 100) / 100,
       wasBlocking: !!task.blocking,
-      userOverrideCount: 0, // TODO: Track priority changes
+      userOverrideCount: priorityChangeCount,
       contextSwitchCount: contextSwitchCounts.get(taskId) || 0,
       outcome,
       completedAt,
+      // V3: Capture score at completion for training
+      initialPriorityScore: task.priorityScore,
+      finalPriorityScore: task.priorityScore,
     };
 
     this.db.completionRecords.push(record);
     contextSwitchCounts.delete(taskId);
 
-    // Update task status
-    await this.updateTask(taskId, { status: 'complete' });
+    // Update task status (this will trigger recalculation if task was blocking others)
+    const idx = this.db.tasks.findIndex(t => t.id === taskId);
+    if (idx !== -1) {
+      this.db.tasks[idx] = {
+        ...this.db.tasks[idx],
+        status: 'complete',
+        updatedAt: new Date().toISOString(),
+      };
+    }
 
+    // Recalculate all tasks - completing a task changes dependency graph
+    // Tasks that depended on this one now have lower dependencyDepth
+    // Tasks blocked by this one now have different blocking relationships
+    this.db.tasks = recalculateAllScores(this.db.tasks, this.db.heuristicWeights);
+    this.rebuildHeap();
+    
+    // Log rebalance event
+    this.logRebalanceEvent('task_completed', tasksBefore, this.db.tasks, taskId);
+    
+    await this.save();
     return record;
   }
 
@@ -585,6 +760,13 @@ export class JsonStorage implements StorageInterface {
   }
 
   /**
+   * V3: Get all queue rebalance events
+   */
+  async getQueueRebalanceEvents(): Promise<QueueRebalanceEvent[]> {
+    return this.db.queueRebalanceEvents || [];
+  }
+
+  /**
    * V3: Export training data for XGBoost
    * Returns structured data ready for ML training
    * Handles null values with sensible defaults for backward compatibility
@@ -593,17 +775,20 @@ export class JsonStorage implements StorageInterface {
     completionRecords: TaskCompletionRecord[];
     priorityChangeEvents: PriorityChangeEvent[];
     taskSelectionEvents: TaskSelectionEvent[];
+    queueRebalanceEvents: QueueRebalanceEvent[];
     tasks: WeightedTask[];
     heuristicWeights: HeuristicWeights;
     summary: {
       totalCompletions: number;
       totalPriorityChanges: number;
       totalSelections: number;
+      totalRebalances: number;
       selectionAccuracy: number;
       dataQuality: {
         completionsWithScores: number;
         tasksWithEffort: number;
         tasksWithDependencies: number;
+        rebalancesWithSignificantChanges: number;
       };
     };
     // ML-ready format with nulls handled
@@ -630,11 +815,20 @@ export class JsonStorage implements StorageInterface {
         hasDependencies: number;  // 0 or 1
         hasBlocking: number;  // 0 or 1
       }>;
+      // V3: Rebalance trajectory data
+      rebalances: Array<{
+        trigger: string;
+        queueSizeBefore: number;
+        queueSizeAfter: number;
+        significantChangeCount: number;
+        topTaskChanged: number;  // 0 or 1
+      }>;
     };
   }> {
     const completionRecords = this.db.completionRecords;
     const priorityChangeEvents = this.db.priorityChangeEvents || [];
     const taskSelectionEvents = this.db.taskSelectionEvents || [];
+    const queueRebalanceEvents = this.db.queueRebalanceEvents || [];
     
     const topSelections = taskSelectionEvents.filter(e => e.wasTopSelected).length;
     const selectionAccuracy = taskSelectionEvents.length > 0
@@ -685,26 +879,44 @@ export class JsonStorage implements StorageInterface {
       hasBlocking: t.blocking ? 1 : 0,
     }));
 
+    // ML-ready rebalance events
+    const mlRebalances = queueRebalanceEvents.map(r => ({
+      trigger: r.trigger,
+      queueSizeBefore: r.queueSizeBefore,
+      queueSizeAfter: r.queueSizeAfter,
+      significantChangeCount: r.significantChanges.length,
+      topTaskChanged: r.topTasksBefore[0] !== r.topTasksAfter[0] ? 1 : 0,
+    }));
+
+    // Rebalances with significant changes
+    const rebalancesWithSignificantChanges = queueRebalanceEvents.filter(
+      r => r.significantChanges.length > 0
+    ).length;
+
     return {
       completionRecords,
       priorityChangeEvents,
       taskSelectionEvents,
+      queueRebalanceEvents,
       tasks: this.db.tasks,
       heuristicWeights: this.db.heuristicWeights,
       summary: {
         totalCompletions: completionRecords.length,
         totalPriorityChanges: priorityChangeEvents.length,
         totalSelections: taskSelectionEvents.length,
+        totalRebalances: queueRebalanceEvents.length,
         selectionAccuracy,
         dataQuality: {
           completionsWithScores,
           tasksWithEffort,
           tasksWithDependencies,
+          rebalancesWithSignificantChanges,
         },
       },
       mlReady: {
         completions: mlCompletions,
         tasks: mlTasks,
+        rebalances: mlRebalances,
       },
     };
   }

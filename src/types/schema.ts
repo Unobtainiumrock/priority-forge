@@ -143,9 +143,71 @@ export interface TaskSelectionEvent {
   timestamp: string;
 }
 
-// V2/V3 Database schema
+// V3: Queue rebalance event (for learning queue dynamics)
+export interface QueueRebalanceEvent {
+  id: string;
+  trigger: 'task_created' | 'task_completed' | 'task_deleted' | 'task_updated' | 'weights_changed';
+  triggerTaskId?: string;        // Which task triggered the rebalance
+  timestamp: string;
+  // Snapshot of queue state before/after
+  queueSizeBefore: number;
+  queueSizeAfter: number;
+  // Track which tasks changed position significantly (>2 ranks)
+  significantChanges: Array<{
+    taskId: string;
+    rankBefore: number;
+    rankAfter: number;
+    scoreBefore: number;
+    scoreAfter: number;
+  }>;
+  // Top 3 tasks before/after for quick comparison
+  topTasksBefore: string[];
+  topTasksAfter: string[];
+}
+
+// V4 Prep: Objective/Goal for goal-conditioned learning
+export interface Objective {
+  id: string;
+  name: string;
+  description: string;
+  targetDate?: string;           // When should this be achieved?
+  status: 'active' | 'achieved' | 'abandoned';
+  keyResults: Array<{
+    id: string;
+    metric: string;
+    target: number;
+    current: number;
+    unit?: string;
+  }>;
+  linkedTaskIds: string[];       // Tasks that contribute to this objective
+  linkedProjectIds: string[];    // Projects this objective spans
+  createdAt: string;
+  updatedAt: string;
+}
+
+// V4 Prep: Objective progress snapshot (for trajectory learning)
+export interface ObjectiveProgressEvent {
+  id: string;
+  objectiveId: string;
+  timestamp: string;
+  progressPercent: number;       // 0-100
+  keyResultProgress: Array<{
+    keyResultId: string;
+    current: number;
+    target: number;
+  }>;
+  tasksCompletedSinceLastSnapshot: string[];
+  // Context: what was queue state when progress was made?
+  queueSnapshot: Array<{
+    taskId: string;
+    rank: number;
+    score: number;
+  }>;
+}
+
+// V2/V3/V4 Database schema
 export interface ProgressDatabase {
-  version: 'v1' | 'v2' | 'v3';
+  version: 'v1' | 'v2' | 'v3' | 'v4';
   lastUpdated: string;
   projects: Project[];
   tasks: WeightedTask[];
@@ -157,6 +219,10 @@ export interface ProgressDatabase {
   // V3: ML training data
   priorityChangeEvents?: PriorityChangeEvent[];
   taskSelectionEvents?: TaskSelectionEvent[];
+  queueRebalanceEvents?: QueueRebalanceEvent[];
+  // V4: Goal-conditioned learning
+  objectives?: Objective[];
+  objectiveProgressEvents?: ObjectiveProgressEvent[];
 }
 
 // API response types

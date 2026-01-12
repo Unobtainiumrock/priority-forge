@@ -1,6 +1,6 @@
 {
   "version": "v3",
-  "lastUpdated": "2026-01-11T21:19:53.349Z",
+  "lastUpdated": "2026-01-12T02:04:23.723Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -73,6 +73,15 @@
       "primaryFocus": "Consolidated work repos for gravity.ai organization",
       "createdAt": "2026-01-11T21:19:47.576Z",
       "updatedAt": "2026-01-11T21:19:47.576Z"
+    },
+    {
+      "id": "12cbbbf7-cea4-423a-842c-b706463a30d6",
+      "name": "rtb-auction",
+      "path": "/Users/fleischn/Desktop/gravity-main/rtb-auction",
+      "status": "active",
+      "primaryFocus": "Production Go RTB platform (formerly marketplace-design)",
+      "createdAt": "2026-01-11T22:30:44.172Z",
+      "updatedAt": "2026-01-11T22:30:44.172Z"
     }
   ],
   "tasks": [
@@ -81,10 +90,10 @@
       "priority": "P0",
       "task": "Conversion tracking (CVR)",
       "project": "marketplace-design",
-      "status": "not_started",
+      "status": "complete",
       "blocking": "eCPM formula incomplete",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-11T22:34:12.074Z",
       "priorityScore": -50,
       "weights": {
         "blockingCount": 0,
@@ -92,17 +101,18 @@
         "timeSensitivity": 4,
         "effortValueRatio": 6,
         "dependencyDepth": 0
-      }
+      },
+      "notes": "Project renamed: marketplace-design → rtb-auction. Now in gravity-main/rtb-auction"
     },
     {
       "id": "INT-001",
       "priority": "P0",
       "task": "Wire up v̂ᵢₜ from NN to bid calculation",
       "project": "overlap-resolution",
-      "status": "not_started",
+      "status": "complete",
       "blocking": "Bidding pipeline",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-12T00:02:35.077Z",
       "priorityScore": -50,
       "weights": {
         "blockingCount": 0,
@@ -117,10 +127,10 @@
       "priority": "P0",
       "task": "Wire up α price ceiling logic",
       "project": "overlap-resolution",
-      "status": "not_started",
+      "status": "complete",
       "blocking": "Overpay protection",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-12T00:02:10.825Z",
       "priorityScore": -50,
       "weights": {
         "blockingCount": 0,
@@ -128,17 +138,18 @@
         "timeSensitivity": 4,
         "effortValueRatio": 6,
         "dependencyDepth": 0
-      }
+      },
+      "notes": "Migrated DynamicFloor from stable-marriage Python to rtb-auction Go. Created pacing/dynamic_floor.go with full α price ceiling implementation. Integrated into Controller.GetEffectiveBid flow."
     },
     {
       "id": "ML-001",
       "priority": "P0",
       "task": "Train with 100K production data",
       "project": "marketplace-design",
-      "status": "waiting",
+      "status": "complete",
       "blocking": "Model accuracy",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-11T22:34:12.828Z",
       "priorityScore": -50,
       "weights": {
         "blockingCount": 0,
@@ -146,17 +157,18 @@
         "timeSensitivity": 4,
         "effortValueRatio": 6,
         "dependencyDepth": 0
-      }
+      },
+      "notes": "Project renamed: marketplace-design → rtb-auction. Now in gravity-main/rtb-auction"
     },
     {
       "id": "DATA-002",
       "priority": "P1",
       "task": "Add advertiser entity (campaign grouping)",
       "project": "marketplace-design",
-      "status": "not_started",
-      "notes": "Multi-campaign pacing",
+      "status": "complete",
+      "notes": "Project renamed: marketplace-design → rtb-auction. Multi-campaign pacing",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-11T22:34:13.452Z",
       "priorityScore": 82,
       "weights": {
         "blockingCount": 0,
@@ -225,10 +237,10 @@
       "priority": "P2",
       "task": "Device/Geo context (3.2% → 80%+)",
       "project": "marketplace-design",
-      "status": "not_started",
-      "notes": "User segmentation",
+      "status": "complete",
+      "notes": "Project renamed: marketplace-design → rtb-auction. User segmentation",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-11T22:34:14.251Z",
       "priorityScore": 182,
       "weights": {
         "blockingCount": 0,
@@ -261,10 +273,10 @@
       "priority": "P2",
       "task": "Resume EKS deployment",
       "project": "marketplace-design",
-      "status": "blocked",
-      "notes": "When ready for prod",
+      "status": "complete",
+      "notes": "Project renamed: marketplace-design → rtb-auction. When ready for prod",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-11T22:34:16.161Z",
       "priorityScore": 182,
       "weights": {
         "blockingCount": 0,
@@ -279,10 +291,10 @@
       "priority": "P3",
       "task": "User embeddings (replace hash)",
       "project": "marketplace-design",
-      "status": "not_started",
-      "notes": "Personalization",
+      "status": "complete",
+      "notes": "Project renamed: marketplace-design → rtb-auction. Personalization",
       "createdAt": "2026-01-09T22:02:38.638Z",
-      "updatedAt": "2026-01-09T22:02:38.638Z",
+      "updatedAt": "2026-01-11T22:34:15.425Z",
       "priorityScore": 282,
       "weights": {
         "blockingCount": 0,
@@ -548,7 +560,7 @@
       "project": "gravity-main",
       "status": "complete",
       "createdAt": "2026-01-11T21:17:01.941Z",
-      "updatedAt": "2026-01-11T21:19:53.335Z",
+      "updatedAt": "2026-01-12T00:15:00.790Z",
       "effort": "low",
       "weights": {
         "blockingCount": 0,
@@ -566,7 +578,7 @@
       "project": "gravity-main",
       "status": "complete",
       "createdAt": "2026-01-11T21:17:01.942Z",
-      "updatedAt": "2026-01-11T21:19:53.338Z",
+      "updatedAt": "2026-01-12T00:15:04.196Z",
       "effort": "low",
       "weights": {
         "blockingCount": 0,
@@ -588,7 +600,7 @@
         "MIGRATE-002"
       ],
       "createdAt": "2026-01-11T21:17:01.943Z",
-      "updatedAt": "2026-01-11T21:19:53.348Z",
+      "updatedAt": "2026-01-11T23:53:53.074Z",
       "effort": "low",
       "weights": {
         "blockingCount": 0,
@@ -604,12 +616,12 @@
       "priority": "P1",
       "task": "Push repos to gravity.ai remote",
       "project": "gravity-main",
-      "status": "not_started",
+      "status": "complete",
       "dependencies": [
         "MIGRATE-003"
       ],
       "createdAt": "2026-01-11T21:17:01.943Z",
-      "updatedAt": "2026-01-11T21:17:01.943Z",
+      "updatedAt": "2026-01-12T00:15:05.335Z",
       "effort": "low",
       "weights": {
         "blockingCount": 0,
@@ -693,6 +705,401 @@
         "dependencyDepth": 0
       },
       "priorityScore": 73
+    },
+    {
+      "id": "ONBOARD-001",
+      "priority": "P1",
+      "task": "Verify all Gravity account access (AWS, GitHub, Railway, Linear, etc.)",
+      "project": "gravity-main",
+      "status": "not_started",
+      "notes": "AWS: trygravity.signin.aws.amazon.com | GitHub: @Try-Gravity | Railway/Linear/Supabase/Vercel teams",
+      "createdAt": "2026-01-11T21:32:55.469Z",
+      "updatedAt": "2026-01-11T21:32:55.469Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 73
+    },
+    {
+      "id": "ONBOARD-002",
+      "priority": "P1",
+      "task": "Clone and explore gravity-engine-workers repository",
+      "project": "gravity-main",
+      "status": "complete",
+      "blocking": "Railway architecture understanding",
+      "dependencies": [
+        "ONBOARD-001"
+      ],
+      "notes": "Cloned as gravity-engine-workers. Note: Workers in this repo are OFF. Source of truth is gravity-engine/src/app/workers (Railway).",
+      "createdAt": "2026-01-11T21:32:57.038Z",
+      "updatedAt": "2026-01-12T01:04:23.813Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 1
+      },
+      "priorityScore": 48
+    },
+    {
+      "id": "ONBOARD-003",
+      "priority": "P1",
+      "task": "Clone and explore gravity-interface repository",
+      "project": "gravity-main",
+      "status": "not_started",
+      "blocking": "Dashboard backend understanding",
+      "dependencies": [
+        "ONBOARD-001"
+      ],
+      "notes": "Backend for dashboards",
+      "createdAt": "2026-01-11T21:32:58.256Z",
+      "updatedAt": "2026-01-11T21:32:58.256Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 1
+      },
+      "priorityScore": 48
+    },
+    {
+      "id": "ONBOARD-004",
+      "priority": "P1",
+      "task": "Transfer personal repos to Try-Gravity GitHub org",
+      "project": "gravity-main",
+      "status": "complete",
+      "dependencies": [
+        "ONBOARD-001"
+      ],
+      "notes": "Transfer: stag-hunt, rtb-auction, overlap-resolution, stable-marriage",
+      "createdAt": "2026-01-11T21:32:59.133Z",
+      "updatedAt": "2026-01-11T22:13:41.158Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 1
+      },
+      "priorityScore": 71
+    },
+    {
+      "id": "ONBOARD-005",
+      "priority": "P1",
+      "task": "Request environment variables from Leo for local dev",
+      "project": "gravity-main",
+      "status": "not_started",
+      "dependencies": [
+        "ONBOARD-002",
+        "ONBOARD-003"
+      ],
+      "notes": "Needed for running services locally",
+      "createdAt": "2026-01-11T21:32:59.752Z",
+      "updatedAt": "2026-01-11T21:32:59.752Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 2
+      },
+      "priorityScore": 69
+    },
+    {
+      "id": "ONBOARD-006",
+      "priority": "P1",
+      "task": "Investigate Railway deployment crashes in gravity-engine-workers",
+      "project": "gravity-main",
+      "status": "not_started",
+      "dependencies": [
+        "ONBOARD-002",
+        "ONBOARD-005"
+      ],
+      "notes": "Multiple services crashed 2026-01-10: process-ad-data, process-metrics, conversions-api, etc.",
+      "createdAt": "2026-01-11T21:33:00.282Z",
+      "updatedAt": "2026-01-11T21:33:00.282Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 3
+      },
+      "priorityScore": 76
+    },
+    {
+      "id": "cceef950-2dee-40a0-9af2-bbcb39f86af9",
+      "priority": "P2",
+      "task": "Install Rectangle window manager",
+      "project": "personal",
+      "status": "not_started",
+      "createdAt": "2026-01-11T22:07:47.660Z",
+      "updatedAt": "2026-01-11T22:07:47.660Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 173
+    },
+    {
+      "id": "84ee8cf8-30fc-4694-a0cf-038f8584b4b5",
+      "priority": "P2",
+      "task": "Install GitHub CLI (gh)",
+      "project": "personal",
+      "status": "not_started",
+      "notes": "Already have gh 2.83.2 installed - verify or update",
+      "createdAt": "2026-01-11T22:07:47.668Z",
+      "updatedAt": "2026-01-11T22:07:47.668Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 173
+    },
+    {
+      "id": "RTB-DATA-001",
+      "priority": "P0",
+      "task": "Conversion tracking (CVR)",
+      "project": "rtb-auction",
+      "status": "complete",
+      "blocking": "eCPM formula incomplete",
+      "notes": "RESOLVED: CVR data exists in campaign_engagement_stats.domain_conversion_rate. engagement_sync worker calculates hourly. Next: wire into predictor.go.",
+      "createdAt": "2026-01-11T22:34:01.636Z",
+      "updatedAt": "2026-01-12T01:04:29.384Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": -50
+    },
+    {
+      "id": "RTB-ML-001",
+      "priority": "P2",
+      "task": "Train with 100K production data",
+      "project": "rtb-auction",
+      "status": "waiting",
+      "blocking": "Model accuracy",
+      "notes": "DEFERRED: Postponing training. Using collected data values directly for now. Will retrain with 100K+ production samples later.",
+      "createdAt": "2026-01-11T22:34:02.937Z",
+      "updatedAt": "2026-01-12T02:04:23.722Z",
+      "effort": "high",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 3,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 159
+    },
+    {
+      "id": "RTB-DATA-002",
+      "priority": "P1",
+      "task": "Add advertiser entity (campaign grouping)",
+      "project": "rtb-auction",
+      "status": "not_started",
+      "notes": "Migrated from marketplace-design DATA-002. Multi-campaign pacing",
+      "createdAt": "2026-01-11T22:34:04.379Z",
+      "updatedAt": "2026-01-11T22:34:04.379Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 73
+    },
+    {
+      "id": "RTB-DATA-003",
+      "priority": "P2",
+      "task": "Device/Geo context (3.2% → 80%+)",
+      "project": "rtb-auction",
+      "status": "not_started",
+      "notes": "Migrated from marketplace-design DATA-003. User segmentation",
+      "createdAt": "2026-01-11T22:34:04.956Z",
+      "updatedAt": "2026-01-11T22:34:04.956Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 182
+    },
+    {
+      "id": "RTB-DATA-004",
+      "priority": "P3",
+      "task": "User embeddings (replace hash)",
+      "project": "rtb-auction",
+      "status": "not_started",
+      "notes": "Migrated from marketplace-design DATA-004. Personalization",
+      "createdAt": "2026-01-11T22:34:05.427Z",
+      "updatedAt": "2026-01-11T22:34:05.427Z",
+      "effort": "high",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 3,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 291
+    },
+    {
+      "id": "RTB-EKS-001",
+      "priority": "P2",
+      "task": "Resume EKS deployment",
+      "project": "rtb-auction",
+      "status": "not_started",
+      "notes": "Migrated from marketplace-design EKS-001. When ready for prod",
+      "createdAt": "2026-01-11T22:34:07.098Z",
+      "updatedAt": "2026-01-11T22:34:07.098Z",
+      "effort": "high",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 3,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 191
+    },
+    {
+      "id": "CVR-001",
+      "priority": "P0",
+      "task": "Add conversion pixel/postback endpoint",
+      "project": "rtb-auction",
+      "status": "complete",
+      "blocking": "CVR data collection",
+      "notes": "ALREADY EXISTS: Conversions API in gravity-engine repo (Railway). Handles 3 types: Roundly, Shopify, General. Writes directly to DB (no Redis queue).",
+      "createdAt": "2026-01-12T00:17:25.499Z",
+      "updatedAt": "2026-01-12T01:04:23.805Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": -50
+    },
+    {
+      "id": "CVR-002",
+      "priority": "P0",
+      "task": "Link conversions to campaign_id via click_id",
+      "project": "rtb-auction",
+      "status": "complete",
+      "blocking": "CVR attribution",
+      "dependencies": [
+        "CVR-001"
+      ],
+      "notes": "campaign_id links conversions to campaigns. click_id in metadata (may need promotion to column). irclid/ircpid are DEPRECATED.",
+      "createdAt": "2026-01-12T00:17:26.641Z",
+      "updatedAt": "2026-01-12T01:20:37.670Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 9,
+        "dependencyDepth": 1
+      },
+      "priorityScore": -61
+    },
+    {
+      "id": "CVR-003",
+      "priority": "P0",
+      "task": "ETL pipeline to join conversions with clicks",
+      "project": "rtb-auction",
+      "status": "complete",
+      "blocking": "historical_cvr calculation",
+      "dependencies": [
+        "CVR-002"
+      ],
+      "notes": "ALREADY EXISTS: engagement_sync worker (hourly) calculates per-domain CVR. Output: campaign_engagement_stats.domain_conversion_rate. CVR is per-DOMAIN not per-campaign (intentional).",
+      "createdAt": "2026-01-12T00:17:28.117Z",
+      "updatedAt": "2026-01-12T01:04:23.806Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 2
+      },
+      "priorityScore": -54
+    },
+    {
+      "id": "CVR-004",
+      "priority": "P2",
+      "task": "Train CVR model with real conversion data",
+      "project": "rtb-auction",
+      "status": "not_started",
+      "blocking": "Accurate v̂ᵢₜ predictions",
+      "dependencies": [
+        "CVR-003"
+      ],
+      "notes": "DEFERRED: Using existing per-domain CVR from campaign_engagement_stats for now (no model training needed). Will train dedicated CVR model later when 10K+ conversions accumulate.",
+      "createdAt": "2026-01-12T00:17:28.967Z",
+      "updatedAt": "2026-01-12T02:04:21.198Z",
+      "effort": "high",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 3,
+        "dependencyDepth": 3
+      },
+      "priorityScore": 153
+    },
+    {
+      "id": "CVR-005",
+      "priority": "P2",
+      "task": "Wire real per-domain CVR from Gravity's campaign_engagement_stats",
+      "project": "rtb-auction",
+      "status": "not_started",
+      "blocking": "Per-domain CVR granularity",
+      "notes": "Currently using hardcoded baseline CVR=2% (aligned with Gravity's DEFAULT_CONVERSION_RATE). Future: query campaign_engagement_stats.domain_conversion_rate by campaign's domain. Requires Supabase access or periodic sync.",
+      "createdAt": "2026-01-12T01:16:53.116Z",
+      "updatedAt": "2026-01-12T01:16:53.116Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 150
     }
   ],
   "dataGaps": [
@@ -828,6 +1235,27 @@
       "decision": "V3 ML: Start with XGBoost (Phase 2), defer Learning-to-Rank (Phase 3)",
       "rationale": "XGBoost handles tabular data well with small datasets. LTR requires more data and pairwise comparisons. Data collection now tracks: priority changes, task selections, queue state.",
       "createdAt": "2026-01-11T01:54:23.524Z"
+    },
+    {
+      "id": "75a5f837-261f-4dd4-854d-4747c059e4b3",
+      "date": "2026-01-11",
+      "decision": "Rename marketplace-design → rtb-auction, consolidate in gravity-main",
+      "rationale": "All repos now live in ~/Desktop/gravity-main/. marketplace-design is now rtb-auction folder. Tasks referencing old name have notes indicating the rename.",
+      "createdAt": "2026-01-11T22:30:58.503Z"
+    },
+    {
+      "id": "490cf978-3935-4310-ab0c-0ebb53511c83",
+      "date": "2026-01-11",
+      "decision": "Migrated DynamicFloor (α price ceiling) from stable-marriage Python to rtb-auction Go pacing package",
+      "rationale": "Completes INT-002. The α ceiling prevents infinite bidding wars while allowing budget fulfillment as deadlines approach. Formula: α = BaseCap + γ · max(0, GlobalPacingLag). Integrated into Controller.GetEffectiveBid() so all bids are automatically capped at α · v̂.",
+      "createdAt": "2026-01-12T00:02:52.450Z"
+    },
+    {
+      "id": "e01fb579-58bb-4d72-bdc1-29f5c72646b3",
+      "date": "2026-01-11",
+      "decision": "CVR is per-domain, not per-campaign",
+      "rationale": "Creative/copy doesn't change between campaigns using same website. Pixel tracks all sessions on domain for baseline CVR. This is intentional \"wide fish net\" approach. Source: engagement_sync worker in gravity-engine-workers.",
+      "createdAt": "2026-01-12T01:04:29.399Z"
     }
   ],
   "completionRecords": [
@@ -900,6 +1328,276 @@
       "contextSwitchCount": 0,
       "outcome": "completed",
       "completedAt": "2026-01-11T21:19:53.348Z"
+    },
+    {
+      "id": "0bd3ab4a-1bff-4e33-9053-17d7f086f4a6",
+      "taskId": "ONBOARD-004",
+      "actualCompletionTime": 0.68,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T22:13:41.158Z"
+    },
+    {
+      "id": "3c8fa87e-ae00-4794-bdc0-96f404465b81",
+      "taskId": "MIGRATE-001",
+      "actualCompletionTime": 1.23,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T22:30:56.014Z"
+    },
+    {
+      "id": "c1b5d1f6-d47f-44e8-9a30-52ba29cbdb99",
+      "taskId": "MIGRATE-002",
+      "actualCompletionTime": 1.23,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T22:30:57.804Z"
+    },
+    {
+      "id": "68fc3b69-7238-4dbd-883d-ace471bd71b5",
+      "taskId": "MIGRATE-003",
+      "actualCompletionTime": 1.19,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T22:30:58.117Z"
+    },
+    {
+      "id": "030558d2-6564-41ab-8aad-f550a491ebc9",
+      "taskId": "DATA-001",
+      "actualCompletionTime": 48.53,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-11T22:34:12.073Z"
+    },
+    {
+      "id": "c348ae2f-c345-4a3d-8809-698e67c56cfa",
+      "taskId": "ML-001",
+      "actualCompletionTime": 48.53,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-11T22:34:12.828Z"
+    },
+    {
+      "id": "c94a4100-6595-42b0-b968-2f843324c5a4",
+      "taskId": "DATA-002",
+      "actualCompletionTime": 48.53,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-11T22:34:13.452Z"
+    },
+    {
+      "id": "cbd6fbba-7e40-41f3-82ba-c75b22b8cb9d",
+      "taskId": "DATA-003",
+      "actualCompletionTime": 48.53,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-11T22:34:14.251Z"
+    },
+    {
+      "id": "77c74289-0a08-43ed-bd7f-c5f03cae5b7b",
+      "taskId": "DATA-004",
+      "actualCompletionTime": 48.53,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-11T22:34:15.424Z"
+    },
+    {
+      "id": "7dd893b4-6188-455e-a590-d3dbe9111ce2",
+      "taskId": "EKS-001",
+      "actualCompletionTime": 48.53,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-11T22:34:16.161Z"
+    },
+    {
+      "id": "4c1deb4c-c5f5-4d39-b5fc-de6e806115e9",
+      "taskId": "MIGRATE-004",
+      "actualCompletionTime": 1.31,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T22:35:28.414Z"
+    },
+    {
+      "id": "62a372a3-2db4-4626-a035-a481b182f03f",
+      "taskId": "MIGRATE-001",
+      "actualCompletionTime": 1.31,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T22:35:40.996Z"
+    },
+    {
+      "id": "2da68976-0078-4f81-947c-fc929ceaf850",
+      "taskId": "MIGRATE-002",
+      "actualCompletionTime": 1.31,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T22:35:42.814Z"
+    },
+    {
+      "id": "0ba58a48-5bf3-46cf-ac95-cd030984eaef",
+      "taskId": "MIGRATE-003",
+      "actualCompletionTime": 2.57,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-11T23:53:53.074Z"
+    },
+    {
+      "id": "6e42c0bb-e036-446f-98c0-bbda31774658",
+      "taskId": "INT-002",
+      "actualCompletionTime": 49.99,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T00:02:10.825Z"
+    },
+    {
+      "id": "12ae8cff-780c-4a6e-b38a-b80cdfc0895e",
+      "taskId": "INT-001",
+      "actualCompletionTime": 50,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T00:02:35.077Z"
+    },
+    {
+      "id": "6924729a-d8d0-43b6-8f68-d44f8414e5a1",
+      "taskId": "MIGRATE-001",
+      "actualCompletionTime": 2.76,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T00:02:42.299Z"
+    },
+    {
+      "id": "e0d9102a-d3ba-45ae-8897-79535d1a889b",
+      "taskId": "MIGRATE-002",
+      "actualCompletionTime": 2.76,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T00:02:44.370Z"
+    },
+    {
+      "id": "4d2b6811-0fa9-4220-84e2-204745fa4de0",
+      "taskId": "MIGRATE-004",
+      "actualCompletionTime": 2.76,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T00:02:45.258Z"
+    },
+    {
+      "id": "997e5de1-0329-427e-acb9-61295070ae8e",
+      "taskId": "MIGRATE-001",
+      "actualCompletionTime": 2.97,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T00:15:00.790Z"
+    },
+    {
+      "id": "c7114a64-e074-4b6c-bd4d-e854067d934f",
+      "taskId": "MIGRATE-002",
+      "actualCompletionTime": 2.97,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T00:15:04.196Z"
+    },
+    {
+      "id": "1db8fcf4-1321-4994-b4d4-0041b4f8b84d",
+      "taskId": "MIGRATE-004",
+      "actualCompletionTime": 2.97,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T00:15:05.335Z"
+    },
+    {
+      "id": "aee47692-74a5-4439-b932-62feee13a2d5",
+      "taskId": "CVR-001",
+      "actualCompletionTime": 0.78,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T01:04:23.805Z"
+    },
+    {
+      "id": "1f40860a-95fe-4938-97be-4d4a8447b899",
+      "taskId": "CVR-003",
+      "actualCompletionTime": 0.78,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T01:04:23.806Z"
+    },
+    {
+      "id": "b5326461-2f12-4fa9-b9a9-5af35e7f82a3",
+      "taskId": "ONBOARD-002",
+      "actualCompletionTime": 3.52,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T01:04:23.813Z"
+    },
+    {
+      "id": "0920c37c-05d3-4126-8ed6-dd7dd9cb2ac7",
+      "taskId": "RTB-DATA-001",
+      "actualCompletionTime": 2.51,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-12T01:04:29.384Z"
+    },
+    {
+      "id": "7b80375d-56ef-434d-ad77-f3114acbaddf",
+      "taskId": "CVR-002",
+      "actualCompletionTime": 1.05,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "cancelled",
+      "completedAt": "2026-01-12T01:20:37.670Z"
     }
   ],
   "heuristicWeights": {
@@ -909,6 +1607,29 @@
     "effortValue": 3,
     "dependency": 2
   },
-  "priorityChangeEvents": [],
+  "priorityChangeEvents": [
+    {
+      "id": "1af9e5c9-f85c-4496-ab14-2d491188e3c2",
+      "taskId": "CVR-004",
+      "oldPriority": "P1",
+      "newPriority": "P2",
+      "oldScore": 53,
+      "newScore": 153,
+      "timestamp": "2026-01-12T02:04:21.198Z",
+      "queuePositionBefore": 18,
+      "queuePositionAfter": 36
+    },
+    {
+      "id": "55a99f2c-f3be-45e9-9a17-b6ea3608d085",
+      "taskId": "RTB-ML-001",
+      "oldPriority": "P0",
+      "newPriority": "P2",
+      "oldScore": -41,
+      "newScore": 159,
+      "timestamp": "2026-01-12T02:04:23.722Z",
+      "queuePositionBefore": 9,
+      "queuePositionAfter": 37
+    }
+  ],
   "taskSelectionEvents": []
 }
