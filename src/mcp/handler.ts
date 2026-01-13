@@ -124,35 +124,63 @@ async function handleResourceRead(uri: string): Promise<string> {
     }
     
     case 'progress://task-protocol': {
-      return `# 📋 TASK MANAGEMENT PROTOCOL
+      return `# 📋 TASK MANAGEMENT PROTOCOL (V3.3)
 
 ## MANDATORY: Follow this protocol for ALL work sessions
 
 ### 1. SESSION START
 - Read \`progress://current-focus\` resource (this happens automatically)
 - If user request ≠ top priority task, call \`log_context_switch\` with the current top task ID
-- Call \`update_task\` with status: "in_progress" for the task being worked on
 
-### 2. DURING WORK
+### 2. ⚠️ CRITICAL: STARTING WORK ON A TASK
+Before ANY actual work begins, you MUST call BOTH:
+
+\`\`\`
+1. log_task_selection(taskId: "TASK-ID")     // Logs which task was selected
+2. update_task(id: "TASK-ID", status: "in_progress")  // Captures startedAt timestamp
+\`\`\`
+
+**Why this matters:**
+- \`startedAt\` timestamp enables calculating \`actualWorkTime\` (not just queue time)
+- ML can learn effort estimation: predicting how long tasks actually take
+- Without this, we only know total time (creation → completion), not actual work duration
+
+**WRONG:**
+  User: "Let's fix the auth bug"
+  Agent: *starts working on code immediately*
+
+**RIGHT:**
+  User: "Let's fix the auth bug"
+  Agent: *calls log_task_selection(taskId: "AUTH-001")*
+         *calls update_task(id: "AUTH-001", status: "in_progress")*
+         *then starts working on code*
+
+### 3. DURING WORK
 - If hitting a blocker: \`update_task\` with status: "blocked" and describe blocker in notes
 - If discovering new tasks: \`create_task\` with appropriate priority
 - If making architectural decisions: \`log_decision\` with date, decision, and rationale
 
-### 3. TASK COMPLETION
+### 4. TASK COMPLETION
 When ANY task is finished (even partially):
 - Call \`complete_task\` with outcome:
   - "completed" - Task fully done
   - "deferred" - Paused, will resume later  
   - "cancelled" - No longer needed
+  
+This automatically calculates:
+- \`actualCompletionTime\`: Hours from creation to completion (queue + work)
+- \`actualWorkTime\`: Hours from startedAt to completion (actual effort)
 
-### 4. SESSION END
+### 5. SESSION END
 - Ensure current task status reflects actual state
 - If incomplete, update notes with progress summary
 
-## WHY THIS MATTERS
-- Completion records train the V3 neural network for better priority scoring
-- Context switch logs help identify task fragmentation
-- Accurate status enables cross-project coordination
+## DATA COLLECTION TARGETS (V3.3)
+| Metric | Target | Why |
+|--------|--------|-----|
+| Completions with \`actualWorkTime\` | 10+ | Effort estimation learning |
+| Task selections logged | 20+ | User preference signal |
+| Priority changes | 5+ | Override/correction signal |
 
 ## ENFORCEMENT
 Every tool response will remind you to follow this protocol. Non-compliance is logged.`;
@@ -1099,15 +1127,22 @@ export async function mcpHandler(req: Request, res: Response): Promise<void> {
           },
           serverInfo: {
             name: 'priority-forge',
-            version: '3.2.0',  // Online learning from drag-and-drop reordering
+            version: '3.3.0',  // V3.3: Work duration tracking for ML effort estimation
           },
           // Include instructions that clients should show to AI
-          instructions: `You are connected to a task prioritization system (Priority Forge v2.2).
+          instructions: `You are connected to a task prioritization system (Priority Forge v3.3).
 
 ## MANDATORY STARTUP SEQUENCE
 1. Read 'progress://current-focus' - understand top priority
 2. Read 'progress://auto-capture' - learn to proactively identify tasks
 3. Read 'progress://project-registry' - check if current project is registered
+
+## CRITICAL: WORK DURATION TRACKING (V3.3)
+When starting work on ANY task, you MUST call BOTH:
+1. \`log_task_selection(taskId)\` - logs which task was selected
+2. \`update_task(id, status: "in_progress")\` - captures startedAt timestamp
+
+This enables ML to learn actual work duration vs queue time. Without this, we lose valuable training data.
 
 ## DURING CONVERSATION
 - Proactively identify tasks from user's descriptions (don't wait for "add a task")
@@ -1120,7 +1155,7 @@ export async function mcpHandler(req: Request, res: Response): Promise<void> {
 
 ## END OF CONVERSATION
 - Update all in-progress tasks
-- Call 'complete_task' for finished work
+- Call 'complete_task' for finished work (captures actualWorkTime)
 - Review conversation for untracked tasks`,
         };
         break;
