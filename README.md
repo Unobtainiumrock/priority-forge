@@ -223,16 +223,20 @@ If you used `./setup.sh` or `npm run setup:mcp`, agent rules are already configu
 
 The setup script automatically copies the agent rules to the correct location for your AI tool. This is **critical** - without agent rules, the AI won't proactively check the tracker at session start.
 
+### Configuration Summary
+
+Here's a quick reference for all configuration file locations:
+
+| Tool | MCP Config Location | Agent Rules Location |
+|------|---------------------|----------------------|
+| **Cursor** | `~/.cursor/mcp.json` | `~/.cursorrules` (global) or `.cursorrules` (project) |
+| **Droid** | `~/.factory/mcp.json` | `~/.factory/AGENTS.md` |
+| **Claude Code** | `~/.claude/mcp.json` | `~/.claude/AGENTS.md` |
+
 <details>
 <summary>Manual Agent Rules Configuration (click to expand)</summary>
 
-Copy the contents of [`AGENT_RULES.md`](./AGENT_RULES.md) to:
-
-| Client | Where to copy it |
-|--------|------------------|
-| **Cursor** | `~/.cursorrules` (global) or `.cursorrules` (project) |
-| **Droid** | `~/.factory/AGENTS.md` |
-| **Claude Code** | `~/.claude/AGENTS.md` |
+Copy the contents of [`AGENT_RULES.md`](./AGENT_RULES.md) to the appropriate agent rules location above.
 
 </details>
 
