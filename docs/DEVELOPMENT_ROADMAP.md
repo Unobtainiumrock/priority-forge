@@ -17,20 +17,35 @@ This document outlines future development phases for Priority Forge, with a focu
 
 ---
 
-## Current State (V3)
+## Current State (V3.3)
 
-The V3 training data is well-suited for **tabular ML** (XGBoost with numerical features) but insufficient for **embedding-based approaches**.
+The V3.3 training data is well-suited for **tabular ML** (XGBoost with numerical features) but insufficient for **embedding-based approaches**.
 
-### What V3 Captures
+### What V3.3 Captures
 
 | Data Type | Fields | Textual Content |
 |-----------|--------|-----------------|
-| completionRecords | taskId, completionTime, wasBlocking, outcome | Minimal (IDs only) |
+| completionRecords | taskId, completionTime, **startedAt, actualWorkTime**, wasBlocking, outcome | Minimal (IDs only) |
 | priorityChangeEvents | taskId, old/new priority, scores | Minimal (IDs only) |
 | taskSelectionEvents | taskId | IDs only |
-| tasks | id, task, project, notes, blocking | Short descriptions (~5-10 words) |
+| tasks | id, task, project, notes, blocking, **startedAt** | Short descriptions (~5-10 words) |
 
-### V3 Limitations for Embeddings
+### V3.3 Additions (Work Duration Tracking)
+
+V3.3 adds critical temporal data for effort estimation:
+
+| Field | Location | Description |
+|-------|----------|-------------|
+| `startedAt` | WeightedTask | When work began (status → in_progress) |
+| `startedAt` | TaskCompletionRecord | Snapshot of when work started |
+| `actualWorkTime` | TaskCompletionRecord | Hours from startedAt → completedAt |
+| `completionsWithWorkTime` | Data quality metrics | Tracks reliable work time samples |
+
+**ML Impact:** Enables training separate models for:
+- **Queue time prediction**: How long will a task sit in backlog?
+- **Work time prediction**: How long will actual work take?
+
+### V3.3 Limitations for Embeddings
 
 1. **Task descriptions average 5-10 words** — insufficient for semantic understanding
 2. **No conversational context** — the "why" behind task creation is lost
@@ -112,17 +127,20 @@ interface EmbeddingReadyTask {
 }
 
 interface EmbeddingReadyCompletionRecord {
-  // === Existing V3 Fields ===
+  // === Existing V3.3 Fields ===
   taskId: string;
-  actualCompletionTime: number;
+  actualCompletionTime: number;     // Total time (queue + work)
   wasBlocking: boolean;
   userOverrideCount: number;
   contextSwitchCount: number;
   outcome: 'completed' | 'cancelled' | 'deferred';
   initialPriorityScore: number;
   finalPriorityScore: number;
+  // V3.3 additions
+  startedAt?: string;               // When work began
+  actualWorkTime?: number;          // Hours of actual work
   
-  // === NEW: Rich Context ===
+  // === NEW: Rich Context for V5+ ===
   
   /**
    * Snapshot of the task's full context at completion time.

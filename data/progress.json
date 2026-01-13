@@ -1,6 +1,6 @@
 {
-  "version": "v3.2",
-  "lastUpdated": "2026-01-13T17:24:35.028Z",
+  "version": "v3.3",
+  "lastUpdated": "2026-01-13T21:42:34.865Z",
   "projects": [
     {
       "id": "789a28cc-a896-4689-a6f5-a648fb86fd12",
@@ -129,7 +129,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "notes": "Project renamed: marketplace-design → rtb-auction. Now in gravity-main/rtb-auction"
+      "notes": "Project renamed: marketplace-design → rtb-auction. Now in gravity-main/rtb-auction",
+      "startedAt": "2026-01-11T12:51:36.073Z"
     },
     {
       "id": "INT-001",
@@ -147,7 +148,8 @@
         "timeSensitivity": 4,
         "effortValueRatio": 6,
         "dependencyDepth": 0
-      }
+      },
+      "startedAt": "2026-01-11T14:02:35.077Z"
     },
     {
       "id": "INT-002",
@@ -166,7 +168,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "notes": "Migrated DynamicFloor from stable-marriage Python to rtb-auction Go. Created pacing/dynamic_floor.go with full α price ceiling implementation. Integrated into Controller.GetEffectiveBid flow."
+      "notes": "Migrated DynamicFloor from stable-marriage Python to rtb-auction Go. Created pacing/dynamic_floor.go with full α price ceiling implementation. Integrated into Controller.GetEffectiveBid flow.",
+      "startedAt": "2026-01-11T14:02:10.825Z"
     },
     {
       "id": "ML-001",
@@ -185,7 +188,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "notes": "Project renamed: marketplace-design → rtb-auction. Now in gravity-main/rtb-auction"
+      "notes": "Project renamed: marketplace-design → rtb-auction. Now in gravity-main/rtb-auction",
+      "startedAt": "2026-01-11T12:51:36.828Z"
     },
     {
       "id": "DATA-002",
@@ -203,7 +207,8 @@
         "timeSensitivity": 0,
         "effortValueRatio": 6,
         "dependencyDepth": 0
-      }
+      },
+      "startedAt": "2026-01-11T12:51:37.452Z"
     },
     {
       "id": "INT-003",
@@ -225,7 +230,8 @@
       "dependencies": [
         "RTB-CALIB-001",
         "RTB-MCDO-001"
-      ]
+      ],
+      "startedAt": "2026-01-11T19:11:55.354Z"
     },
     {
       "id": "DASH-001",
@@ -279,7 +285,8 @@
         "timeSensitivity": 0,
         "effortValueRatio": 6,
         "dependencyDepth": 0
-      }
+      },
+      "startedAt": "2026-01-11T12:51:38.251Z"
     },
     {
       "id": "EXP-001",
@@ -315,7 +322,8 @@
         "timeSensitivity": 0,
         "effortValueRatio": 6,
         "dependencyDepth": 0
-      }
+      },
+      "startedAt": "2026-01-11T12:51:40.161Z"
     },
     {
       "id": "DATA-004",
@@ -333,7 +341,8 @@
         "timeSensitivity": 0,
         "effortValueRatio": 6,
         "dependencyDepth": 0
-      }
+      },
+      "startedAt": "2026-01-11T12:51:39.424Z"
     },
     {
       "id": "ML-002",
@@ -432,7 +441,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-11T23:23:52.880Z"
     },
     {
       "id": "ESMM-004",
@@ -452,7 +462,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": 80
+      "priorityScore": 80,
+      "startedAt": "2026-01-11T22:05:17.714Z"
     },
     {
       "id": "ESMM-005",
@@ -476,7 +487,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 78
+      "priorityScore": 78,
+      "startedAt": "2026-01-11T22:05:23.878Z"
     },
     {
       "id": "ESMM-006",
@@ -518,7 +530,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": -50
+      "priorityScore": -50,
+      "startedAt": "2026-01-10T22:41:02.350Z"
     },
     {
       "id": "V3-001",
@@ -560,7 +573,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 40
+      "priorityScore": 40,
+      "startedAt": "2026-01-11T01:51:49.552Z"
     },
     {
       "id": "PERSONAL-001",
@@ -579,7 +593,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": -7
+      "priorityScore": -7,
+      "startedAt": "2026-01-11T18:00:49.938Z"
     },
     {
       "id": "MIGRATE-001",
@@ -597,7 +612,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": -27
+      "priorityScore": -27,
+      "startedAt": "2026-01-11T21:19:17.335Z"
     },
     {
       "id": "MIGRATE-002",
@@ -615,7 +631,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": -27
+      "priorityScore": -27,
+      "startedAt": "2026-01-11T21:19:17.338Z"
     },
     {
       "id": "MIGRATE-003",
@@ -637,7 +654,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-11T21:19:17.348Z"
     },
     {
       "id": "MIGRATE-004",
@@ -658,7 +676,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 2
       },
-      "priorityScore": 69
+      "priorityScore": 69,
+      "startedAt": "2026-01-11T21:45:04.414Z"
     },
     {
       "id": "ONBOARD-001",
@@ -700,7 +719,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": 48
+      "priorityScore": 48,
+      "startedAt": "2026-01-11T23:18:47.813Z"
     },
     {
       "id": "ONBOARD-003",
@@ -745,7 +765,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-11T21:47:17.158Z"
     },
     {
       "id": "ONBOARD-005",
@@ -848,7 +869,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": -50
+      "priorityScore": -50,
+      "startedAt": "2026-01-11T23:49:29.384Z"
     },
     {
       "id": "RTB-ML-001",
@@ -964,7 +986,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": -50
+      "priorityScore": -50,
+      "startedAt": "2026-01-12T00:27:11.805Z"
     },
     {
       "id": "CVR-002",
@@ -987,7 +1010,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": -61
+      "priorityScore": -61,
+      "startedAt": "2026-01-12T00:40:25.670Z"
     },
     {
       "id": "CVR-003",
@@ -1010,7 +1034,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": -54
+      "priorityScore": -54,
+      "startedAt": "2026-01-12T00:27:11.806Z"
     },
     {
       "id": "CVR-004",
@@ -1073,7 +1098,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": 41
+      "priorityScore": 41,
+      "startedAt": "2026-01-12T05:15:45.744Z"
     },
     {
       "id": "RTB-MCDO-001",
@@ -1093,7 +1119,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 50
+      "priorityScore": 50,
+      "startedAt": "2026-01-12T05:00:25.149Z"
     },
     {
       "id": "dad63160-0cf7-41d9-97fc-c1d42dc95647",
@@ -1175,7 +1202,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": 141
+      "priorityScore": 141,
+      "startedAt": "2026-01-12T09:48:18.157Z"
     },
     {
       "id": "RTB-INT-T2",
@@ -1219,7 +1247,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": -50
+      "priorityScore": -50,
+      "startedAt": "2026-01-12T07:21:52.859Z"
     },
     {
       "id": "DEV-DOCKER-001",
@@ -1239,7 +1268,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 150
+      "priorityScore": 150,
+      "startedAt": "2026-01-12T07:59:41.161Z"
     },
     {
       "id": "323bc088-2999-4d32-b976-56a5b7b9fe09",
@@ -1259,7 +1289,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 82
+      "priorityScore": 82,
+      "startedAt": "2026-01-12T08:19:00.926Z"
     },
     {
       "id": "JOIN-001",
@@ -1281,7 +1312,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T08:36:46.443Z"
     },
     {
       "id": "JOIN-002",
@@ -1303,7 +1335,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T08:40:02.926Z"
     },
     {
       "id": "JOIN-003",
@@ -1325,7 +1358,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T08:41:56.693Z"
     },
     {
       "id": "JOIN-004",
@@ -1349,7 +1383,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 78
+      "priorityScore": 78,
+      "startedAt": "2026-01-12T08:28:48.180Z"
     },
     {
       "id": "STAKEHOLDER-001",
@@ -1392,7 +1427,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 50
+      "priorityScore": 50,
+      "startedAt": "2026-01-12T10:25:09.094Z"
     },
     {
       "id": "E2E-002",
@@ -1412,7 +1448,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": 41
+      "priorityScore": 41,
+      "startedAt": "2026-01-12T10:39:37.319Z"
     },
     {
       "id": "E2E-003",
@@ -1432,7 +1469,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": 41
+      "priorityScore": 41,
+      "startedAt": "2026-01-12T10:40:09.084Z"
     },
     {
       "id": "E2E-004",
@@ -1453,7 +1491,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": 48
+      "priorityScore": 48,
+      "startedAt": "2026-01-12T10:25:28.461Z"
     },
     {
       "id": "E2E-008",
@@ -1477,7 +1516,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 146
+      "priorityScore": 146,
+      "startedAt": "2026-01-12T10:27:04.641Z"
     },
     {
       "id": "E2E-007",
@@ -1520,7 +1560,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": 148
+      "priorityScore": 148,
+      "startedAt": "2026-01-12T10:24:25.629Z"
     },
     {
       "id": "E2E-005",
@@ -1544,7 +1585,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": 33
+      "priorityScore": 33,
+      "startedAt": "2026-01-12T10:26:11.668Z"
     },
     {
       "id": "E2E-009",
@@ -1567,7 +1609,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 39
+      "priorityScore": 39,
+      "startedAt": "2026-01-12T11:36:02.260Z"
     },
     {
       "id": "SIM-001",
@@ -1625,7 +1668,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 50
+      "priorityScore": 50,
+      "startedAt": "2026-01-12T13:01:37.632Z"
     },
     {
       "id": "REAL-002",
@@ -1647,7 +1691,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T13:03:02.735Z"
     },
     {
       "id": "REAL-003",
@@ -1671,7 +1716,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 46
+      "priorityScore": 46,
+      "startedAt": "2026-01-12T13:02:07.168Z"
     },
     {
       "id": "REAL-004",
@@ -1693,7 +1739,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 3
       },
-      "priorityScore": 67
+      "priorityScore": 67,
+      "startedAt": "2026-01-12T13:04:32.785Z"
     },
     {
       "id": "REAL-005",
@@ -1794,7 +1841,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 82
+      "priorityScore": 82,
+      "startedAt": "2026-01-12T17:23:24.971Z"
     },
     {
       "id": "SIM-PERSIST-001",
@@ -1813,7 +1861,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": 73
+      "priorityScore": 73,
+      "startedAt": "2026-01-12T17:33:29.892Z"
     },
     {
       "id": "SIM-PERSIST-002",
@@ -1835,7 +1884,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T17:34:32.901Z"
     },
     {
       "id": "SIM-PERSIST-003",
@@ -1857,7 +1907,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 78
+      "priorityScore": 78,
+      "startedAt": "2026-01-12T17:34:47.972Z"
     },
     {
       "id": "SIM-PERSIST-004",
@@ -1898,7 +1949,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 82
+      "priorityScore": 82,
+      "startedAt": "2026-01-12T18:30:09.242Z"
     },
     {
       "id": "COMPARE-002",
@@ -1920,7 +1972,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": 80
+      "priorityScore": 80,
+      "startedAt": "2026-01-12T18:32:08.286Z"
     },
     {
       "id": "COMPARE-003",
@@ -1942,7 +1995,8 @@
         "effortValueRatio": 3,
         "dependencyDepth": 1
       },
-      "priorityScore": 89
+      "priorityScore": 89,
+      "startedAt": "2026-01-12T18:30:22.734Z"
     },
     {
       "id": "COMPARE-004",
@@ -2027,7 +2081,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": 82
+      "priorityScore": 82,
+      "startedAt": "2026-01-12T18:33:36.304Z"
     },
     {
       "id": "COMPARE-001-B",
@@ -2049,7 +2104,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T18:34:23.134Z"
     },
     {
       "id": "COMPARE-001-C",
@@ -2071,7 +2127,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T18:34:39.423Z"
     },
     {
       "id": "COMPARE-001-D",
@@ -2093,7 +2150,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 78
+      "priorityScore": 78,
+      "startedAt": "2026-01-12T18:34:00.011Z"
     },
     {
       "id": "COMPARE-001-E",
@@ -2115,7 +2173,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 3
       },
-      "priorityScore": 76
+      "priorityScore": 76,
+      "startedAt": "2026-01-12T18:33:42.653Z"
     },
     {
       "id": "COMPARE-002-A",
@@ -2137,7 +2196,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T18:35:48.651Z"
     },
     {
       "id": "COMPARE-002-B",
@@ -2159,7 +2219,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 78
+      "priorityScore": 78,
+      "startedAt": "2026-01-12T18:34:14.857Z"
     },
     {
       "id": "COMPARE-002-C",
@@ -2181,7 +2242,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 3
       },
-      "priorityScore": 67
+      "priorityScore": 67,
+      "startedAt": "2026-01-12T18:36:27.014Z"
     },
     {
       "id": "COMPARE-003-A",
@@ -2203,7 +2265,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 1
       },
-      "priorityScore": 71
+      "priorityScore": 71,
+      "startedAt": "2026-01-12T18:36:15.902Z"
     },
     {
       "id": "COMPARE-003-B",
@@ -2225,7 +2288,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 2
       },
-      "priorityScore": 69
+      "priorityScore": 69,
+      "startedAt": "2026-01-12T18:37:15.133Z"
     },
     {
       "id": "COMPARE-003-C",
@@ -2247,7 +2311,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 78
+      "priorityScore": 78,
+      "startedAt": "2026-01-12T18:34:35.743Z"
     },
     {
       "id": "COMPARE-003-D",
@@ -2269,7 +2334,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 3
       },
-      "priorityScore": 76
+      "priorityScore": 76,
+      "startedAt": "2026-01-12T18:35:26.495Z"
     },
     {
       "id": "COMPARE-003-E",
@@ -2291,7 +2357,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 4
       },
-      "priorityScore": 65
+      "priorityScore": 65,
+      "startedAt": "2026-01-12T18:38:41.202Z"
     },
     {
       "id": "COMPARE-004-A",
@@ -2313,7 +2380,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": 180
+      "priorityScore": 180,
+      "startedAt": "2026-01-12T18:35:36.985Z"
     },
     {
       "id": "COMPARE-004-B",
@@ -2335,7 +2403,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 2
       },
-      "priorityScore": 169
+      "priorityScore": 169,
+      "startedAt": "2026-01-12T18:39:02.590Z"
     },
     {
       "id": "COMPARE-004-C",
@@ -2357,7 +2426,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 3
       },
-      "priorityScore": 176
+      "priorityScore": 176,
+      "startedAt": "2026-01-12T18:35:43.018Z"
     },
     {
       "id": "COMPARE-004-D",
@@ -2379,7 +2449,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 4
       },
-      "priorityScore": 174
+      "priorityScore": 174,
+      "startedAt": "2026-01-12T18:35:57.253Z"
     },
     {
       "id": "COMPARE-005-A",
@@ -2401,7 +2472,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": 180
+      "priorityScore": 180,
+      "startedAt": "2026-01-12T18:35:43.064Z"
     },
     {
       "id": "COMPARE-005-B",
@@ -2423,7 +2495,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 2
       },
-      "priorityScore": 178
+      "priorityScore": 178,
+      "startedAt": "2026-01-12T18:36:35.198Z"
     },
     {
       "id": "COMPARE-005-C",
@@ -2445,7 +2518,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 3
       },
-      "priorityScore": 167
+      "priorityScore": 167,
+      "startedAt": "2026-01-12T18:40:08.443Z"
     },
     {
       "id": "COMPARE-006-A",
@@ -2467,7 +2541,8 @@
         "effortValueRatio": 3,
         "dependencyDepth": 2
       },
-      "priorityScore": 287
+      "priorityScore": 287,
+      "startedAt": "2026-01-12T18:35:33.647Z"
     },
     {
       "id": "COMPARE-006-B",
@@ -2489,7 +2564,8 @@
         "effortValueRatio": 3,
         "dependencyDepth": 3
       },
-      "priorityScore": 285
+      "priorityScore": 285,
+      "startedAt": "2026-01-12T18:35:23.661Z"
     },
     {
       "id": "COMPARE-006-C",
@@ -2511,7 +2587,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 4
       },
-      "priorityScore": 265
+      "priorityScore": 265,
+      "startedAt": "2026-01-12T18:41:32.588Z"
     },
     {
       "id": "1236f706-8c19-4ec2-bfa5-fc8eadfe11d9",
@@ -2626,7 +2703,8 @@
         "effortValueRatio": 3,
         "dependencyDepth": 0
       },
-      "priorityScore": -41
+      "priorityScore": -41,
+      "startedAt": "2026-01-13T01:25:22.824Z"
     },
     {
       "id": "QC-005",
@@ -2665,7 +2743,8 @@
         "effortValueRatio": 3,
         "dependencyDepth": 0
       },
-      "priorityScore": -41
+      "priorityScore": -41,
+      "startedAt": "2026-01-13T01:36:25.606Z"
     },
     {
       "id": "QC-007",
@@ -2688,7 +2767,8 @@
         "effortValueRatio": 3,
         "dependencyDepth": 1
       },
-      "priorityScore": 89
+      "priorityScore": 89,
+      "startedAt": "2026-01-13T01:38:11.206Z"
     },
     {
       "id": "STREAM-001",
@@ -2708,7 +2788,8 @@
         "effortValueRatio": 6,
         "dependencyDepth": 0
       },
-      "priorityScore": -50
+      "priorityScore": -50,
+      "startedAt": "2026-01-13T03:19:17.953Z"
     },
     {
       "id": "STREAM-002",
@@ -2731,20 +2812,21 @@
         "effortValueRatio": 6,
         "dependencyDepth": 1
       },
-      "priorityScore": -52
+      "priorityScore": -52,
+      "startedAt": "2026-01-13T03:19:07.511Z"
     },
     {
       "id": "STREAM-003",
       "priority": "P1",
       "task": "Implement event buffer for rewind/scrub capability",
       "project": "stable-marriage",
-      "status": "not_started",
+      "status": "cancelled",
       "dependencies": [
         "STREAM-002"
       ],
-      "notes": "Ring buffer in Redux to keep last N events. Playback slider scrubs through buffered history. Jump to Live button returns to streaming head.",
+      "notes": "SUPERSEDED: Original simple ring buffer approach replaced with comprehensive streaming performance architecture. See STREAM-PERF-* tasks for Web Worker + batching + downsampling + mutable refs approach.",
       "createdAt": "2026-01-13T03:18:46.138Z",
-      "updatedAt": "2026-01-13T03:18:46.138Z",
+      "updatedAt": "2026-01-13T21:02:51.218Z",
       "effort": "low",
       "weights": {
         "blockingCount": 0,
@@ -2820,11 +2902,11 @@
       "priority": "P0",
       "task": "Debug Magneta 204 errors - production ad serving pipeline broken",
       "project": "gravity-debug",
-      "status": "not_started",
+      "status": "complete",
       "blocking": "All magneta ad revenue",
       "notes": "Publisher getting 204s, pregenerated AI ads in Redis not being served",
       "createdAt": "2026-01-13T06:53:50.954Z",
-      "updatedAt": "2026-01-13T06:53:50.954Z",
+      "updatedAt": "2026-01-13T19:58:41.073Z",
       "effort": "high",
       "weights": {
         "blockingCount": 0,
@@ -2833,7 +2915,8 @@
         "effortValueRatio": 3,
         "dependencyDepth": 0
       },
-      "priorityScore": -41
+      "priorityScore": -41,
+      "startedAt": "2026-01-13T15:16:05.073Z"
     },
     {
       "id": "ENTANGLE-001",
@@ -2872,7 +2955,8 @@
         "effortValueRatio": 9,
         "dependencyDepth": 0
       },
-      "priorityScore": 73
+      "priorityScore": 73,
+      "startedAt": "2026-01-13T08:28:23.267Z"
     },
     {
       "id": "ENTANGLE-003",
@@ -2995,6 +3079,182 @@
         "dependencyDepth": 2
       },
       "priorityScore": 187
+    },
+    {
+      "id": "ccba0166-8e23-4be7-9ee6-aa756303612e",
+      "priority": "P2",
+      "task": "Follow-up with university to confirm 2027 intersession return is allowed for leave of absence",
+      "project": "personal",
+      "status": "not_started",
+      "notes": "Have copy of leave of absence form for 2027. Location: ~/Downloads/Leave of Absence Form.pdf on Framework laptop. Need to contact university in Fall 2026 to confirm return year of 2027 for intersession is permitted. Set deadline for October 1, 2026 to allow time before typical fall semester deadlines.",
+      "createdAt": "2026-01-13T20:31:43.976Z",
+      "updatedAt": "2026-01-13T20:32:24.167Z",
+      "deadline": "2026-10-01",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 1,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 165
+    },
+    {
+      "id": "STREAM-PERF-001",
+      "priority": "P0",
+      "task": "Create Web Worker for WebSocket connection and JSON parsing",
+      "project": "stable-marriage",
+      "status": "complete",
+      "blocking": "All streaming performance tasks - single worker handles all WS messages off main thread",
+      "notes": "Move WebSocket connection into dedicated Web Worker. Worker handles: 1) WebSocket lifecycle (connect/disconnect/reconnect), 2) JSON.parse() for all incoming messages, 3) Message classification (event/snapshot/complete/error). Main thread never blocks on network or parsing. Single worker is sufficient - WS is single-threaded anyway.",
+      "createdAt": "2026-01-13T21:02:55.064Z",
+      "updatedAt": "2026-01-13T21:09:09.886Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": -50,
+      "startedAt": "2026-01-13T21:03:45.886Z"
+    },
+    {
+      "id": "STREAM-PERF-002",
+      "priority": "P0",
+      "task": "Implement batching in Web Worker (buffer array + 100ms flush interval)",
+      "project": "stable-marriage",
+      "status": "complete",
+      "blocking": "Reduces Redux dispatches from 1000/sec to 10/sec",
+      "dependencies": [
+        "STREAM-PERF-001"
+      ],
+      "notes": "Worker accumulates events in buffer array. Every 100ms: 1) Batch all buffered events, 2) Compute latest metrics summary, 3) postMessage to main thread with {batch, summary}. This replaces the broken MIN_DISPATCH_INTERVAL=50ms throttle that was DROPPING events instead of batching.",
+      "createdAt": "2026-01-13T21:02:59.242Z",
+      "updatedAt": "2026-01-13T21:09:10.415Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 9,
+        "dependencyDepth": 1
+      },
+      "priorityScore": -61,
+      "startedAt": "2026-01-13T21:04:58.415Z"
+    },
+    {
+      "id": "STREAM-PERF-003",
+      "priority": "P0",
+      "task": "Fix Redux slice - replace O(N) shift() with O(1) ring buffer using writeIndex",
+      "project": "stable-marriage",
+      "status": "complete",
+      "blocking": "Eliminates array copy on every event when buffer is full",
+      "dependencies": [
+        "STREAM-PERF-002"
+      ],
+      "notes": "Current addEvent reducer uses state.events.shift() which is O(N). Replace with: state.events[state.writeIndex] = event; state.writeIndex = (state.writeIndex + 1) % state.maxBufferSize. Also add bulkAddEvents action that accepts batched events from worker.",
+      "createdAt": "2026-01-13T21:03:02.560Z",
+      "updatedAt": "2026-01-13T21:09:10.677Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 9,
+        "dependencyDepth": 2
+      },
+      "priorityScore": -63,
+      "startedAt": "2026-01-13T21:04:58.677Z"
+    },
+    {
+      "id": "STREAM-PERF-004",
+      "priority": "P0",
+      "task": "Implement downsampling for chart data (LTTB or time-bucketing)",
+      "project": "stable-marriage",
+      "status": "complete",
+      "blocking": "Charts render ~200 points instead of 10,000 - critical for Recharts performance",
+      "dependencies": [
+        "STREAM-PERF-003"
+      ],
+      "notes": "selectChartData currently maps ALL events (up to 10K) on every state change. Options: 1) LTTB (Largest Triangle Three Buckets) for visually optimal downsampling, 2) Simple time-bucket averaging. Worker can pre-compute downsampled data. Charts only receive ~200 points max regardless of buffer size.",
+      "createdAt": "2026-01-13T21:03:06.987Z",
+      "updatedAt": "2026-01-13T21:09:11.191Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 6,
+        "dependencyDepth": 3
+      },
+      "priorityScore": -56,
+      "startedAt": "2026-01-13T21:03:47.191Z"
+    },
+    {
+      "id": "STREAM-PERF-005",
+      "priority": "P1",
+      "task": "Configure Redux DevTools for high-frequency streaming (actionsDenylist + maxAge)",
+      "project": "stable-marriage",
+      "status": "complete",
+      "notes": "DevTools stores full state snapshot for every action. At 10 batched dispatches/sec with 10K event buffer = massive memory leak. Fix: 1) Add streaming/bulkAddEvents to actionsDenylist, 2) Set maxAge: 25, 3) Add env var DISABLE_DEVTOOLS for stress testing. Reference: store configuration in stable-marriage/frontend/src/store/.",
+      "createdAt": "2026-01-13T21:03:10.511Z",
+      "updatedAt": "2026-01-13T21:09:11.594Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 73,
+      "startedAt": "2026-01-13T21:04:59.594Z"
+    },
+    {
+      "id": "STREAM-PERF-006",
+      "priority": "P1",
+      "task": "Add mutable refs for full-resolution data (bypass Redux for raw event storage)",
+      "project": "stable-marriage",
+      "status": "complete",
+      "dependencies": [
+        "STREAM-PERF-002"
+      ],
+      "notes": "For save/export functionality, we need full-resolution data but shouldn't pay Redux immutability cost. Create useRef for fullDataBuffer that worker populates directly. Redux only stores: 1) Connection state, 2) Downsampled chart data, 3) Latest metrics summary. Full data lives in ref for export.",
+      "createdAt": "2026-01-13T21:03:13.829Z",
+      "updatedAt": "2026-01-13T21:09:11.999Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 2
+      },
+      "priorityScore": 78,
+      "startedAt": "2026-01-13T21:03:47.999Z"
+    },
+    {
+      "id": "STREAM-PERF-007",
+      "priority": "P1",
+      "task": "Create architecture documentation with Mermaid diagrams for streaming system",
+      "project": "stable-marriage",
+      "status": "complete",
+      "notes": "Document in stable-marriage/docs/STREAMING_ARCHITECTURE.md: 1) High-level flow diagram (Go → Worker → Main Thread), 2) Detailed component diagram showing Web Worker internals (ring buffer, batch timer, downsampler), 3) Main thread data flow (mutable ref vs Redux). Use Mermaid syntax for diagrams.",
+      "createdAt": "2026-01-13T21:03:16.489Z",
+      "updatedAt": "2026-01-13T21:09:12.398Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 73,
+      "startedAt": "2026-01-13T21:05:00.398Z"
     }
   ],
   "dataGaps": [
@@ -3158,6 +3418,13 @@
       "decision": "Go codebase has multiple concerns (auction hosting, communication facilitation, experimental design) that could be split into separate microservices behind APIs in the future",
       "rationale": "Current monolithic structure works for now, but long-term maintainability and scalability would benefit from separation of concerns into distinct services",
       "createdAt": "2026-01-12T17:44:26.907Z"
+    },
+    {
+      "id": "23292966-4094-4044-aad8-12de9209bdcb",
+      "date": "2026-01-13",
+      "decision": "Web Worker + Batching + Mutable Refs architecture for streaming performance",
+      "rationale": "Frontend was crashing due to main thread overload: 1) JSON.parse on main thread, 2) Redux dispatch per event (1000/sec), 3) O(N) array operations, 4) DevTools storing full state history. Solution: Single Web Worker handles WS + parsing + batching. Main thread receives batched updates at 10/sec. Full-res data in mutable ref (bypass Redux). Chart data downsampled to ~200 points. DevTools configured with actionsDenylist.",
+      "createdAt": "2026-01-13T21:03:24.914Z"
     }
   ],
   "completionRecords": [
@@ -3171,7 +3438,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-10T22:42:14.350Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-10T22:41:02.350Z",
+      "actualWorkTime": 0.02,
+      "_imputed": true
     },
     {
       "id": "638dacea-95bb-4e2f-92cf-3c4a6e8387e8",
@@ -3183,7 +3453,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T01:56:01.552Z",
       "initialPriorityScore": 40,
-      "finalPriorityScore": 40
+      "finalPriorityScore": 40,
+      "startedAt": "2026-01-11T01:51:49.552Z",
+      "actualWorkTime": 0.07,
+      "_imputed": true
     },
     {
       "id": "ecee9b54-11d6-42af-91e6-a1f2fdf83a95",
@@ -3195,7 +3468,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T21:17:01.938Z",
       "initialPriorityScore": -7,
-      "finalPriorityScore": -7
+      "finalPriorityScore": -7,
+      "startedAt": "2026-01-11T18:00:49.938Z",
+      "actualWorkTime": 3.27,
+      "_imputed": true
     },
     {
       "id": "b4532ac0-f202-4b21-b31e-7e4fee9657fb",
@@ -3207,7 +3483,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T21:19:34.190Z",
       "initialPriorityScore": -7,
-      "finalPriorityScore": -7
+      "finalPriorityScore": -7,
+      "startedAt": "2026-01-11T18:02:46.190Z",
+      "actualWorkTime": 3.28,
+      "_imputed": true
     },
     {
       "id": "71e83107-eb37-4e1f-a2f0-4926ef30d3e9",
@@ -3219,7 +3498,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T21:19:53.335Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T21:19:17.335Z",
+      "actualWorkTime": 0.01,
+      "_imputed": true
     },
     {
       "id": "46ca6e77-c26d-4aa1-8a30-2d692341af12",
@@ -3231,7 +3513,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T21:19:53.338Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T21:19:17.338Z",
+      "actualWorkTime": 0.01,
+      "_imputed": true
     },
     {
       "id": "c529a422-76fc-4ec2-a1fd-8ff0a54e874d",
@@ -3243,7 +3528,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T21:19:53.348Z",
       "initialPriorityScore": 63,
-      "finalPriorityScore": 63
+      "finalPriorityScore": 63,
+      "startedAt": "2026-01-11T21:19:17.348Z",
+      "actualWorkTime": 0.01,
+      "_imputed": true
     },
     {
       "id": "0bd3ab4a-1bff-4e33-9053-17d7f086f4a6",
@@ -3255,7 +3543,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T22:13:41.158Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-11T21:47:17.158Z",
+      "actualWorkTime": 0.44,
+      "_imputed": true
     },
     {
       "id": "3c8fa87e-ae00-4794-bdc0-96f404465b81",
@@ -3267,7 +3558,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T22:30:56.014Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T21:43:32.014Z",
+      "actualWorkTime": 0.79,
+      "_imputed": true
     },
     {
       "id": "c1b5d1f6-d47f-44e8-9a30-52ba29cbdb99",
@@ -3279,7 +3573,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T22:30:57.804Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T21:43:33.804Z",
+      "actualWorkTime": 0.79,
+      "_imputed": true
     },
     {
       "id": "68fc3b69-7238-4dbd-883d-ace471bd71b5",
@@ -3291,7 +3588,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T22:30:58.117Z",
       "initialPriorityScore": 63,
-      "finalPriorityScore": 63
+      "finalPriorityScore": 63,
+      "startedAt": "2026-01-11T21:45:22.117Z",
+      "actualWorkTime": 0.76,
+      "_imputed": true
     },
     {
       "id": "030558d2-6564-41ab-8aad-f550a491ebc9",
@@ -3303,7 +3603,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-11T22:34:12.073Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-11T12:51:36.073Z",
+      "actualWorkTime": 9.71,
+      "_imputed": true
     },
     {
       "id": "c348ae2f-c345-4a3d-8809-698e67c56cfa",
@@ -3315,7 +3618,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-11T22:34:12.828Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-11T12:51:36.828Z",
+      "actualWorkTime": 9.71,
+      "_imputed": true
     },
     {
       "id": "c94a4100-6595-42b0-b968-2f843324c5a4",
@@ -3327,7 +3633,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-11T22:34:13.452Z",
       "initialPriorityScore": 82,
-      "finalPriorityScore": 82
+      "finalPriorityScore": 82,
+      "startedAt": "2026-01-11T12:51:37.452Z",
+      "actualWorkTime": 9.71,
+      "_imputed": true
     },
     {
       "id": "cbd6fbba-7e40-41f3-82ba-c75b22b8cb9d",
@@ -3339,7 +3648,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-11T22:34:14.251Z",
       "initialPriorityScore": 182,
-      "finalPriorityScore": 182
+      "finalPriorityScore": 182,
+      "startedAt": "2026-01-11T12:51:38.251Z",
+      "actualWorkTime": 9.71,
+      "_imputed": true
     },
     {
       "id": "77c74289-0a08-43ed-bd7f-c5f03cae5b7b",
@@ -3351,7 +3663,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-11T22:34:15.424Z",
       "initialPriorityScore": 282,
-      "finalPriorityScore": 282
+      "finalPriorityScore": 282,
+      "startedAt": "2026-01-11T12:51:39.424Z",
+      "actualWorkTime": 9.71,
+      "_imputed": true
     },
     {
       "id": "7dd893b4-6188-455e-a590-d3dbe9111ce2",
@@ -3363,7 +3678,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-11T22:34:16.161Z",
       "initialPriorityScore": 182,
-      "finalPriorityScore": 182
+      "finalPriorityScore": 182,
+      "startedAt": "2026-01-11T12:51:40.161Z",
+      "actualWorkTime": 9.71,
+      "_imputed": true
     },
     {
       "id": "4c1deb4c-c5f5-4d39-b5fc-de6e806115e9",
@@ -3375,7 +3693,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T22:35:28.414Z",
       "initialPriorityScore": 73,
-      "finalPriorityScore": 73
+      "finalPriorityScore": 73,
+      "startedAt": "2026-01-11T21:45:04.414Z",
+      "actualWorkTime": 0.84,
+      "_imputed": true
     },
     {
       "id": "62a372a3-2db4-4626-a035-a481b182f03f",
@@ -3387,7 +3708,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T22:35:40.996Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T21:45:16.996Z",
+      "actualWorkTime": 0.84,
+      "_imputed": true
     },
     {
       "id": "2da68976-0078-4f81-947c-fc929ceaf850",
@@ -3399,7 +3723,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T22:35:42.814Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T21:45:18.814Z",
+      "actualWorkTime": 0.84,
+      "_imputed": true
     },
     {
       "id": "0ba58a48-5bf3-46cf-ac95-cd030984eaef",
@@ -3411,7 +3738,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-11T23:53:53.074Z",
       "initialPriorityScore": 63,
-      "finalPriorityScore": 63
+      "finalPriorityScore": 63,
+      "startedAt": "2026-01-11T22:52:05.074Z",
+      "actualWorkTime": 1.03,
+      "_imputed": true
     },
     {
       "id": "6e42c0bb-e036-446f-98c0-bbda31774658",
@@ -3423,7 +3753,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T00:02:10.825Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-11T14:02:10.825Z",
+      "actualWorkTime": 10,
+      "_imputed": true
     },
     {
       "id": "12ae8cff-780c-4a6e-b38a-b80cdfc0895e",
@@ -3435,7 +3768,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T00:02:35.077Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-11T14:02:35.077Z",
+      "actualWorkTime": 10,
+      "_imputed": true
     },
     {
       "id": "6924729a-d8d0-43b6-8f68-d44f8414e5a1",
@@ -3447,7 +3783,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T00:02:42.299Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T22:56:42.299Z",
+      "actualWorkTime": 1.1,
+      "_imputed": true
     },
     {
       "id": "e0d9102a-d3ba-45ae-8897-79535d1a889b",
@@ -3459,7 +3798,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T00:02:44.370Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T22:56:44.370Z",
+      "actualWorkTime": 1.1,
+      "_imputed": true
     },
     {
       "id": "4d2b6811-0fa9-4220-84e2-204745fa4de0",
@@ -3471,7 +3813,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T00:02:45.258Z",
       "initialPriorityScore": 73,
-      "finalPriorityScore": 73
+      "finalPriorityScore": 73,
+      "startedAt": "2026-01-11T22:56:45.258Z",
+      "actualWorkTime": 1.1,
+      "_imputed": true
     },
     {
       "id": "997e5de1-0329-427e-acb9-61295070ae8e",
@@ -3483,7 +3828,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T00:15:00.790Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T23:03:36.790Z",
+      "actualWorkTime": 1.19,
+      "_imputed": true
     },
     {
       "id": "c7114a64-e074-4b6c-bd4d-e854067d934f",
@@ -3495,7 +3843,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T00:15:04.196Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-11T23:03:40.196Z",
+      "actualWorkTime": 1.19,
+      "_imputed": true
     },
     {
       "id": "1db8fcf4-1321-4994-b4d4-0041b4f8b84d",
@@ -3507,7 +3858,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T00:15:05.335Z",
       "initialPriorityScore": 73,
-      "finalPriorityScore": 73
+      "finalPriorityScore": 73,
+      "startedAt": "2026-01-11T23:03:41.335Z",
+      "actualWorkTime": 1.19,
+      "_imputed": true
     },
     {
       "id": "aee47692-74a5-4439-b932-62feee13a2d5",
@@ -3519,7 +3873,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T01:04:23.805Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-12T00:27:11.805Z",
+      "actualWorkTime": 0.62,
+      "_imputed": true
     },
     {
       "id": "1f40860a-95fe-4938-97be-4d4a8447b899",
@@ -3531,7 +3888,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T01:04:23.806Z",
       "initialPriorityScore": -54,
-      "finalPriorityScore": -54
+      "finalPriorityScore": -54,
+      "startedAt": "2026-01-12T00:27:11.806Z",
+      "actualWorkTime": 0.62,
+      "_imputed": true
     },
     {
       "id": "b5326461-2f12-4fa9-b9a9-5af35e7f82a3",
@@ -3543,7 +3903,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T01:04:23.813Z",
       "initialPriorityScore": 48,
-      "finalPriorityScore": 48
+      "finalPriorityScore": 48,
+      "startedAt": "2026-01-11T23:18:47.813Z",
+      "actualWorkTime": 1.76,
+      "_imputed": true
     },
     {
       "id": "0920c37c-05d3-4126-8ed6-dd7dd9cb2ac7",
@@ -3555,7 +3918,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T01:04:29.384Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-11T23:49:29.384Z",
+      "actualWorkTime": 1.25,
+      "_imputed": true
     },
     {
       "id": "7b80375d-56ef-434d-ad77-f3114acbaddf",
@@ -3567,7 +3933,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T01:20:37.670Z",
       "initialPriorityScore": -61,
-      "finalPriorityScore": -61
+      "finalPriorityScore": -61,
+      "startedAt": "2026-01-12T00:40:25.670Z",
+      "actualWorkTime": 0.67,
+      "_imputed": true
     },
     {
       "id": "afd68590-418f-4465-81a4-ad90f9eb1761",
@@ -3579,7 +3948,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T03:29:47.658Z",
       "initialPriorityScore": -37,
-      "finalPriorityScore": -37
+      "finalPriorityScore": -37,
+      "startedAt": "2026-01-12T01:01:35.658Z",
+      "actualWorkTime": 2.47,
+      "_imputed": true
     },
     {
       "id": "b4c85f00-f413-4c16-bfbd-05df965e4b5a",
@@ -3591,7 +3963,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T03:29:49.336Z",
       "initialPriorityScore": -27,
-      "finalPriorityScore": -27
+      "finalPriorityScore": -27,
+      "startedAt": "2026-01-12T01:01:01.336Z",
+      "actualWorkTime": 2.48,
+      "_imputed": true
     },
     {
       "id": "c800d0cf-d52b-4337-b117-c72d0d14245e",
@@ -3603,7 +3978,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T04:38:52.880Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-11T23:23:52.880Z",
+      "actualWorkTime": 5.25,
+      "_imputed": true
     },
     {
       "id": "841627a6-a6d2-445f-b35d-7a1be2e5660b",
@@ -3615,7 +3993,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T04:38:53.714Z",
       "initialPriorityScore": 80,
-      "finalPriorityScore": 80
+      "finalPriorityScore": 80,
+      "startedAt": "2026-01-11T22:05:17.714Z",
+      "actualWorkTime": 6.56,
+      "_imputed": true
     },
     {
       "id": "326d05c1-693a-4145-8988-d73443fb2c1b",
@@ -3627,7 +4008,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T04:38:59.878Z",
       "initialPriorityScore": 78,
-      "finalPriorityScore": 78
+      "finalPriorityScore": 78,
+      "startedAt": "2026-01-11T22:05:23.878Z",
+      "actualWorkTime": 6.56,
+      "_imputed": true
     },
     {
       "id": "0ab35031-d17d-4ad7-9918-d6841f6f33b9",
@@ -3639,7 +4023,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T06:21:45.744Z",
       "initialPriorityScore": 41,
-      "finalPriorityScore": 41
+      "finalPriorityScore": 41,
+      "startedAt": "2026-01-12T05:15:45.744Z",
+      "actualWorkTime": 1.1,
+      "_imputed": true
     },
     {
       "id": "d820b3ba-7040-48f4-8b9c-a07be1ab51ac",
@@ -3651,7 +4038,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T06:25:37.149Z",
       "initialPriorityScore": 50,
-      "finalPriorityScore": 50
+      "finalPriorityScore": 50,
+      "startedAt": "2026-01-12T05:00:25.149Z",
+      "actualWorkTime": 1.42,
+      "_imputed": true
     },
     {
       "id": "41c5a5c2-4100-4881-8bd8-cc89eb3f7c6a",
@@ -3663,7 +4053,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T06:29:19.354Z",
       "initialPriorityScore": 82,
-      "finalPriorityScore": 82
+      "finalPriorityScore": 82,
+      "startedAt": "2026-01-11T19:11:55.354Z",
+      "actualWorkTime": 11.29,
+      "_imputed": true
     },
     {
       "id": "1bf0faa5-e56e-489e-a6b9-ce94690d23fa",
@@ -3675,7 +4068,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T08:12:52.859Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-12T07:21:52.859Z",
+      "actualWorkTime": 0.85,
+      "_imputed": true
     },
     {
       "id": "fe6254e4-dba9-449f-8b2b-413abe1c97e2",
@@ -3687,7 +4083,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T08:53:41.161Z",
       "initialPriorityScore": 150,
-      "finalPriorityScore": 150
+      "finalPriorityScore": 150,
+      "startedAt": "2026-01-12T07:59:41.161Z",
+      "actualWorkTime": 0.9,
+      "_imputed": true
     },
     {
       "id": "3ad4ce22-d855-4ce3-8e1a-d54dd0de0417",
@@ -3699,7 +4098,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T09:19:58.443Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T08:36:46.443Z",
+      "actualWorkTime": 0.72,
+      "_imputed": true
     },
     {
       "id": "40b57a2e-3715-4f77-8078-4a2c9d93c30d",
@@ -3711,7 +4113,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T09:29:50.926Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T08:40:02.926Z",
+      "actualWorkTime": 0.83,
+      "_imputed": true
     },
     {
       "id": "0300b252-776d-4bf1-8b6b-5d70c9e36e52",
@@ -3723,7 +4128,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T09:34:36.926Z",
       "initialPriorityScore": 82,
-      "finalPriorityScore": 82
+      "finalPriorityScore": 82,
+      "startedAt": "2026-01-12T08:19:00.926Z",
+      "actualWorkTime": 1.26,
+      "_imputed": true
     },
     {
       "id": "7b94f427-9f30-45a5-bb87-d6072cbe77f1",
@@ -3735,7 +4143,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T09:34:44.693Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T08:41:56.693Z",
+      "actualWorkTime": 0.88,
+      "_imputed": true
     },
     {
       "id": "e142fbd6-ce00-4cd3-8cf8-0cd6451f6f0a",
@@ -3747,7 +4158,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T09:34:48.180Z",
       "initialPriorityScore": 78,
-      "finalPriorityScore": 78
+      "finalPriorityScore": 78,
+      "startedAt": "2026-01-12T08:28:48.180Z",
+      "actualWorkTime": 1.1,
+      "_imputed": true
     },
     {
       "id": "8802400a-3062-488a-b5cd-f27424eae43c",
@@ -3759,7 +4173,10 @@
       "outcome": "cancelled",
       "completedAt": "2026-01-12T11:35:49.629Z",
       "initialPriorityScore": 148,
-      "finalPriorityScore": 148
+      "finalPriorityScore": 148,
+      "startedAt": "2026-01-12T10:24:25.629Z",
+      "actualWorkTime": 1.19,
+      "_imputed": true
     },
     {
       "id": "c0fae616-5541-4a94-98f1-dac41e676d31",
@@ -3771,7 +4188,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T11:37:13.319Z",
       "initialPriorityScore": 41,
-      "finalPriorityScore": 41
+      "finalPriorityScore": 41,
+      "startedAt": "2026-01-12T10:39:37.319Z",
+      "actualWorkTime": 0.96,
+      "_imputed": true
     },
     {
       "id": "6a51733c-0deb-4e32-bf3b-45dfa2bfa699",
@@ -3783,7 +4203,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T11:37:45.084Z",
       "initialPriorityScore": 41,
-      "finalPriorityScore": 41
+      "finalPriorityScore": 41,
+      "startedAt": "2026-01-12T10:40:09.084Z",
+      "actualWorkTime": 0.96,
+      "_imputed": true
     },
     {
       "id": "cbf55607-08c8-4b87-b2a4-df1a68c7197d",
@@ -3795,7 +4218,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T11:37:45.094Z",
       "initialPriorityScore": 50,
-      "finalPriorityScore": 50
+      "finalPriorityScore": 50,
+      "startedAt": "2026-01-12T10:25:09.094Z",
+      "actualWorkTime": 1.21,
+      "_imputed": true
     },
     {
       "id": "ac41500c-7749-4978-bb99-607393088cee",
@@ -3807,7 +4233,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T11:38:04.461Z",
       "initialPriorityScore": 48,
-      "finalPriorityScore": 48
+      "finalPriorityScore": 48,
+      "startedAt": "2026-01-12T10:25:28.461Z",
+      "actualWorkTime": 1.21,
+      "_imputed": true
     },
     {
       "id": "b180f3d8-c519-428c-85dd-81b9e3932ff2",
@@ -3819,7 +4248,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T11:38:26.260Z",
       "initialPriorityScore": 39,
-      "finalPriorityScore": 39
+      "finalPriorityScore": 39,
+      "startedAt": "2026-01-12T11:36:02.260Z",
+      "actualWorkTime": 0.04,
+      "_imputed": true
     },
     {
       "id": "f1d77c51-03f5-4671-b974-50a54cc24814",
@@ -3831,7 +4263,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T11:39:23.668Z",
       "initialPriorityScore": 33,
-      "finalPriorityScore": 33
+      "finalPriorityScore": 33,
+      "startedAt": "2026-01-12T10:26:11.668Z",
+      "actualWorkTime": 1.22,
+      "_imputed": true
     },
     {
       "id": "4ddef78a-5ac1-4e64-a817-0dbf2efe09ae",
@@ -3843,7 +4278,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T11:39:54.157Z",
       "initialPriorityScore": 141,
-      "finalPriorityScore": 141
+      "finalPriorityScore": 141,
+      "startedAt": "2026-01-12T09:48:18.157Z",
+      "actualWorkTime": 1.86,
+      "_imputed": true
     },
     {
       "id": "f1d77ad4-d900-4641-97ec-56dde60e532a",
@@ -3855,7 +4293,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T11:40:52.641Z",
       "initialPriorityScore": 146,
-      "finalPriorityScore": 146
+      "finalPriorityScore": 146,
+      "startedAt": "2026-01-12T10:27:04.641Z",
+      "actualWorkTime": 1.23,
+      "_imputed": true
     },
     {
       "id": "c5a79c63-fa8d-437e-a548-59252df73964",
@@ -3867,7 +4308,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T13:05:49.632Z",
       "initialPriorityScore": 50,
-      "finalPriorityScore": 50
+      "finalPriorityScore": 50,
+      "startedAt": "2026-01-12T13:01:37.632Z",
+      "actualWorkTime": 0.07,
+      "_imputed": true
     },
     {
       "id": "0dec2e00-4079-42b8-9662-1b745cd3dbe0",
@@ -3879,7 +4323,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T13:07:50.735Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T13:03:02.735Z",
+      "actualWorkTime": 0.08,
+      "_imputed": true
     },
     {
       "id": "7ba73595-2d79-4339-a0a3-0a49e2639783",
@@ -3891,7 +4338,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T13:14:43.168Z",
       "initialPriorityScore": 46,
-      "finalPriorityScore": 46
+      "finalPriorityScore": 46,
+      "startedAt": "2026-01-12T13:02:07.168Z",
+      "actualWorkTime": 0.21,
+      "_imputed": true
     },
     {
       "id": "40adad5e-57e3-41a5-9bb3-150fc5661c73",
@@ -3903,7 +4353,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T13:14:44.785Z",
       "initialPriorityScore": 67,
-      "finalPriorityScore": 67
+      "finalPriorityScore": 67,
+      "startedAt": "2026-01-12T13:04:32.785Z",
+      "actualWorkTime": 0.17,
+      "_imputed": true
     },
     {
       "id": "64d32424-d36d-4260-a0e0-ebd307422d9c",
@@ -3915,7 +4368,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T17:28:12.971Z",
       "initialPriorityScore": 82,
-      "finalPriorityScore": 82
+      "finalPriorityScore": 82,
+      "startedAt": "2026-01-12T17:23:24.971Z",
+      "actualWorkTime": 0.08,
+      "_imputed": true
     },
     {
       "id": "117f4792-dbc0-4614-beb8-68f9717b0485",
@@ -3927,7 +4383,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T17:37:05.892Z",
       "initialPriorityScore": 73,
-      "finalPriorityScore": 73
+      "finalPriorityScore": 73,
+      "startedAt": "2026-01-12T17:33:29.892Z",
+      "actualWorkTime": 0.06,
+      "_imputed": true
     },
     {
       "id": "859a0203-7edc-4a92-ad5f-294b10513974",
@@ -3939,7 +4398,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T17:38:08.901Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T17:34:32.901Z",
+      "actualWorkTime": 0.06,
+      "_imputed": true
     },
     {
       "id": "8658bb8c-cbc1-435b-90c2-8eed8af09806",
@@ -3951,7 +4413,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T17:57:35.972Z",
       "initialPriorityScore": 78,
-      "finalPriorityScore": 78
+      "finalPriorityScore": 78,
+      "startedAt": "2026-01-12T17:34:47.972Z",
+      "actualWorkTime": 0.38,
+      "_imputed": true
     },
     {
       "id": "043c10b1-8bb3-4fc2-9ae9-c726cbe9ef0f",
@@ -3963,7 +4428,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:36:36.304Z",
       "initialPriorityScore": 82,
-      "finalPriorityScore": 82
+      "finalPriorityScore": 82,
+      "startedAt": "2026-01-12T18:33:36.304Z",
+      "actualWorkTime": 0.05,
+      "_imputed": true
     },
     {
       "id": "44cf4e68-7794-41b6-9b0d-8439ab0919fa",
@@ -3975,7 +4443,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:37:23.134Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T18:34:23.134Z",
+      "actualWorkTime": 0.05,
+      "_imputed": true
     },
     {
       "id": "d7098c3e-e84c-41db-819a-1b31b522a483",
@@ -3987,7 +4458,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:38:15.423Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T18:34:39.423Z",
+      "actualWorkTime": 0.06,
+      "_imputed": true
     },
     {
       "id": "d3e2fbad-cdcb-490a-bd48-e4cb70e8e9bf",
@@ -3999,7 +4473,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:39:24.011Z",
       "initialPriorityScore": 78,
-      "finalPriorityScore": 78
+      "finalPriorityScore": 78,
+      "startedAt": "2026-01-12T18:34:00.011Z",
+      "actualWorkTime": 0.09,
+      "_imputed": true
     },
     {
       "id": "146e3718-57b9-4cda-8e3b-d98b1ec817eb",
@@ -4011,7 +4488,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:40:54.653Z",
       "initialPriorityScore": 76,
-      "finalPriorityScore": 76
+      "finalPriorityScore": 76,
+      "startedAt": "2026-01-12T18:33:42.653Z",
+      "actualWorkTime": 0.12,
+      "_imputed": true
     },
     {
       "id": "d4a37eeb-493f-457a-b3cd-d989a3819401",
@@ -4023,7 +4503,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:40:57.242Z",
       "initialPriorityScore": 82,
-      "finalPriorityScore": 82
+      "finalPriorityScore": 82,
+      "startedAt": "2026-01-12T18:30:09.242Z",
+      "actualWorkTime": 0.18,
+      "_imputed": true
     },
     {
       "id": "c8f3f595-1cbb-412c-97a0-7267344ed0c7",
@@ -4035,7 +4518,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:41:12.651Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T18:35:48.651Z",
+      "actualWorkTime": 0.09,
+      "_imputed": true
     },
     {
       "id": "0ec39afb-9ea4-406b-bd50-21b181083a47",
@@ -4047,7 +4533,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:42:38.857Z",
       "initialPriorityScore": 78,
-      "finalPriorityScore": 78
+      "finalPriorityScore": 78,
+      "startedAt": "2026-01-12T18:34:14.857Z",
+      "actualWorkTime": 0.14,
+      "_imputed": true
     },
     {
       "id": "5e943909-4571-49c1-aba6-821df315a1fa",
@@ -4059,7 +4548,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:44:15.014Z",
       "initialPriorityScore": 67,
-      "finalPriorityScore": 67
+      "finalPriorityScore": 67,
+      "startedAt": "2026-01-12T18:36:27.014Z",
+      "actualWorkTime": 0.13,
+      "_imputed": true
     },
     {
       "id": "7b3abe02-6bd6-43be-9ae9-12f7052272e8",
@@ -4071,7 +4563,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:44:39.902Z",
       "initialPriorityScore": 71,
-      "finalPriorityScore": 71
+      "finalPriorityScore": 71,
+      "startedAt": "2026-01-12T18:36:15.902Z",
+      "actualWorkTime": 0.14,
+      "_imputed": true
     },
     {
       "id": "a32b4fd6-016e-4c8c-a0b3-595fcdc141e7",
@@ -4083,7 +4578,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:46:15.133Z",
       "initialPriorityScore": 69,
-      "finalPriorityScore": 69
+      "finalPriorityScore": 69,
+      "startedAt": "2026-01-12T18:37:15.133Z",
+      "actualWorkTime": 0.15,
+      "_imputed": true
     },
     {
       "id": "c0e5d8e5-d271-4d58-a18c-5e1fdc6d5c16",
@@ -4095,7 +4593,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:48:23.743Z",
       "initialPriorityScore": 78,
-      "finalPriorityScore": 78
+      "finalPriorityScore": 78,
+      "startedAt": "2026-01-12T18:34:35.743Z",
+      "actualWorkTime": 0.23,
+      "_imputed": true
     },
     {
       "id": "56c7b3f8-bff7-49c5-9a43-360a6bfd5bf2",
@@ -4107,7 +4608,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:49:50.495Z",
       "initialPriorityScore": 76,
-      "finalPriorityScore": 76
+      "finalPriorityScore": 76,
+      "startedAt": "2026-01-12T18:35:26.495Z",
+      "actualWorkTime": 0.24,
+      "_imputed": true
     },
     {
       "id": "9b355199-7a66-4d14-b491-ddc9e2969f44",
@@ -4119,7 +4623,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:50:41.202Z",
       "initialPriorityScore": 65,
-      "finalPriorityScore": 65
+      "finalPriorityScore": 65,
+      "startedAt": "2026-01-12T18:38:41.202Z",
+      "actualWorkTime": 0.2,
+      "_imputed": true
     },
     {
       "id": "7d008160-29f7-49c5-8f4d-f6e396066e92",
@@ -4131,7 +4638,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:51:48.985Z",
       "initialPriorityScore": 180,
-      "finalPriorityScore": 180
+      "finalPriorityScore": 180,
+      "startedAt": "2026-01-12T18:35:36.985Z",
+      "actualWorkTime": 0.27,
+      "_imputed": true
     },
     {
       "id": "e502d1c8-313c-4ac0-844f-137719887a46",
@@ -4143,7 +4653,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:52:14.590Z",
       "initialPriorityScore": 169,
-      "finalPriorityScore": 169
+      "finalPriorityScore": 169,
+      "startedAt": "2026-01-12T18:39:02.590Z",
+      "actualWorkTime": 0.22,
+      "_imputed": true
     },
     {
       "id": "9716054a-527d-45e1-bcc5-ab3e247ec04f",
@@ -4155,7 +4668,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:53:07.018Z",
       "initialPriorityScore": 176,
-      "finalPriorityScore": 176
+      "finalPriorityScore": 176,
+      "startedAt": "2026-01-12T18:35:43.018Z",
+      "actualWorkTime": 0.29,
+      "_imputed": true
     },
     {
       "id": "40808c28-a318-4923-ba7f-f5b38c58ac5e",
@@ -4167,7 +4683,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:54:33.253Z",
       "initialPriorityScore": 174,
-      "finalPriorityScore": 174
+      "finalPriorityScore": 174,
+      "startedAt": "2026-01-12T18:35:57.253Z",
+      "actualWorkTime": 0.31,
+      "_imputed": true
     },
     {
       "id": "d837174b-6f42-40af-8136-18165ae8e17b",
@@ -4179,7 +4698,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:54:55.064Z",
       "initialPriorityScore": 180,
-      "finalPriorityScore": 180
+      "finalPriorityScore": 180,
+      "startedAt": "2026-01-12T18:35:43.064Z",
+      "actualWorkTime": 0.32,
+      "_imputed": true
     },
     {
       "id": "a9702eb0-e4e6-46c2-952d-786ff1b2e547",
@@ -4191,7 +4713,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:55:47.198Z",
       "initialPriorityScore": 178,
-      "finalPriorityScore": 178
+      "finalPriorityScore": 178,
+      "startedAt": "2026-01-12T18:36:35.198Z",
+      "actualWorkTime": 0.32,
+      "_imputed": true
     },
     {
       "id": "9e07f35f-1bb2-4b11-9b05-151e27df4b60",
@@ -4203,7 +4728,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:56:20.443Z",
       "initialPriorityScore": 167,
-      "finalPriorityScore": 167
+      "finalPriorityScore": 167,
+      "startedAt": "2026-01-12T18:40:08.443Z",
+      "actualWorkTime": 0.27,
+      "_imputed": true
     },
     {
       "id": "e6726d7a-44ed-4c4d-b7bf-e5323685faee",
@@ -4215,7 +4743,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:56:44.286Z",
       "initialPriorityScore": 80,
-      "finalPriorityScore": 80
+      "finalPriorityScore": 80,
+      "startedAt": "2026-01-12T18:32:08.286Z",
+      "actualWorkTime": 0.41,
+      "_imputed": true
     },
     {
       "id": "7aaed5cc-2ba0-4c63-83c4-aebdb74bc50d",
@@ -4227,7 +4758,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T18:56:46.734Z",
       "initialPriorityScore": 89,
-      "finalPriorityScore": 89
+      "finalPriorityScore": 89,
+      "startedAt": "2026-01-12T18:30:22.734Z",
+      "actualWorkTime": 0.44,
+      "_imputed": true
     },
     {
       "id": "7f25ad8c-c00c-49ea-b30a-2d0ae2f55bd8",
@@ -4239,7 +4773,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T19:00:09.647Z",
       "initialPriorityScore": 287,
-      "finalPriorityScore": 287
+      "finalPriorityScore": 287,
+      "startedAt": "2026-01-12T18:35:33.647Z",
+      "actualWorkTime": 0.41,
+      "_imputed": true
     },
     {
       "id": "9165c148-e8d8-4a2e-a267-8af4c5221e05",
@@ -4251,7 +4788,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T19:00:35.661Z",
       "initialPriorityScore": 285,
-      "finalPriorityScore": 285
+      "finalPriorityScore": 285,
+      "startedAt": "2026-01-12T18:35:23.661Z",
+      "actualWorkTime": 0.42,
+      "_imputed": true
     },
     {
       "id": "a7ae11c5-76da-45d1-b6c2-b44f44c4a875",
@@ -4263,7 +4803,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-12T19:00:44.588Z",
       "initialPriorityScore": 265,
-      "finalPriorityScore": 265
+      "finalPriorityScore": 265,
+      "startedAt": "2026-01-12T18:41:32.588Z",
+      "actualWorkTime": 0.32,
+      "_imputed": true
     },
     {
       "id": "b9cd9262-6555-48a2-993c-3bf0734beaec",
@@ -4275,7 +4818,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-13T01:42:10.824Z",
       "initialPriorityScore": -41,
-      "finalPriorityScore": -41
+      "finalPriorityScore": -41,
+      "startedAt": "2026-01-13T01:25:22.824Z",
+      "actualWorkTime": 0.28,
+      "_imputed": true
     },
     {
       "id": "aa4ec852-9485-4fe4-b151-bcc0d6906cde",
@@ -4287,7 +4833,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-13T01:45:25.606Z",
       "initialPriorityScore": -41,
-      "finalPriorityScore": -41
+      "finalPriorityScore": -41,
+      "startedAt": "2026-01-13T01:36:25.606Z",
+      "actualWorkTime": 0.15,
+      "_imputed": true
     },
     {
       "id": "54062995-c3bb-4721-b8fe-a61bb631a89f",
@@ -4299,7 +4848,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-13T02:06:23.206Z",
       "initialPriorityScore": 89,
-      "finalPriorityScore": 89
+      "finalPriorityScore": 89,
+      "startedAt": "2026-01-13T01:38:11.206Z",
+      "actualWorkTime": 0.47,
+      "_imputed": true
     },
     {
       "id": "1908c35f-8e63-49cd-a607-dc3e1527e20a",
@@ -4311,7 +4863,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-13T03:22:53.953Z",
       "initialPriorityScore": -50,
-      "finalPriorityScore": -50
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-13T03:19:17.953Z",
+      "actualWorkTime": 0.06,
+      "_imputed": true
     },
     {
       "id": "88715447-52ce-4a6f-a1f7-3d1a00361777",
@@ -4323,7 +4878,10 @@
       "outcome": "completed",
       "completedAt": "2026-01-13T03:26:55.511Z",
       "initialPriorityScore": -52,
-      "finalPriorityScore": -52
+      "finalPriorityScore": -52,
+      "startedAt": "2026-01-13T03:19:07.511Z",
+      "actualWorkTime": 0.13,
+      "_imputed": true
     },
     {
       "id": "f28f9783-215f-4691-81db-e1bfc1c70ec6",
@@ -4335,7 +4893,130 @@
       "outcome": "completed",
       "completedAt": "2026-01-13T08:30:47.267Z",
       "initialPriorityScore": 73,
-      "finalPriorityScore": 73
+      "finalPriorityScore": 73,
+      "startedAt": "2026-01-13T08:28:23.267Z",
+      "actualWorkTime": 0.04,
+      "_imputed": true
+    },
+    {
+      "id": "2ef07f75-6451-4692-868f-b8ae6e0bd83d",
+      "taskId": "48b4d1f2-34e3-4b8f-9827-d6c185725fa4",
+      "actualCompletionTime": 13.08,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-13T19:58:41.073Z",
+      "initialPriorityScore": -41,
+      "finalPriorityScore": -41,
+      "startedAt": "2026-01-13T15:16:05.073Z",
+      "actualWorkTime": 4.71,
+      "_imputed": true
+    },
+    {
+      "id": "58b09ce0-4d7b-42e0-9123-6c45ca2cd7d3",
+      "taskId": "STREAM-PERF-001",
+      "actualCompletionTime": 0.1,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-13T21:09:09.886Z",
+      "initialPriorityScore": -50,
+      "finalPriorityScore": -50,
+      "startedAt": "2026-01-13T21:03:45.886Z",
+      "actualWorkTime": 0.09,
+      "_imputed": true
+    },
+    {
+      "id": "1c65b488-7eb1-4e2c-9e47-3a8d48cb44a6",
+      "taskId": "STREAM-PERF-002",
+      "actualCompletionTime": 0.1,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-13T21:09:10.415Z",
+      "initialPriorityScore": -61,
+      "finalPriorityScore": -61,
+      "startedAt": "2026-01-13T21:04:58.415Z",
+      "actualWorkTime": 0.07,
+      "_imputed": true
+    },
+    {
+      "id": "d88b1912-9bdf-4612-9f85-f37e886a5942",
+      "taskId": "STREAM-PERF-003",
+      "actualCompletionTime": 0.1,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-13T21:09:10.677Z",
+      "initialPriorityScore": -63,
+      "finalPriorityScore": -63,
+      "startedAt": "2026-01-13T21:04:58.677Z",
+      "actualWorkTime": 0.07,
+      "_imputed": true
+    },
+    {
+      "id": "efefd5f4-67a1-494b-bdd9-d1bea98c3d69",
+      "taskId": "STREAM-PERF-004",
+      "actualCompletionTime": 0.1,
+      "wasBlocking": true,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-13T21:09:11.191Z",
+      "initialPriorityScore": -56,
+      "finalPriorityScore": -56,
+      "startedAt": "2026-01-13T21:03:47.191Z",
+      "actualWorkTime": 0.09,
+      "_imputed": true
+    },
+    {
+      "id": "fa188c3f-3d9d-4868-b5b7-9297b8a39b34",
+      "taskId": "STREAM-PERF-005",
+      "actualCompletionTime": 0.1,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-13T21:09:11.594Z",
+      "initialPriorityScore": 73,
+      "finalPriorityScore": 73,
+      "startedAt": "2026-01-13T21:04:59.594Z",
+      "actualWorkTime": 0.07,
+      "_imputed": true
+    },
+    {
+      "id": "f84f6183-3628-4139-9513-ff4703ff20ff",
+      "taskId": "STREAM-PERF-006",
+      "actualCompletionTime": 0.1,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-13T21:09:11.999Z",
+      "initialPriorityScore": 78,
+      "finalPriorityScore": 78,
+      "startedAt": "2026-01-13T21:03:47.999Z",
+      "actualWorkTime": 0.09,
+      "_imputed": true
+    },
+    {
+      "id": "b9dd73b2-2741-43e8-a42f-af88f9ac1441",
+      "taskId": "STREAM-PERF-007",
+      "actualCompletionTime": 0.1,
+      "wasBlocking": false,
+      "userOverrideCount": 0,
+      "contextSwitchCount": 0,
+      "outcome": "completed",
+      "completedAt": "2026-01-13T21:09:12.398Z",
+      "initialPriorityScore": 73,
+      "finalPriorityScore": 73,
+      "startedAt": "2026-01-13T21:05:00.398Z",
+      "actualWorkTime": 0.07,
+      "_imputed": true
     }
   ],
   "heuristicWeights": {

@@ -605,15 +605,24 @@ export class JsonStorage implements StorageInterface {
     const oldScore = existingTask.priorityScore;
     const oldDependencies = existingTask.dependencies || [];
     const oldBlocking = existingTask.blocking;
+    const oldStatus = existingTask.status;
     
     // Get queue position before update
     const sortedBefore = this.taskHeap.toSortedArray();
     const queuePositionBefore = sortedBefore.findIndex(t => t.id === id);
     
+    // V3.3: Capture startedAt when transitioning to in_progress
+    let startedAt = existingTask.startedAt;
+    if (data.status === 'in_progress' && oldStatus !== 'in_progress' && !startedAt) {
+      startedAt = new Date().toISOString();
+      console.log(`📊 V3.3: Task ${id} started work at ${startedAt}`);
+    }
+    
     // Merge updates
     const updatedBase: WeightedTask = {
       ...existingTask,
       ...data,
+      startedAt,  // V3.3: Preserve or set startedAt
       weights: data.weights 
         ? { ...existingTask.weights, ...data.weights }
         : existingTask.weights,
@@ -861,6 +870,16 @@ export class JsonStorage implements StorageInterface {
     const completedTime = new Date(completedAt).getTime();
     const hoursElapsed = (completedTime - createdAt) / (1000 * 60 * 60);
 
+    // V3.3: Calculate actual work time (from startedAt, not createdAt)
+    let actualWorkTime: number | undefined;
+    if (task.startedAt) {
+      const startedTime = new Date(task.startedAt).getTime();
+      actualWorkTime = Math.round(((completedTime - startedTime) / (1000 * 60 * 60)) * 100) / 100;
+      console.log(`📊 V3.3: Task ${taskId} work duration: ${actualWorkTime}h (started: ${task.startedAt})`);
+    } else {
+      console.log(`⚠️ V3.3: Task ${taskId} completed without startedAt - using queue time as fallback`);
+    }
+
     // Count priority changes for this task
     const priorityChangeCount = (this.db.priorityChangeEvents || [])
       .filter(e => e.taskId === taskId).length;
@@ -877,6 +896,9 @@ export class JsonStorage implements StorageInterface {
       // V3: Capture score at completion for training
       initialPriorityScore: task.priorityScore,
       finalPriorityScore: task.priorityScore,
+      // V3.3: Actual work duration tracking
+      startedAt: task.startedAt,
+      actualWorkTime,
     };
 
     this.db.completionRecords.push(record);
@@ -989,6 +1011,7 @@ export class JsonStorage implements StorageInterface {
       selectionAccuracy: number;
       dataQuality: {
         completionsWithScores: number;
+        completionsWithWorkTime: number;  // V3.3: How many completions have reliable work duration
         tasksWithEffort: number;
         tasksWithDependencies: number;
         rebalancesWithSignificantChanges: number;
@@ -999,6 +1022,9 @@ export class JsonStorage implements StorageInterface {
       completions: Array<{
         taskId: string;
         completionTimeHours: number;
+        workTimeHours: number;     // V3.3: Actual work time (startedAt → completedAt)
+        queueTimeHours: number;    // V3.3: Queue time (createdAt → startedAt)
+        hasWorkTimeData: number;   // V3.3: 1 if workTimeHours is reliable, 0 if fallback
         wasBlocking: number;  // 0 or 1
         outcome: string;
         initialScore: number;
@@ -1043,6 +1069,10 @@ export class JsonStorage implements StorageInterface {
     const completionsWithScores = completionRecords.filter(
       r => r.initialPriorityScore !== undefined
     ).length;
+    // V3.3: Track completions with actual work time data
+    const completionsWithWorkTime = completionRecords.filter(
+      r => r.actualWorkTime !== undefined
+    ).length;
     const tasksWithEffort = tasks.filter(t => t.effort).length;
     const tasksWithDependencies = tasks.filter(
       t => t.dependencies && t.dependencies.length > 0
@@ -1057,9 +1087,17 @@ export class JsonStorage implements StorageInterface {
       const task = this.taskMap.get(r.taskId);
       const initialScore = r.initialPriorityScore ?? task?.priorityScore ?? 0;
       const finalScore = r.finalPriorityScore ?? task?.priorityScore ?? 0;
+      // V3.3: Include work time and queue time separately
+      const hasWorkTime = r.actualWorkTime !== undefined;
+      const queueTimeHours = hasWorkTime && r.startedAt
+        ? Math.round(((new Date(r.startedAt).getTime() - new Date(task?.createdAt || r.startedAt).getTime()) / (1000 * 60 * 60)) * 100) / 100
+        : r.actualCompletionTime;  // Fallback: use total time as queue time
       return {
         taskId: r.taskId,
         completionTimeHours: r.actualCompletionTime,
+        workTimeHours: r.actualWorkTime ?? r.actualCompletionTime,  // Fallback: use total time
+        queueTimeHours,
+        hasWorkTimeData: hasWorkTime ? 1 : 0,  // Flag for ML to know if data is reliable
         wasBlocking: r.wasBlocking ? 1 : 0,
         outcome: r.outcome,
         initialScore,
@@ -1112,6 +1150,7 @@ export class JsonStorage implements StorageInterface {
         selectionAccuracy,
         dataQuality: {
           completionsWithScores,
+          completionsWithWorkTime,  // V3.3: Tracks how many have actual work duration
           tasksWithEffort,
           tasksWithDependencies,
           rebalancesWithSignificantChanges,

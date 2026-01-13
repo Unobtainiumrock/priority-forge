@@ -80,6 +80,8 @@ export interface WeightedTask extends Task {
   // V2 additions for better scoring
   deadline?: string;      // ISO date string for time sensitivity
   effort?: Effort;        // Task effort estimate
+  // V3.3: Work duration tracking
+  startedAt?: string;     // ISO timestamp when work actually began (status → in_progress)
 }
 
 export interface DataGap {
@@ -105,7 +107,7 @@ export interface Decision {
 export interface TaskCompletionRecord {
   id: string;
   taskId: string;
-  actualCompletionTime: number;  // Hours from creation to done
+  actualCompletionTime: number;  // Hours from creation to done (queue time + work time)
   wasBlocking: boolean;
   userOverrideCount: number;
   contextSwitchCount: number;
@@ -114,6 +116,9 @@ export interface TaskCompletionRecord {
   // V3 additions
   initialPriorityScore?: number;  // Score when task was created
   finalPriorityScore?: number;    // Score at completion
+  // V3.3: Actual work duration tracking
+  startedAt?: string;             // When work began (status → in_progress)
+  actualWorkTime?: number;        // Hours from startedAt to completedAt (actual work, not queue time)
 }
 
 // V3: Priority change event (for learning from user overrides)
