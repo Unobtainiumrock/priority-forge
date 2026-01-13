@@ -184,17 +184,25 @@ When a task is marked complete.
 ```typescript
 interface TaskCompletionRecord {
   taskId: string;
-  actualCompletionTime: number;  // Hours from creation to done
+  actualCompletionTime: number;  // Hours from creation to done (queue + work)
   wasBlocking: boolean;
   userOverrideCount: number;     // How many times priority was changed
   contextSwitchCount: number;
   outcome: 'completed' | 'cancelled' | 'deferred';
   initialPriorityScore: number;
   finalPriorityScore: number;
+  // V3.3: Work duration tracking
+  startedAt?: string;            // When work actually began (status → in_progress)
+  actualWorkTime?: number;       // Hours from startedAt to completedAt
 }
 ```
 
-**Training Signal:** Actual outcomes for retrospective learning.
+**Training Signals:**
+- `actualCompletionTime`: Total time in system (queue time + work time)
+- `actualWorkTime`: Actual effort duration (V3.3) - critical for effort estimation learning
+- `startedAt`: Enables distinguishing queue time from work time
+
+**V3.3 Requirement:** Agents MUST call `update_task(status: "in_progress")` when starting work to capture `startedAt`. Without this, `actualWorkTime` cannot be computed.
 
 ---
 
@@ -223,14 +231,24 @@ interface TaskCompletionRecord {
 
 **Goal:** Predict how long a task will take to complete.
 
+**V3.3 Enhancement:** With `actualWorkTime` separate from queue time, we can now train two distinct models:
+
+| Model | Target Variable | What It Predicts |
+|-------|-----------------|------------------|
+| Queue Time Model | `actualCompletionTime - actualWorkTime` | How long a task will sit in backlog |
+| Work Time Model | `actualWorkTime` | Actual effort duration |
+
 **Features:**
 - Task properties (effort, priority, blocking status)
 - Queue context (position, queue size)
 - Historical completion times for similar tasks
+- **V3.3 new:** `hasWorkTimeData` flag to weight reliable samples higher
 
 **Model:** XGBoost regressor or simple neural network
 
-**Data Requirements:** ~100+ completion records with accurate timing.
+**Data Requirements:** 
+- ~100+ completion records for queue time prediction
+- ~50+ completion records with `actualWorkTime` (requires `startedAt`) for work time prediction
 
 ### Target 3: Queue Trajectory Learning (Future - V4+)
 
@@ -365,9 +383,16 @@ Model learns: "Given where we are and where we want to be, which task best advan
 | Selection events | 50 | 200 | 500+ |
 | Selection accuracy | N/A | 70%+ | 85%+ |
 | Completion records | 50 | 200 | 500+ |
+| **Completions with `actualWorkTime`** | 10 | 50 | 100+ |
 | Rebalance events | 20 | 100 | 300+ |
 | Tasks with effort | 50% | 80% | 95% |
 | Tasks with dependencies | 20% | 40% | 60% |
+
+### V3.3 Work Duration Quality
+
+The new `actualWorkTime` metric requires agents to call `update_task(status: "in_progress")` before starting work. Track this via `completionsWithWorkTime` in the data quality summary.
+
+**Why it matters:** Without `actualWorkTime`, we can only predict total time (queue + work), which is less actionable than predicting actual effort duration separately.
 
 ### Checking Data Quality
 
@@ -421,7 +446,20 @@ Returns:
   "taskSelectionEvents": [...],
   "queueRebalanceEvents": [...],
   "mlReady": {
-    "completions": [...],
+    "completions": [
+      {
+        "taskId": "TASK-001",
+        "completionTimeHours": 5.2,
+        "workTimeHours": 1.5,          // V3.3: Actual work duration
+        "queueTimeHours": 3.7,         // V3.3: Time in backlog
+        "hasWorkTimeData": 1,          // V3.3: 1 if reliable, 0 if imputed
+        "wasBlocking": 1,
+        "outcome": "completed",
+        "initialScore": 45,
+        "finalScore": 45,
+        "scoreDelta": 0
+      }
+    ],
     "tasks": [...],
     "rebalances": [...]
   },
@@ -430,7 +468,14 @@ Returns:
     "totalPriorityChanges": 12,
     "totalSelections": 89,
     "totalRebalances": 156,
-    "selectionAccuracy": 73.2
+    "selectionAccuracy": 73.2,
+    "dataQuality": {
+      "completionsWithScores": 47,
+      "completionsWithWorkTime": 12,   // V3.3: Tracks reliable work time data
+      "tasksWithEffort": 35,
+      "tasksWithDependencies": 18,
+      "rebalancesWithSignificantChanges": 23
+    }
   }
 }
 ```

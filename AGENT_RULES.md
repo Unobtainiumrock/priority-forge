@@ -19,6 +19,33 @@ Before responding to the user's first message, you MUST:
 - When user mentions bugs, features, TODOs, blockers → call `mcp_priority-forge_create_task`
 - When uncertain → call `mcp_priority-forge_suggest_tasks` to extract potential tasks
 
+## CRITICAL: MARK TASKS "IN PROGRESS" WHEN STARTING WORK
+
+**Before you begin actual work on a task**, you MUST call:
+
+```
+mcp_priority-forge_update_task(id: "TASK-ID", status: "in_progress")
+```
+
+This captures the `startedAt` timestamp - essential for ML to learn actual work duration vs queue time.
+
+```
+WRONG:
+  User: "Let's fix the auth bug"
+  Agent: *starts working on code immediately*
+  Agent: *calls complete_task when done*
+
+RIGHT:
+  User: "Let's fix the auth bug"
+  Agent: *calls update_task(id: "AUTH-001", status: "in_progress")*
+  Agent: *starts working on code*
+  Agent: *calls complete_task when done*
+```
+
+**Why this matters:** Without `startedAt`, the system can only measure time from task creation to completion (queue time + work time mixed). With `startedAt`, we can distinguish:
+- Queue time: `createdAt` → `startedAt` (how long it sat in the backlog)
+- Work time: `startedAt` → `completedAt` (actual work duration)
+
 ## ON COMPLETING WORK
 
 Always call `mcp_priority-forge_complete_task` with:
@@ -37,9 +64,9 @@ Always call `mcp_priority-forge_complete_task` with:
 > **Purpose:** Collect data to train XGBoost for better priority weights.
 > **Target:** 10+ completions, 20+ selections, 5+ priority changes
 
-### CRITICAL: Log Task Selections
+### CRITICAL: Full Task Lifecycle Logging
 
-**Before starting work on ANY task**, call `log_task_selection`:
+**When starting work on ANY task**, do BOTH of these:
 
 ```
 WRONG:
@@ -49,13 +76,19 @@ WRONG:
 RIGHT:
   User: "Let's work on INT-001"
   Agent: *calls mcp_priority-forge_log_task_selection(taskId: "INT-001")*
+         *calls mcp_priority-forge_update_task(id: "INT-001", status: "in_progress")*
          *then starts working on INT-001*
 ```
 
-This logs:
+`log_task_selection` captures:
 - Which task was selected
 - What our top recommendation was
 - Whether user followed our recommendation (training signal!)
+
+`update_task(status: "in_progress")` captures:
+- `startedAt` timestamp → enables `actualWorkTime` calculation
+- Distinguishes queue time from actual work time
+- Critical for learning task duration estimates
 
 ### Fill In Effort Estimates
 
@@ -91,4 +124,5 @@ Periodically call `mcp_priority-forge_get_ml_summary` to check:
 | Completions | 10+ | Outcome signal |
 | Selections | 20+ | User preference signal |
 | Priority Changes | 5+ | Override/correction signal |
+| Completions with `actualWorkTime` | 10+ | Work duration learning (requires `in_progress` status) |
 
