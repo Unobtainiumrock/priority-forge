@@ -5,4 +5,5 @@ dist/
 
 # Data files - each user has their own
 data/progress.json
+data/progress.backup.*.json
 data/PROGRESS_TRACKER.md
