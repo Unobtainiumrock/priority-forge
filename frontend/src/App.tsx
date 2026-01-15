@@ -31,7 +31,6 @@ function App() {
 
   const heuristicWeights = useAppSelector(selectHeuristicWeights);
   const isConnected = !!data && !isError;
-  const hasData = !!data?.priorityQueue?.length;
 
   return (
     <div className="min-h-screen">

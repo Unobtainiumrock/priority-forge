@@ -62,6 +62,7 @@ export function TaskCard({
     blocked: Lock,
     waiting: Hourglass,
     complete: CheckCircle2,
+    cancelled: Circle,
   }[task.status] || Circle;
   void _StatusIcon; // Available for future use
 
