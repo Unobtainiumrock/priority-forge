@@ -8,5 +8,10 @@ data/progress.json
 data/progress.backup.*.json
 data/PROGRESS_TRACKER.md
 
+# V4: Workspace data (each user has their own)
+data/workspaces.json
+data/workspaces/
+data/ml-training.json
+
 # Runtime state (PIDs, logs from setup.sh)
 .pids/

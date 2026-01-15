@@ -27,6 +27,7 @@ HTTP-based MCP server for cross-project task prioritization with heap-based prio
 - [V2 Priority Scoring](#v2-priority-scoring)
   - [Dynamic Rebalancing (V3)](#dynamic-rebalancing-v3)
 - [Data Storage](#data-storage)
+- [Workspaces (V4)](#workspaces-v4)
 - [Scripts](#scripts)
 - [Windows Support](#windows-support)
 - [Environment Variables](#environment-variables)
@@ -410,13 +411,62 @@ All rebalancing events are logged for ML training (see V3 Training Data below)
 
 ## Data Storage
 
-| File | Purpose |
-|------|---------|
-| `data/progress.json` | Source of truth (JSON database) - **gitignored** |
-| `data/progress.json.example` | Example database structure |
-| `data/PROGRESS_TRACKER.md` | Auto-generated markdown - **gitignored** |
+### V4 Architecture (Workspaces + Global ML)
+
+| File | Purpose | Gitignored |
+|------|---------|------------|
+| `data/workspaces.json` | Workspace metadata (list, current) | ✅ Yes |
+| `data/workspaces/{id}/progress.json` | Per-workspace tasks, projects, decisions | ✅ Yes |
+| `data/ml-training.json` | **Global** ML training data (shared across workspaces) | ✅ Yes |
+| `data/progress.json` | Legacy database (migrated on first run) | ✅ Yes |
+| `data/progress.json.example` | Example database structure | ❌ No |
+
+### Why Global ML Data?
+
+ML training data (`completionRecords`, `taskSelectionEvents`, `dragReorderEvents`, etc.) is stored **globally** rather than per-workspace because:
+
+1. **Training thresholds** - We need ~50+ selection events to train; fragmenting across workspaces makes this harder
+2. **User behavior is consistent** - How you prioritize tasks is similar across contexts
+3. **Transfer learning** - Patterns like "blocking tasks should be prioritized" are universal
+
+Each ML event is tagged with `workspaceId` for optional filtering if needed.
 
 > Each user maintains their own task database. The example file shows the expected structure.
+
+## Workspaces (V4)
+
+Workspaces allow you to organize tasks into separate contexts (e.g., "Work" vs "Personal", or different clients).
+
+### MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_workspaces` | List all available workspaces |
+| `get_current_workspace` | Get the currently active workspace |
+| `create_workspace` | Create a new workspace |
+| `switch_workspace` | Switch to a different workspace |
+| `delete_workspace` | Delete a workspace (cannot delete current) |
+| `seed_workspace` | Seed empty workspace with example data |
+
+### REST Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/workspaces` | List all workspaces |
+| `GET` | `/workspaces/current` | Get current workspace |
+| `POST` | `/workspaces` | Create workspace |
+| `POST` | `/workspaces/:id/switch` | Switch to workspace |
+| `DELETE` | `/workspaces/:id` | Delete workspace |
+
+### What's Per-Workspace vs Global
+
+| Per-Workspace | Global (Shared) |
+|---------------|-----------------|
+| Tasks | Heuristic weights |
+| Projects | Completion records |
+| Decisions | Selection events |
+| Data gaps | Drag reorder events |
+| Objectives | Online learner state |
 
 ## Scripts
 
@@ -608,8 +658,9 @@ The system **doesn't learn WHICH tasks should block others** — that semantic u
 | V1 | ✅ Complete | JSON storage, REST API, MCP endpoint, static P0-P3 |
 | V2 | ✅ Complete | Heap-based priority queue with weighted scoring |
 | V2.1 | ✅ Complete | Universal coverage via MCP Resources + Prompts |
-| V3 | ✅ Current | Dynamic rebalancing + ML training data collection |
-| V4 | 🔲 Planned | Goal-conditioned learning with objectives |
+| V3 | ✅ Complete | Dynamic rebalancing + ML training data collection |
+| V4 | ✅ Current | Workspaces + global ML training data architecture |
+| V5 | 🔲 Planned | Goal-conditioned learning with objectives |
 
 ## License
 
