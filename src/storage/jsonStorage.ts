@@ -31,6 +31,8 @@ import {
   DragReorderEvent,
   OnlineLearnerState,
   ProgressDatabase,
+  GlobalMLDatabase,
+  DEFAULT_GLOBAL_ML_DATABASE,
   CreateProjectDTO,
   UpdateProjectDTO,
   CreateTaskDTO,
@@ -57,6 +59,7 @@ import { MinHeap, toWeightedTask, recalculateAllScores, getDefaultWeights } from
 const DATA_DIR = path.join(__dirname, '../../data');
 const WORKSPACES_DIR = path.join(DATA_DIR, 'workspaces');
 const WORKSPACES_META_FILE = path.join(DATA_DIR, 'workspaces.json');
+const GLOBAL_ML_FILE = path.join(DATA_DIR, 'ml-training.json'); // V4: Global ML training data
 const LEGACY_DB_FILE = path.join(DATA_DIR, 'progress.json'); // For migration
 
 function getEmptyDatabase(): ProgressDatabase {
@@ -84,6 +87,7 @@ const contextSwitchCounts: Map<string, number> = new Map();
 
 export class JsonStorage implements StorageInterface {
   private db: ProgressDatabase;
+  private globalML: GlobalMLDatabase;  // V4: Global ML training data (shared across workspaces)
   private currentWorkspaceId: string | null = null;
   
   /**
@@ -96,8 +100,10 @@ export class JsonStorage implements StorageInterface {
   private onWrite: (() => Promise<void>) | null = null;
 
   constructor() {
-    // Initialize workspace system
+    // Initialize workspace system (includes global ML migration)
     this.initializeWorkspaces();
+    // Load global ML training data
+    this.globalML = this.loadGlobalML();
     // Load current workspace
     this.currentWorkspaceId = this.loadCurrentWorkspaceId();
     this.db = this.load();
@@ -121,7 +127,43 @@ export class JsonStorage implements StorageInterface {
       const workspaceDir = path.join(WORKSPACES_DIR, defaultWorkspaceId);
       fs.mkdirSync(workspaceDir, { recursive: true });
       
-      // Copy legacy database to workspace
+      // Read legacy database
+      const legacyDb = JSON.parse(fs.readFileSync(LEGACY_DB_FILE, 'utf-8')) as ProgressDatabase;
+      
+      // Extract ML data to global file (V4: Preserve training continuity)
+      if (!fs.existsSync(GLOBAL_ML_FILE)) {
+        console.log('🧠 Extracting ML training data to global file...');
+        const globalML: GlobalMLDatabase = {
+          version: 'v1',
+          lastUpdated: new Date().toISOString(),
+          heuristicWeights: legacyDb.heuristicWeights || { ...DEFAULT_HEURISTIC_WEIGHTS },
+          completionRecords: (legacyDb.completionRecords || []).map(r => ({
+            ...r,
+            workspaceId: defaultWorkspaceId,  // Tag with source workspace
+          })),
+          priorityChangeEvents: (legacyDb.priorityChangeEvents || []).map(e => ({
+            ...e,
+            workspaceId: defaultWorkspaceId,
+          })),
+          taskSelectionEvents: (legacyDb.taskSelectionEvents || []).map(e => ({
+            ...e,
+            workspaceId: defaultWorkspaceId,
+          })),
+          queueRebalanceEvents: (legacyDb.queueRebalanceEvents || []).map(e => ({
+            ...e,
+            workspaceId: defaultWorkspaceId,
+          })),
+          dragReorderEvents: (legacyDb.dragReorderEvents || []).map(e => ({
+            ...e,
+            workspaceId: defaultWorkspaceId,
+          })),
+          onlineLearnerState: legacyDb.onlineLearnerState || { ...DEFAULT_ONLINE_LEARNER_STATE },
+        };
+        fs.writeFileSync(GLOBAL_ML_FILE, JSON.stringify(globalML, null, 2));
+        console.log(`✅ Migrated ${globalML.completionRecords.length} completion records, ${globalML.taskSelectionEvents.length} selection events to global ML file`);
+      }
+      
+      // Copy legacy database to workspace (workspace-scoped data only)
       const workspaceDbFile = path.join(workspaceDir, 'progress.json');
       fs.copyFileSync(LEGACY_DB_FILE, workspaceDbFile);
       
@@ -192,6 +234,32 @@ export class JsonStorage implements StorageInterface {
    */
   private saveWorkspaceMetadata(metadata: WorkspaceMetadata): void {
     fs.writeFileSync(WORKSPACES_META_FILE, JSON.stringify(metadata, null, 2));
+  }
+
+  /**
+   * V4: Load global ML training data
+   * This data is shared across ALL workspaces to ensure training continuity
+   */
+  private loadGlobalML(): GlobalMLDatabase {
+    if (!fs.existsSync(GLOBAL_ML_FILE)) {
+      const empty: GlobalMLDatabase = { ...DEFAULT_GLOBAL_ML_DATABASE };
+      fs.writeFileSync(GLOBAL_ML_FILE, JSON.stringify(empty, null, 2));
+      return empty;
+    }
+    try {
+      return JSON.parse(fs.readFileSync(GLOBAL_ML_FILE, 'utf-8')) as GlobalMLDatabase;
+    } catch {
+      console.error('Failed to load global ML data, using defaults');
+      return { ...DEFAULT_GLOBAL_ML_DATABASE };
+    }
+  }
+
+  /**
+   * V4: Save global ML training data
+   */
+  private saveGlobalML(): void {
+    this.globalML.lastUpdated = new Date().toISOString();
+    fs.writeFileSync(GLOBAL_ML_FILE, JSON.stringify(this.globalML, null, 2));
   }
 
   /**
@@ -307,12 +375,12 @@ export class JsonStorage implements StorageInterface {
       significantChanges,
       topTasksBefore: topBefore,
       topTasksAfter: topAfter,
+      // V4: Tag with workspace for ML filtering
+      workspaceId: this.currentWorkspaceId || undefined,
     };
 
-    if (!this.db.queueRebalanceEvents) {
-      this.db.queueRebalanceEvents = [];
-    }
-    this.db.queueRebalanceEvents.push(event);
+    // V4: Write to global ML file
+    this.globalML.queueRebalanceEvents.push(event);
     
     console.log(`📊 V3: Logged rebalance event (${trigger}): ${significantChanges.length} significant changes`);
   }
@@ -685,7 +753,7 @@ export class JsonStorage implements StorageInterface {
         weights: data.weights ? { ...getDefaultWeights(), ...data.weights } : undefined,
       } as WeightedTask,
       this.getTaskArray(),
-      this.db.heuristicWeights
+      this.globalML.heuristicWeights
     );
 
     // Add to Map (guaranteed unique due to check above)
@@ -694,7 +762,7 @@ export class JsonStorage implements StorageInterface {
     // IMPORTANT: Recalculate ALL task weights since dependencies/blocking may have changed
     // e.g., if new task depends on existing task, that task's blockingCount increases
     if (data.dependencies?.length || data.blocking) {
-      const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+      const recalculated = recalculateAllScores(this.getTaskArray(), this.globalML.heuristicWeights);
       // Update Map with recalculated tasks
       for (const task of recalculated) {
         this.taskMap.set(task.id, task);
@@ -759,7 +827,7 @@ export class JsonStorage implements StorageInterface {
     // Recalculate scores
     if (dependenciesChanged) {
       // Full recalculation needed - dependency graph changed
-      const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+      const recalculated = recalculateAllScores(this.getTaskArray(), this.globalML.heuristicWeights);
       for (const task of recalculated) {
         this.taskMap.set(task.id, task);
       }
@@ -772,7 +840,7 @@ export class JsonStorage implements StorageInterface {
       const updatedTask = toWeightedTask(
         updatedBase,
         this.getTaskArray(),
-        this.db.heuristicWeights
+        this.globalML.heuristicWeights
       );
       this.taskMap.set(id, updatedTask);
       this.taskHeap.update(id, updatedTask);
@@ -795,12 +863,13 @@ export class JsonStorage implements StorageInterface {
         timestamp: new Date().toISOString(),
         queuePositionBefore,
         queuePositionAfter,
+        // V4: Tag with workspace for ML filtering
+        workspaceId: this.currentWorkspaceId || undefined,
       };
       
-      if (!this.db.priorityChangeEvents) {
-        this.db.priorityChangeEvents = [];
-      }
-      this.db.priorityChangeEvents.push(changeEvent);
+      // V4: Write to global ML file
+      this.globalML.priorityChangeEvents.push(changeEvent);
+      this.saveGlobalML();
       
       console.log(`📊 V3: Logged priority change for ${id}: ${oldPriority} → ${data.priority}`);
     }
@@ -826,7 +895,7 @@ export class JsonStorage implements StorageInterface {
     
     // Recalculate if deleted task was blocking others
     if (hadDependents || deletedTask.blocking || deletedTask.dependencies?.length) {
-      const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+      const recalculated = recalculateAllScores(this.getTaskArray(), this.globalML.heuristicWeights);
       this.taskMap.clear();
       for (const task of recalculated) {
         this.taskMap.set(task.id, task);
@@ -851,7 +920,7 @@ export class JsonStorage implements StorageInterface {
     // Snapshot before state for rebalance logging
     const tasksBefore = this.getTaskArray();
     
-    const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+    const recalculated = recalculateAllScores(this.getTaskArray(), this.globalML.heuristicWeights);
     this.taskMap.clear();
     for (const task of recalculated) {
       this.taskMap.set(task.id, task);
@@ -872,13 +941,13 @@ export class JsonStorage implements StorageInterface {
     // Snapshot before state for rebalance logging
     const tasksBefore = this.getTaskArray();
     
-    this.db.heuristicWeights = {
-      ...this.db.heuristicWeights,
+    this.globalML.heuristicWeights = {
+      ...this.globalML.heuristicWeights,
       ...weights,
     };
     
     // Recalculate all task scores with new weights
-    const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+    const recalculated = recalculateAllScores(this.getTaskArray(), this.globalML.heuristicWeights);
     this.taskMap.clear();
     for (const task of recalculated) {
       this.taskMap.set(task.id, task);
@@ -888,16 +957,19 @@ export class JsonStorage implements StorageInterface {
     // Log rebalance event (weights changed always logs)
     this.logRebalanceEvent('weights_changed', tasksBefore, this.getTaskArray());
     
+    // V4: Save global ML data (weights are global)
+    this.saveGlobalML();
     await this.save();
     
-    return this.db.heuristicWeights;
+    return this.globalML.heuristicWeights;
   }
 
   /**
    * V2: Get current heuristic weights
+   * V4: Now from global ML data
    */
   async getHeuristicWeights(): Promise<HeuristicWeights> {
-    return this.db.heuristicWeights;
+    return this.globalML.heuristicWeights;
   }
 
   // Data Gaps
@@ -999,8 +1071,8 @@ export class JsonStorage implements StorageInterface {
       console.log(`⚠️ V3.3: Task ${taskId} completed without startedAt - using queue time as fallback`);
     }
 
-    // Count priority changes for this task
-    const priorityChangeCount = (this.db.priorityChangeEvents || [])
+    // Count priority changes for this task (from global ML data)
+    const priorityChangeCount = this.globalML.priorityChangeEvents
       .filter(e => e.taskId === taskId).length;
 
     const record: TaskCompletionRecord = {
@@ -1018,9 +1090,12 @@ export class JsonStorage implements StorageInterface {
       // V3.3: Actual work duration tracking
       startedAt: task.startedAt,
       actualWorkTime,
+      // V4: Tag with workspace for ML filtering
+      workspaceId: this.currentWorkspaceId || undefined,
     };
 
-    this.db.completionRecords.push(record);
+    // V4: Write to global ML file (not workspace-scoped)
+    this.globalML.completionRecords.push(record);
     contextSwitchCounts.delete(taskId);
 
     // Update task status in Map
@@ -1034,7 +1109,7 @@ export class JsonStorage implements StorageInterface {
     // Recalculate all tasks - completing a task changes dependency graph
     // Tasks that depended on this one now have lower dependencyDepth
     // Tasks blocked by this one now have different blocking relationships
-    const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+    const recalculated = recalculateAllScores(this.getTaskArray(), this.globalML.heuristicWeights);
     this.taskMap.clear();
     for (const t of recalculated) {
       this.taskMap.set(t.id, t);
@@ -1044,12 +1119,15 @@ export class JsonStorage implements StorageInterface {
     // Log rebalance event
     this.logRebalanceEvent('task_completed', tasksBefore, this.getTaskArray(), taskId);
     
+    // V4: Save both workspace data and global ML data
+    this.saveGlobalML();
     await this.save();
     return record;
   }
 
   async getCompletionRecords(): Promise<TaskCompletionRecord[]> {
-    return this.db.completionRecords;
+    // V4: Return from global ML data
+    return this.globalML.completionRecords;
   }
 
   // ========== V3: ML Training Data Methods ==========
@@ -1076,38 +1154,42 @@ export class JsonStorage implements StorageInterface {
       queueSize: sorted.length,
       wasTopSelected: selectedTaskId === topTask?.id,
       timestamp: new Date().toISOString(),
+      // V4: Tag with workspace for ML filtering
+      workspaceId: this.currentWorkspaceId || undefined,
     };
 
-    if (!this.db.taskSelectionEvents) {
-      this.db.taskSelectionEvents = [];
-    }
-    this.db.taskSelectionEvents.push(event);
+    // V4: Write to global ML file
+    this.globalML.taskSelectionEvents.push(event);
     
     console.log(`📊 V3: Logged task selection: ${selectedTaskId} (rank ${selectedRank + 1}/${sorted.length}, was_top: ${event.wasTopSelected})`);
     
-    await this.save();
+    // V4: Save global ML data
+    this.saveGlobalML();
     return event;
   }
 
   /**
    * V3: Get all priority change events
+   * V4: Now from global ML data
    */
   async getPriorityChangeEvents(): Promise<PriorityChangeEvent[]> {
-    return this.db.priorityChangeEvents || [];
+    return this.globalML.priorityChangeEvents;
   }
 
   /**
    * V3: Get all task selection events
+   * V4: Now from global ML data
    */
   async getTaskSelectionEvents(): Promise<TaskSelectionEvent[]> {
-    return this.db.taskSelectionEvents || [];
+    return this.globalML.taskSelectionEvents;
   }
 
   /**
    * V3: Get all queue rebalance events
+   * V4: Now from global ML data
    */
   async getQueueRebalanceEvents(): Promise<QueueRebalanceEvent[]> {
-    return this.db.queueRebalanceEvents || [];
+    return this.globalML.queueRebalanceEvents;
   }
 
   /**
@@ -1173,10 +1255,11 @@ export class JsonStorage implements StorageInterface {
       }>;
     };
   }> {
-    const completionRecords = this.db.completionRecords;
-    const priorityChangeEvents = this.db.priorityChangeEvents || [];
-    const taskSelectionEvents = this.db.taskSelectionEvents || [];
-    const queueRebalanceEvents = this.db.queueRebalanceEvents || [];
+    // V4: Read from global ML data
+    const completionRecords = this.globalML.completionRecords;
+    const priorityChangeEvents = this.globalML.priorityChangeEvents;
+    const taskSelectionEvents = this.globalML.taskSelectionEvents;
+    const queueRebalanceEvents = this.globalML.queueRebalanceEvents;
     const tasks = this.getTaskArray();
     
     const topSelections = taskSelectionEvents.filter(e => e.wasTopSelected).length;
@@ -1260,7 +1343,7 @@ export class JsonStorage implements StorageInterface {
       taskSelectionEvents,
       queueRebalanceEvents,
       tasks,
-      heuristicWeights: this.db.heuristicWeights,
+      heuristicWeights: this.globalML.heuristicWeights,
       summary: {
         totalCompletions: completionRecords.length,
         totalPriorityChanges: priorityChangeEvents.length,
@@ -1339,9 +1422,9 @@ export class JsonStorage implements StorageInterface {
       }
     }
     
-    // Compute weight update if online learning is enabled
+    // Compute weight update if online learning is enabled (from global ML state)
     let appliedWeightDelta: Partial<HeuristicWeights> | undefined;
-    const learnerState = this.db.onlineLearnerState || { ...DEFAULT_ONLINE_LEARNER_STATE };
+    const learnerState = this.globalML.onlineLearnerState;
     
     if (learnerState.enabled && implicitPreferences.length > 0) {
       appliedWeightDelta = await this.computeOnlineWeightUpdate(
@@ -1372,25 +1455,21 @@ export class JsonStorage implements StorageInterface {
       appliedWeightDelta,
       queueSize: sortedTasks.length,
       tasksPassedIds,
+      // V4: Tag with workspace for ML filtering
+      workspaceId: this.currentWorkspaceId || undefined,
     };
     
-    // Store the event
-    if (!this.db.dragReorderEvents) {
-      this.db.dragReorderEvents = [];
-    }
-    this.db.dragReorderEvents.push(event);
+    // V4: Store in global ML file
+    this.globalML.dragReorderEvents.push(event);
     
-    // Update learner state
-    if (!this.db.onlineLearnerState) {
-      this.db.onlineLearnerState = { ...DEFAULT_ONLINE_LEARNER_STATE };
-    }
-    this.db.onlineLearnerState.totalUpdates++;
-    this.db.onlineLearnerState.lastUpdateTimestamp = new Date().toISOString();
-    this.db.onlineLearnerState.totalPairs += implicitPreferences.length;
+    // Update learner state in global ML
+    this.globalML.onlineLearnerState.totalUpdates++;
+    this.globalML.onlineLearnerState.lastUpdateTimestamp = new Date().toISOString();
+    this.globalML.onlineLearnerState.totalPairs += implicitPreferences.length;
     
     // Count correct predictions (where heuristics agreed with user)
     const correctCount = implicitPreferences.filter(p => p.scoreDiff < 0).length;
-    this.db.onlineLearnerState.correctPredictions += correctCount;
+    this.globalML.onlineLearnerState.correctPredictions += correctCount;
     
     console.log(`📊 V3.2: Logged drag reorder: ${taskId} ${fromRank} → ${toRank} (${direction})`);
     console.log(`  ↳ Generated ${implicitPreferences.length} pairwise preferences`);
@@ -1398,6 +1477,8 @@ export class JsonStorage implements StorageInterface {
       console.log(`  ↳ Applied weight update:`, appliedWeightDelta);
     }
     
+    // V4: Save global ML data
+    this.saveGlobalML();
     await this.save();
     return event;
   }
@@ -1489,28 +1570,28 @@ export class JsonStorage implements StorageInterface {
     // Apply to weights (with min/max bounds)
     const bound = (val: number) => Math.max(minWeight, Math.min(maxWeight, val));
     const newWeights: HeuristicWeights = {
-      blocking: bound(this.db.heuristicWeights.blocking + (weightDelta.blocking || 0)),
-      crossProject: bound(this.db.heuristicWeights.crossProject + (weightDelta.crossProject || 0)),
-      timeSensitive: bound(this.db.heuristicWeights.timeSensitive + (weightDelta.timeSensitive || 0)),
-      effortValue: bound(this.db.heuristicWeights.effortValue + (weightDelta.effortValue || 0)),
-      dependency: bound(this.db.heuristicWeights.dependency + (weightDelta.dependency || 0)),
+      blocking: bound(this.globalML.heuristicWeights.blocking + (weightDelta.blocking || 0)),
+      crossProject: bound(this.globalML.heuristicWeights.crossProject + (weightDelta.crossProject || 0)),
+      timeSensitive: bound(this.globalML.heuristicWeights.timeSensitive + (weightDelta.timeSensitive || 0)),
+      effortValue: bound(this.globalML.heuristicWeights.effortValue + (weightDelta.effortValue || 0)),
+      dependency: bound(this.globalML.heuristicWeights.dependency + (weightDelta.dependency || 0)),
     };
     
     // Only update if there's meaningful change
     const hasChange = Object.values(weightDelta).some(v => v && Math.abs(v) > 0.001);
     if (hasChange) {
-      this.db.heuristicWeights = newWeights;
+      this.globalML.heuristicWeights = newWeights;
       
       // Recalculate all task scores with new weights
-      const recalculated = recalculateAllScores(this.getTaskArray(), this.db.heuristicWeights);
+      const recalculated = recalculateAllScores(this.getTaskArray(), this.globalML.heuristicWeights);
       this.taskMap.clear();
       for (const task of recalculated) {
         this.taskMap.set(task.id, task);
       }
       this.rebuildHeap();
       
-      // Track cumulative loss
-      this.db.onlineLearnerState!.cumulativeLoss += totalLoss;
+      // Track cumulative loss in global ML state
+      this.globalML.onlineLearnerState.cumulativeLoss += totalLoss;
     }
     
     return weightDelta;
@@ -1518,38 +1599,38 @@ export class JsonStorage implements StorageInterface {
 
   /**
    * V3.2: Get current online learner state
+   * V4: Now from global ML data
    */
   async getOnlineLearnerState(): Promise<OnlineLearnerState> {
-    return this.db.onlineLearnerState || { ...DEFAULT_ONLINE_LEARNER_STATE };
+    return this.globalML.onlineLearnerState;
   }
 
   /**
    * V3.2: Update online learner configuration
+   * V4: Now stored in global ML data
    */
   async updateOnlineLearnerConfig(config: UpdateOnlineLearnerDTO): Promise<OnlineLearnerState> {
-    if (!this.db.onlineLearnerState) {
-      this.db.onlineLearnerState = { ...DEFAULT_ONLINE_LEARNER_STATE };
-    }
-    
-    this.db.onlineLearnerState = {
-      ...this.db.onlineLearnerState,
+    this.globalML.onlineLearnerState = {
+      ...this.globalML.onlineLearnerState,
       ...config,
     };
     
-    await this.save();
+    this.saveGlobalML();
     console.log('📊 V3.2: Updated online learner config:', config);
-    return this.db.onlineLearnerState;
+    return this.globalML.onlineLearnerState;
   }
 
   /**
    * V3.2: Get all drag reorder events
+   * V4: Now from global ML data
    */
   async getDragReorderEvents(): Promise<DragReorderEvent[]> {
-    return this.db.dragReorderEvents || [];
+    return this.globalML.dragReorderEvents;
   }
 
   /**
    * V3.2: Get online learning accuracy metrics
+   * V4: Now from global ML data
    */
   async getOnlineLearnerMetrics(): Promise<{
     totalUpdates: number;
@@ -1561,7 +1642,7 @@ export class JsonStorage implements StorageInterface {
     learningRate: number;
     enabled: boolean;
   }> {
-    const state = this.db.onlineLearnerState || { ...DEFAULT_ONLINE_LEARNER_STATE };
+    const state = this.globalML.onlineLearnerState;
     const accuracy = state.totalPairs > 0 
       ? (state.correctPredictions / state.totalPairs) * 100 
       : 0;
@@ -1572,7 +1653,7 @@ export class JsonStorage implements StorageInterface {
       correctPredictions: state.correctPredictions,
       accuracy: Math.round(accuracy * 100) / 100,
       cumulativeLoss: Math.round(state.cumulativeLoss * 100) / 100,
-      currentWeights: this.db.heuristicWeights,
+      currentWeights: this.globalML.heuristicWeights,
       learningRate: state.learningRate,
       enabled: state.enabled,
     };
