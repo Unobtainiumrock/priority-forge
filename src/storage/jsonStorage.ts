@@ -18,6 +18,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import chokidar, { FSWatcher } from 'chokidar';
 import {
   Project,
   Task,
@@ -98,6 +99,14 @@ export class JsonStorage implements StorageInterface {
   
   private taskHeap: MinHeap<WeightedTask>;
   private onWrite: (() => Promise<void>) | null = null;
+  
+  /**
+   * V4.1: File watcher for external modification detection
+   * Uses chokidar for reliable cross-platform watching (handles atomic file ops like mv)
+   */
+  private fileWatcher: FSWatcher | null = null;
+  private lastWriteTime: number = 0;  // Track our own writes to avoid reload loops
+  private static readonly WRITE_GRACE_PERIOD_MS = 1500;  // Ignore file changes within 1.5s of our write
 
   constructor() {
     // Initialize workspace system (includes global ML migration)
@@ -110,6 +119,81 @@ export class JsonStorage implements StorageInterface {
     // Initialize Map from loaded tasks (with deduplication)
     this.initializeTaskMap();
     this.taskHeap = new MinHeap(this.getTaskArray());
+    // Start watching for external file changes
+    this.startFileWatcher();
+  }
+  
+  /**
+   * V4.1: Start watching the current workspace's progress.json for external changes
+   * Uses chokidar which properly handles:
+   * - Atomic file replacements (mv, rsync, etc.)
+   * - FSEvents quirks on macOS
+   * - Recursive directory watching
+   */
+  private startFileWatcher(): void {
+    this.stopFileWatcher();  // Clean up any existing watcher
+    
+    const dbFile = this.getWorkspaceDbFile();
+    if (!fs.existsSync(dbFile)) return;
+    
+    try {
+      this.fileWatcher = chokidar.watch(dbFile, {
+        persistent: true,
+        awaitWriteFinish: {
+          stabilityThreshold: 300,  // Wait 300ms for write to finish
+          pollInterval: 100
+        },
+        ignoreInitial: true,  // Don't fire on initial add
+        usePolling: true,     // Use polling for reliability with atomic replacements
+        interval: 1000,       // Poll every 1 second (balance between responsiveness and CPU)
+        atomic: true          // Handle atomic writes (mv, etc.)
+      });
+      
+      this.fileWatcher.on('change', (changedPath) => {
+        // Check if this was our own write (within grace period)
+        const now = Date.now();
+        const timeSinceWrite = now - this.lastWriteTime;
+        if (timeSinceWrite < JsonStorage.WRITE_GRACE_PERIOD_MS) {
+          console.log(`👁️  Ignoring change (own write ${timeSinceWrite}ms ago)`);
+          return;  // Ignore - this was our own write
+        }
+        
+        console.log(`📂 External file change detected (${timeSinceWrite}ms since last write), reloading...`);
+        this.reloadFromDisk();
+      });
+      
+      this.fileWatcher.on('error', (err) => {
+        console.warn('⚠️  File watcher error:', err);
+      });
+      
+      console.log('👁️  File watcher active for external changes (chokidar)');
+    } catch (err) {
+      console.warn('⚠️  Could not start file watcher:', err);
+    }
+  }
+  
+  /**
+   * V4.1: Stop the file watcher (called on workspace switch or shutdown)
+   */
+  private stopFileWatcher(): void {
+    if (this.fileWatcher) {
+      this.fileWatcher.close();
+      this.fileWatcher = null;
+    }
+  }
+  
+  /**
+   * V4.1: Reload database from disk (called when external changes detected)
+   */
+  private reloadFromDisk(): void {
+    try {
+      this.db = this.load();
+      this.initializeTaskMap();
+      this.taskHeap = new MinHeap(this.getTaskArray());
+      console.log(`✅ Database reloaded: ${this.taskMap.size} tasks`);
+    } catch (err) {
+      console.error('❌ Failed to reload database:', err);
+    }
   }
   
   /**
@@ -200,9 +284,11 @@ export class JsonStorage implements StorageInterface {
   
   /**
    * V4: Get workspace database file path
+   * V4.1: Made workspaceId optional - defaults to current workspace
    */
-  private getWorkspaceDbFile(workspaceId: string): string {
-    const workspaceDir = path.join(WORKSPACES_DIR, workspaceId);
+  private getWorkspaceDbFile(workspaceId?: string): string {
+    const effectiveId = workspaceId || this.currentWorkspaceId || 'default';
+    const workspaceDir = path.join(WORKSPACES_DIR, effectiveId);
     if (!fs.existsSync(workspaceDir)) {
       fs.mkdirSync(workspaceDir, { recursive: true });
     }
@@ -590,6 +676,8 @@ export class JsonStorage implements StorageInterface {
       ? this.getWorkspaceDbFile(this.currentWorkspaceId)
       : LEGACY_DB_FILE; // Fallback
     
+    // V4.1: Track our write time to avoid reload loops from file watcher
+    this.lastWriteTime = Date.now();
     fs.writeFileSync(dbFile, JSON.stringify(this.db, null, 2));
     if (this.onWrite) {
       await this.onWrite();
@@ -1815,6 +1903,9 @@ export class JsonStorage implements StorageInterface {
     this.db = this.load();
     this.initializeTaskMap();
     this.taskHeap = new MinHeap(this.getTaskArray());
+    
+    // V4.1: Restart file watcher for new workspace's file
+    this.startFileWatcher();
     
     console.log(`📁 V4: Switched to workspace "${workspace.name}" (${workspaceId})`);
   }
