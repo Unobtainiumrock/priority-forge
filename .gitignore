@@ -7,3 +7,6 @@ dist/
 data/progress.json
 data/progress.backup.*.json
 data/PROGRESS_TRACKER.md
+
+# Runtime state (PIDs, logs from setup.sh)
+.pids/
