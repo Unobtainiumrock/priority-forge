@@ -92,7 +92,7 @@ export function StatsBar() {
                 Top Priority
               </span>
               <span className="text-sm font-medium text-surface-100">
-                [{topPriority.id}] {topPriority.task}
+                {topPriority.task}
               </span>
             </div>
             <div className="text-right">

@@ -420,3 +420,22 @@ export interface UpdateOnlineLearnerDTO {
   minWeight?: number;
   maxWeight?: number;
 }
+
+// V4: Workspace Management
+export interface Workspace {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkspaceMetadata {
+  workspaces: Workspace[];
+  currentWorkspaceId: string | null;
+}
+
+export interface CreateWorkspaceDTO {
+  name: string;
+  description?: string;
+}

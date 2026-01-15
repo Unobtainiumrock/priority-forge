@@ -47,12 +47,17 @@ import {
   UpdateOnlineLearnerDTO,
   TaskWeights,
   Effort,
+  Workspace,
+  CreateWorkspaceDTO,
+  WorkspaceMetadata,
 } from '../types/schema';
 import { StorageInterface } from './interface';
 import { MinHeap, toWeightedTask, recalculateAllScores, getDefaultWeights } from '../heap';
 
 const DATA_DIR = path.join(__dirname, '../../data');
-const DB_FILE = path.join(DATA_DIR, 'progress.json');
+const WORKSPACES_DIR = path.join(DATA_DIR, 'workspaces');
+const WORKSPACES_META_FILE = path.join(DATA_DIR, 'workspaces.json');
+const LEGACY_DB_FILE = path.join(DATA_DIR, 'progress.json'); // For migration
 
 function getEmptyDatabase(): ProgressDatabase {
   return {
@@ -79,6 +84,7 @@ const contextSwitchCounts: Map<string, number> = new Map();
 
 export class JsonStorage implements StorageInterface {
   private db: ProgressDatabase;
+  private currentWorkspaceId: string | null = null;
   
   /**
    * V3.1: Map-based task storage for O(1) lookups and guaranteed uniqueness
@@ -90,10 +96,102 @@ export class JsonStorage implements StorageInterface {
   private onWrite: (() => Promise<void>) | null = null;
 
   constructor() {
+    // Initialize workspace system
+    this.initializeWorkspaces();
+    // Load current workspace
+    this.currentWorkspaceId = this.loadCurrentWorkspaceId();
     this.db = this.load();
     // Initialize Map from loaded tasks (with deduplication)
     this.initializeTaskMap();
     this.taskHeap = new MinHeap(this.getTaskArray());
+  }
+  
+  /**
+   * V4: Initialize workspace directories and metadata
+   */
+  private initializeWorkspaces(): void {
+    if (!fs.existsSync(WORKSPACES_DIR)) {
+      fs.mkdirSync(WORKSPACES_DIR, { recursive: true });
+    }
+    
+    // Migrate legacy database to default workspace if it exists
+    if (fs.existsSync(LEGACY_DB_FILE) && !fs.existsSync(WORKSPACES_META_FILE)) {
+      console.log('🔄 Migrating legacy database to default workspace...');
+      const defaultWorkspaceId = 'default';
+      const workspaceDir = path.join(WORKSPACES_DIR, defaultWorkspaceId);
+      fs.mkdirSync(workspaceDir, { recursive: true });
+      
+      // Copy legacy database to workspace
+      const workspaceDbFile = path.join(workspaceDir, 'progress.json');
+      fs.copyFileSync(LEGACY_DB_FILE, workspaceDbFile);
+      
+      // Create workspace metadata
+      const metadata: WorkspaceMetadata = {
+        workspaces: [{
+          id: defaultWorkspaceId,
+          name: 'Default',
+          description: 'Migrated from legacy database',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }],
+        currentWorkspaceId: defaultWorkspaceId,
+      };
+      fs.writeFileSync(WORKSPACES_META_FILE, JSON.stringify(metadata, null, 2));
+      console.log('✅ Migration complete! Legacy database migrated to default workspace.');
+    }
+  }
+  
+  /**
+   * V4: Load current workspace ID from metadata
+   */
+  private loadCurrentWorkspaceId(): string | null {
+    if (!fs.existsSync(WORKSPACES_META_FILE)) {
+      return null;
+    }
+    try {
+      const metadata = JSON.parse(fs.readFileSync(WORKSPACES_META_FILE, 'utf-8')) as WorkspaceMetadata;
+      return metadata.currentWorkspaceId || null;
+    } catch {
+      return null;
+    }
+  }
+  
+  /**
+   * V4: Get workspace database file path
+   */
+  private getWorkspaceDbFile(workspaceId: string): string {
+    const workspaceDir = path.join(WORKSPACES_DIR, workspaceId);
+    if (!fs.existsSync(workspaceDir)) {
+      fs.mkdirSync(workspaceDir, { recursive: true });
+    }
+    return path.join(workspaceDir, 'progress.json');
+  }
+  
+  /**
+   * V4: Load workspace metadata
+   */
+  private loadWorkspaceMetadata(): WorkspaceMetadata {
+    if (!fs.existsSync(WORKSPACES_META_FILE)) {
+      return {
+        workspaces: [],
+        currentWorkspaceId: null,
+      };
+    }
+    try {
+      return JSON.parse(fs.readFileSync(WORKSPACES_META_FILE, 'utf-8')) as WorkspaceMetadata;
+    } catch {
+      return {
+        workspaces: [],
+        currentWorkspaceId: null,
+      };
+    }
+  }
+  
+  /**
+   * V4: Save workspace metadata
+   */
+  private saveWorkspaceMetadata(metadata: WorkspaceMetadata): void {
+    fs.writeFileSync(WORKSPACES_META_FILE, JSON.stringify(metadata, null, 2));
   }
 
   /**
@@ -223,12 +321,18 @@ export class JsonStorage implements StorageInterface {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    if (!fs.existsSync(DB_FILE)) {
+    
+    // V4: Use workspace-specific database file
+    const dbFile = this.currentWorkspaceId 
+      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
+      : LEGACY_DB_FILE; // Fallback to legacy for migration
+    
+    if (!fs.existsSync(dbFile)) {
       const empty = getEmptyDatabase();
-      fs.writeFileSync(DB_FILE, JSON.stringify(empty, null, 2));
+      fs.writeFileSync(dbFile, JSON.stringify(empty, null, 2));
       return empty;
     }
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
+    const raw = fs.readFileSync(dbFile, 'utf-8');
     const db = JSON.parse(raw) as ProgressDatabase;
     
     // Migration chain: V1 → V2 → V3 → V3.2
@@ -272,7 +376,10 @@ export class JsonStorage implements StorageInterface {
     };
     
     // Save migrated database
-    fs.writeFileSync(DB_FILE, JSON.stringify(v2Db, null, 2));
+    const dbFile = this.currentWorkspaceId 
+      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
+      : LEGACY_DB_FILE;
+    fs.writeFileSync(dbFile, JSON.stringify(v2Db, null, 2));
     console.log('✅ Migration complete! Database is now V2.');
     
     return v2Db;
@@ -293,7 +400,10 @@ export class JsonStorage implements StorageInterface {
     };
     
     // Save migrated database
-    fs.writeFileSync(DB_FILE, JSON.stringify(v3Db, null, 2));
+    const dbFile = this.currentWorkspaceId 
+      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
+      : LEGACY_DB_FILE;
+    fs.writeFileSync(dbFile, JSON.stringify(v3Db, null, 2));
     console.log('✅ Migration complete! Database is now V3.');
     
     return v3Db;
@@ -393,7 +503,10 @@ export class JsonStorage implements StorageInterface {
     };
     
     // Save migrated database
-    fs.writeFileSync(DB_FILE, JSON.stringify(v32Db, null, 2));
+    const dbFile = this.currentWorkspaceId 
+      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
+      : LEGACY_DB_FILE;
+    fs.writeFileSync(dbFile, JSON.stringify(v32Db, null, 2));
     console.log('✅ Migration complete! Database is now V3.2 with Online Learning support.');
     
     return v32Db;
@@ -403,7 +516,13 @@ export class JsonStorage implements StorageInterface {
     // Sync array from Map before saving
     this.syncTasksArray();
     this.db.lastUpdated = new Date().toISOString();
-    fs.writeFileSync(DB_FILE, JSON.stringify(this.db, null, 2));
+    
+    // V4: Save to workspace-specific database file
+    const dbFile = this.currentWorkspaceId 
+      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
+      : LEGACY_DB_FILE; // Fallback
+    
+    fs.writeFileSync(dbFile, JSON.stringify(this.db, null, 2));
     if (this.onWrite) {
       await this.onWrite();
     }
@@ -1457,6 +1576,193 @@ export class JsonStorage implements StorageInterface {
       learningRate: state.learningRate,
       enabled: state.enabled,
     };
+  }
+
+  // ========== V4: Workspace Management Methods ==========
+
+  /**
+   * V4: Get all workspaces
+   */
+  async getWorkspaces(): Promise<Workspace[]> {
+    const metadata = this.loadWorkspaceMetadata();
+    return metadata.workspaces;
+  }
+
+  /**
+   * V4: Get current workspace ID
+   */
+  async getCurrentWorkspaceId(): Promise<string | null> {
+    return this.currentWorkspaceId;
+  }
+
+  /**
+   * V4: Get workspace by ID
+   */
+  async getWorkspace(id: string): Promise<Workspace | null> {
+    const metadata = this.loadWorkspaceMetadata();
+    return metadata.workspaces.find(w => w.id === id) || null;
+  }
+
+  /**
+   * V4: Create a new workspace
+   */
+  async createWorkspace(data: CreateWorkspaceDTO): Promise<Workspace> {
+    const metadata = this.loadWorkspaceMetadata();
+    const now = new Date().toISOString();
+    const workspace: Workspace = {
+      id: uuidv4(),
+      name: data.name,
+      description: data.description,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    metadata.workspaces.push(workspace);
+    
+    // If no current workspace, set this as current
+    if (!metadata.currentWorkspaceId) {
+      metadata.currentWorkspaceId = workspace.id;
+      this.currentWorkspaceId = workspace.id;
+    }
+    
+    this.saveWorkspaceMetadata(metadata);
+    
+    // Initialize workspace database (empty)
+    const dbFile = this.getWorkspaceDbFile(workspace.id);
+    if (!fs.existsSync(dbFile)) {
+      const empty = getEmptyDatabase();
+      fs.writeFileSync(dbFile, JSON.stringify(empty, null, 2));
+    }
+    
+    console.log(`📁 V4: Created workspace "${workspace.name}" (${workspace.id})`);
+    return workspace;
+  }
+
+  /**
+   * V4: Get a seeded database with example data
+   */
+  private getSeededDatabase(): ProgressDatabase {
+    const exampleProjectId = uuidv4();
+    return {
+      ...getEmptyDatabase(),
+      projects: [
+        {
+          id: exampleProjectId,
+          name: 'example-project',
+          path: '~/projects/example',
+          status: 'active',
+          primaryFocus: 'Example project - replace with your own',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      tasks: [
+        {
+          id: 'EXAMPLE-001',
+          priority: 'P1',
+          task: 'Replace this with your first task',
+          project: 'example-project',
+          status: 'not_started',
+          notes: 'Delete this example and add your own tasks',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          priorityScore: 82,
+          weights: {
+            blockingCount: 0,
+            crossProjectImpact: 0,
+            timeSensitivity: 0,
+            effortValueRatio: 6,
+            dependencyDepth: 0,
+          },
+        },
+      ],
+    };
+  }
+
+  /**
+   * V4: Seed the current workspace with example data (if empty)
+   */
+  async seedCurrentWorkspace(): Promise<void> {
+    if (!this.currentWorkspaceId) {
+      throw new Error('No workspace is currently active');
+    }
+
+    const dbFile = this.getWorkspaceDbFile(this.currentWorkspaceId);
+    
+    // Only seed if database is empty
+    if (fs.existsSync(dbFile)) {
+      const existing = JSON.parse(fs.readFileSync(dbFile, 'utf-8')) as ProgressDatabase;
+      if (existing.tasks.length > 0 || existing.projects.length > 0) {
+        throw new Error('Workspace already has data. Cannot seed non-empty workspace.');
+      }
+    }
+
+    const seeded = this.getSeededDatabase();
+    fs.writeFileSync(dbFile, JSON.stringify(seeded, null, 2));
+    
+    // Reload the database
+    this.db = this.load();
+    this.initializeTaskMap();
+    this.taskHeap = new MinHeap(this.getTaskArray());
+    
+    console.log(`📁 V4: Seeded workspace ${this.currentWorkspaceId} with example data`);
+  }
+
+  /**
+   * V4: Switch to a different workspace
+   */
+  async switchWorkspace(workspaceId: string): Promise<void> {
+    const metadata = this.loadWorkspaceMetadata();
+    const workspace = metadata.workspaces.find(w => w.id === workspaceId);
+    
+    if (!workspace) {
+      throw new Error(`Workspace ${workspaceId} not found`);
+    }
+    
+    // Save current workspace state before switching
+    await this.save();
+    
+    // Switch workspace
+    this.currentWorkspaceId = workspaceId;
+    metadata.currentWorkspaceId = workspaceId;
+    this.saveWorkspaceMetadata(metadata);
+    
+    // Reload database for new workspace
+    this.db = this.load();
+    this.initializeTaskMap();
+    this.taskHeap = new MinHeap(this.getTaskArray());
+    
+    console.log(`📁 V4: Switched to workspace "${workspace.name}" (${workspaceId})`);
+  }
+
+  /**
+   * V4: Delete a workspace
+   */
+  async deleteWorkspace(workspaceId: string): Promise<boolean> {
+    const metadata = this.loadWorkspaceMetadata();
+    const idx = metadata.workspaces.findIndex(w => w.id === workspaceId);
+    
+    if (idx === -1) {
+      return false;
+    }
+    
+    // Don't allow deleting the current workspace
+    if (metadata.currentWorkspaceId === workspaceId) {
+      throw new Error('Cannot delete the current workspace. Switch to another workspace first.');
+    }
+    
+    // Remove workspace from metadata
+    metadata.workspaces.splice(idx, 1);
+    this.saveWorkspaceMetadata(metadata);
+    
+    // Delete workspace directory
+    const workspaceDir = path.join(WORKSPACES_DIR, workspaceId);
+    if (fs.existsSync(workspaceDir)) {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+    }
+    
+    console.log(`📁 V4: Deleted workspace ${workspaceId}`);
+    return true;
   }
 }
 

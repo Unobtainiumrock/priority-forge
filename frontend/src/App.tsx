@@ -4,6 +4,7 @@ import { ProjectFilter } from './components/ProjectFilter';
 import { PriorityQueueList } from './components/PriorityQueueList';
 import { DecisionsPanel } from './components/DecisionsPanel';
 import { HeuristicWeightTuner } from './components/HeuristicWeightTuner';
+import { WorkspaceSwitcher } from './components/WorkspaceSwitcher';
 import { useGetStatusQuery } from './store';
 import { useAppSelector } from './store/hooks';
 import { selectHeuristicWeights } from './store/selectors';
@@ -55,7 +56,7 @@ function App() {
         )}
 
         {/* Loading State (initial) */}
-        {isLoading && !hasData && (
+        {isLoading && !data && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center animate-fade-in">
               <div className="relative w-16 h-16 mx-auto mb-6">
@@ -70,8 +71,8 @@ function App() {
           </div>
         )}
 
-        {/* Main Dashboard */}
-        {hasData && (
+        {/* Main Dashboard - Always show, even if empty */}
+        {data && (
           <>
             {/* Stats Overview */}
             <StatsBar />
@@ -80,6 +81,7 @@ function App() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Sidebar - Filters & Info */}
               <div className="space-y-6">
+                <WorkspaceSwitcher />
                 <ProjectFilter />
                 <DecisionsPanel />
               </div>

@@ -246,6 +246,85 @@ When ANY task is finished (even partially):
 `);
 });
 
+// V4: Workspace Management
+app.get('/workspaces', async (_req, res) => {
+  try {
+    const workspaces = await storage.getWorkspaces();
+    const currentId = await storage.getCurrentWorkspaceId();
+    res.json({
+      workspaces,
+      currentWorkspaceId: currentId,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch workspaces' });
+  }
+});
+
+app.get('/workspaces/current', async (_req, res) => {
+  try {
+    const currentId = await storage.getCurrentWorkspaceId();
+    if (!currentId) {
+      return res.json({ workspace: null, workspaceId: null });
+    }
+    const workspace = await storage.getWorkspace(currentId);
+    res.json({
+      workspace: workspace || null,
+      workspaceId: currentId,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch current workspace' });
+  }
+});
+
+app.post('/workspaces', async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: 'Workspace name is required' });
+    }
+    const workspace = await storage.createWorkspace({ name, description });
+    res.json(workspace);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to create workspace' });
+  }
+});
+
+app.post('/workspaces/:id/switch', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await storage.switchWorkspace(id);
+    const workspace = await storage.getWorkspace(id);
+    res.json({
+      workspace,
+      message: `Switched to workspace "${workspace?.name || id}"`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to switch workspace' });
+  }
+});
+
+app.delete('/workspaces/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await storage.deleteWorkspace(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Workspace not found' });
+    }
+    res.json({ success: true, message: `Deleted workspace ${id}` });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to delete workspace' });
+  }
+});
+
+app.post('/workspaces/current/seed', async (_req, res) => {
+  try {
+    await storage.seedCurrentWorkspace();
+    res.json({ success: true, message: 'Workspace seeded with example data' });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to seed workspace' });
+  }
+});
+
 // MCP endpoint (JSON-RPC 2.0)
 app.post('/mcp', mcpHandler);
 

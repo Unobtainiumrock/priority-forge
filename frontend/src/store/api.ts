@@ -162,6 +162,101 @@ export const priorityApi = createApi({
       query: () => '/online-learner',
       providesTags: ['Weights'],
     }),
+
+    // V4: Workspace Management
+    getWorkspaces: builder.query<
+      {
+        workspaces: Array<{
+          id: string;
+          name: string;
+          description?: string;
+          createdAt: string;
+          updatedAt: string;
+        }>;
+        currentWorkspaceId: string | null;
+      },
+      void
+    >({
+      query: () => '/workspaces',
+      providesTags: ['Status'],
+    }),
+
+    getCurrentWorkspace: builder.query<
+      {
+        workspace: {
+          id: string;
+          name: string;
+          description?: string;
+          createdAt: string;
+          updatedAt: string;
+        } | null;
+        workspaceId: string | null;
+      },
+      void
+    >({
+      query: () => '/workspaces/current',
+      providesTags: ['Status'],
+    }),
+
+    createWorkspace: builder.mutation<
+      {
+        id: string;
+        name: string;
+        description?: string;
+        createdAt: string;
+        updatedAt: string;
+      },
+      { name: string; description?: string }
+    >({
+      query: (data) => ({
+        url: '/workspaces',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Status'],
+    }),
+
+    switchWorkspace: builder.mutation<
+      {
+        workspace: {
+          id: string;
+          name: string;
+          description?: string;
+          createdAt: string;
+          updatedAt: string;
+        } | null;
+        message: string;
+      },
+      string
+    >({
+      query: (workspaceId) => ({
+        url: `/workspaces/${workspaceId}/switch`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Status', 'Tasks', 'Weights'],
+    }),
+
+    deleteWorkspace: builder.mutation<
+      { success: boolean; message: string },
+      string
+    >({
+      query: (workspaceId) => ({
+        url: `/workspaces/${workspaceId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Status'],
+    }),
+
+    seedWorkspace: builder.mutation<
+      { success: boolean; message: string },
+      void
+    >({
+      query: () => ({
+        url: '/workspaces/current/seed',
+        method: 'POST',
+      }),
+      invalidatesTags: ['Status', 'Tasks'],
+    }),
   }),
 });
 
@@ -177,4 +272,10 @@ export const {
   useDeleteTaskMutation,
   useLogDragReorderMutation,
   useGetOnlineLearnerStateQuery,
+  useGetWorkspacesQuery,
+  useGetCurrentWorkspaceQuery,
+  useCreateWorkspaceMutation,
+  useSwitchWorkspaceMutation,
+  useDeleteWorkspaceMutation,
+  useSeedWorkspaceMutation,
 } = priorityApi;

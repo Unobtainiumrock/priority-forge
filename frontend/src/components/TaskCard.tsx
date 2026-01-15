@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Circle,
   GripVertical,
+  Trash2,
 } from 'lucide-react';
 import type { WeightedTask } from '../types';
 import { 
@@ -21,6 +22,7 @@ import {
 } from '../lib/utils';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setSelectedTask } from '../store';
+import { useDeleteTaskMutation } from '../store/api';
 
 interface TaskCardProps {
   task: WeightedTask;
@@ -52,6 +54,7 @@ export function TaskCard({
   const selectedTaskId = useAppSelector((state) => state.ui.selectedTaskId);
   const isSelected = selectedTaskId === task.id;
   const urgency = scoreToUrgency(task.priorityScore);
+  const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
 
   const _StatusIcon = {
     not_started: Circle,
@@ -64,6 +67,22 @@ export function TaskCard({
 
   const handleClick = () => {
     dispatch(setSelectedTask(isSelected ? null : task.id));
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card selection when clicking delete
+    if (confirm(`Are you sure you want to delete task "${task.task}"?`)) {
+      try {
+        await deleteTask(task.id).unwrap();
+        // Deselect if this task was selected
+        if (isSelected) {
+          dispatch(setSelectedTask(null));
+        }
+      } catch (error) {
+        console.error('Failed to delete task:', error);
+        alert('Failed to delete task. Please try again.');
+      }
+    }
   };
 
   // V3.2: Drag handlers
@@ -104,11 +123,21 @@ export function TaskCard({
           )}>
             {task.priority}
           </span>
-          <span className="text-sm text-surface-200 truncate flex-1">{task.task}</span>
+          <span className={cn(
+            "text-sm text-surface-200 flex-1",
+            isSelected ? "whitespace-normal break-words" : "truncate"
+          )}>
+            {task.task}
+          </span>
           <span className="text-xs font-mono text-surface-500">
             {formatScore(task.priorityScore)}
           </span>
         </div>
+        {isSelected && task.notes && (
+          <div className="mt-2 pt-2 border-t border-surface-700 text-xs text-surface-400 italic whitespace-normal break-words">
+            {task.notes}
+          </div>
+        )}
       </button>
     );
   }
@@ -122,7 +151,7 @@ export function TaskCard({
       onDrop={handleDrop}
       onClick={handleClick}
       className={cn(
-        'task-card w-full text-left p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing',
+        'task-card group w-full text-left p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing',
         'animate-slide-in-left',
         isSelected 
           ? 'bg-surface-800 border-green-500/50 ring-2 ring-green-500/30' 
@@ -180,7 +209,10 @@ export function TaskCard({
           </div>
 
           {/* Task Title */}
-          <h3 className="text-sm font-medium text-surface-100 mb-2 leading-tight">
+          <h3 className={cn(
+            "text-sm font-medium text-surface-100 mb-2 leading-tight",
+            isSelected ? "whitespace-normal break-words" : "line-clamp-2"
+          )}>
             {task.task}
           </h3>
 
@@ -211,41 +243,143 @@ export function TaskCard({
 
           {/* Notes */}
           {task.notes && (
-            <p className="mt-2 text-xs text-surface-500 italic truncate">
+            <p className={cn(
+              "mt-2 text-xs text-surface-500 italic",
+              isSelected ? "whitespace-normal break-words" : "truncate"
+            )}>
               {task.notes}
             </p>
           )}
         </div>
 
-        {/* Arrow */}
-        <ChevronRight className={cn(
-          'w-5 h-5 text-surface-600 transition-transform',
-          isSelected && 'transform rotate-90 text-green-400'
-        )} />
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          {/* Delete Button */}
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className={cn(
+              'p-1.5 rounded text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors',
+              'opacity-0 group-hover:opacity-100',
+              isDeleting && 'opacity-100 animate-pulse'
+            )}
+            title="Delete task"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+          
+          {/* Arrow */}
+          <ChevronRight className={cn(
+            'w-5 h-5 text-surface-600 transition-transform',
+            isSelected && 'transform rotate-90 text-green-400'
+          )} />
+        </div>
       </div>
 
-      {/* Weights Preview (expanded when selected) */}
+      {/* Expanded Details (when selected) */}
       {isSelected && (
-        <div className="mt-4 pt-4 border-t border-surface-700 animate-fade-in">
-          <div className="grid grid-cols-5 gap-2">
-            {[
-              { label: 'Blocking', value: task.weights.blockingCount, max: 10 },
-              { label: 'Cross-Project', value: task.weights.crossProjectImpact, max: 1 },
-              { label: 'Time Sensitive', value: task.weights.timeSensitivity, max: 10 },
-              { label: 'Effort/Value', value: task.weights.effortValueRatio, max: 9 },
-              { label: 'Dep Depth', value: task.weights.dependencyDepth, max: 5 },
-            ].map(({ label, value, max }) => (
-              <div key={label} className="text-center">
-                <div className="text-lg font-bold text-surface-200 font-mono">{value}</div>
-                <div className="text-[9px] text-surface-500 uppercase">{label}</div>
-                <div className="mt-1 h-1 bg-surface-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-green-500 rounded-full transition-all"
-                    style={{ width: `${(value / max) * 100}%` }}
-                  />
+        <div className="mt-4 pt-4 border-t border-surface-700 animate-fade-in space-y-4">
+          {/* Full Task Details */}
+          <div className="space-y-3">
+            <div className="text-xs font-semibold text-surface-400 uppercase tracking-wide mb-2">
+              Full Details
+            </div>
+            
+            {/* Full Task Description */}
+            <div>
+              <div className="text-xs text-surface-500 mb-1">Task Description</div>
+              <div className="text-sm text-surface-200 whitespace-normal break-words leading-relaxed">
+                {task.task}
+              </div>
+            </div>
+
+            {/* Full Notes */}
+            {task.notes && (
+              <div>
+                <div className="text-xs text-surface-500 mb-1">Notes</div>
+                <div className="text-sm text-surface-300 whitespace-normal break-words leading-relaxed italic">
+                  {task.notes}
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* Dependencies */}
+            {task.dependencies && task.dependencies.length > 0 && (
+              <div>
+                <div className="text-xs text-surface-500 mb-1">Dependencies</div>
+                <div className="flex flex-wrap gap-2">
+                  {task.dependencies.map((depId) => (
+                    <span
+                      key={depId}
+                      className="px-2 py-1 text-xs font-mono bg-surface-700/50 rounded border border-surface-600 text-surface-300"
+                    >
+                      {depId}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Timestamps */}
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <div className="text-surface-500 mb-1">Created</div>
+                <div className="text-surface-400 font-mono">
+                  {new Date(task.createdAt).toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-surface-500 mb-1">Updated</div>
+                <div className="text-surface-400 font-mono">
+                  {new Date(task.updatedAt).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Priority Score Breakdown */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-semibold text-surface-400 uppercase tracking-wide">
+                Priority Score Breakdown
+              </div>
+              {/* Delete Button (small, to the right) */}
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className={cn(
+                  'flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors',
+                  'bg-red-500/10 text-red-400 border border-red-500/30',
+                  'hover:bg-red-500/20 hover:border-red-500/50',
+                  'disabled:opacity-50 disabled:cursor-not-allowed',
+                  isDeleting && 'animate-pulse'
+                )}
+                title="Delete task"
+              >
+                <Trash2 className="w-3 h-3" />
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {[
+                { label: 'Blocking', value: task.weights.blockingCount, max: 10 },
+                { label: 'Cross-Project', value: task.weights.crossProjectImpact, max: 1 },
+                { label: 'Time Sensitive', value: task.weights.timeSensitivity, max: 10 },
+                { label: 'Effort/Value', value: task.weights.effortValueRatio, max: 9 },
+                { label: 'Dep Depth', value: task.weights.dependencyDepth, max: 5 },
+              ].map(({ label, value, max }) => (
+                <div key={label} className="text-center">
+                  <div className="text-lg font-bold text-surface-200 font-mono">{value}</div>
+                  <div className="text-[9px] text-surface-500 uppercase">{label}</div>
+                  <div className="mt-1 h-1 bg-surface-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-green-500 rounded-full transition-all"
+                      style={{ width: `${(value / max) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
