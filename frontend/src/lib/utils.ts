@@ -12,7 +12,10 @@ export function formatNumber(value: number, decimals: number = 2): string {
   });
 }
 
-export function formatScore(score: number): string {
+export function formatScore(score: number | null | undefined): string {
+  if (score === null || score === undefined || Number.isNaN(score)) {
+    return '—';
+  }
   const prefix = score >= 0 ? '+' : '';
   return `${prefix}${score.toFixed(0)}`;
 }
@@ -98,3 +101,14 @@ export function scoreToUrgency(score: number): 'critical' | 'high' | 'medium' | 
   return 'low';
 }
 
+// Get urgency color based on priority level (P0-P3), not score value
+// This ensures score color matches the priority badge color
+export function priorityToUrgency(priority: string): 'critical' | 'high' | 'medium' | 'low' {
+  switch (priority) {
+    case 'P0': return 'critical';  // red
+    case 'P1': return 'high';      // amber
+    case 'P2': return 'medium';    // blue
+    case 'P3': return 'low';       // gray
+    default: return 'low';
+  }
+}

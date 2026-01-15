@@ -11,6 +11,7 @@ interface UIState {
   isWeightsPanelOpen: boolean;
   isDetailsPanelOpen: boolean;
   searchQuery: string;
+  hideCompleted: boolean;  // Hide completed/cancelled tasks by default
 }
 
 const initialState: UIState = {
@@ -22,6 +23,7 @@ const initialState: UIState = {
   isWeightsPanelOpen: false,
   isDetailsPanelOpen: false,
   searchQuery: '',
+  hideCompleted: true,  // Default: hide completed/cancelled
 };
 
 export const uiSlice = createSlice({
@@ -62,6 +64,13 @@ export const uiSlice = createSlice({
       state.filterPriority = 'all';
       state.filterStatus = 'all';
       state.searchQuery = '';
+      state.hideCompleted = true;
+    },
+    toggleHideCompleted: (state) => {
+      state.hideCompleted = !state.hideCompleted;
+    },
+    setHideCompleted: (state, action: PayloadAction<boolean>) => {
+      state.hideCompleted = action.payload;
     },
   },
 });
@@ -77,6 +86,8 @@ export const {
   closeDetailsPanel,
   setSearchQuery,
   resetFilters,
+  toggleHideCompleted,
+  setHideCompleted,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

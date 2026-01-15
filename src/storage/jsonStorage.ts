@@ -662,8 +662,9 @@ export class JsonStorage implements StorageInterface {
     if (includeCompleted) {
       return all;
     }
-    // Filter out completed tasks by default
-    return all.filter(t => t.status !== 'complete');
+    // Filter out completed/cancelled tasks by default
+    const finishedStatuses = ['complete', 'completed', 'cancelled'];
+    return all.filter(t => !finishedStatuses.includes(t.status));
   }
 
   /**
@@ -674,10 +675,11 @@ export class JsonStorage implements StorageInterface {
   }
 
   /**
-   * Get completed tasks only
+   * Get completed/cancelled tasks only
    */
   async getCompletedTasks(): Promise<WeightedTask[]> {
-    return this.taskHeap.toSortedArray().filter(t => t.status === 'complete');
+    const finishedStatuses = ['complete', 'completed', 'cancelled'];
+    return this.taskHeap.toSortedArray().filter(t => finishedStatuses.includes(t.status));
   }
 
   async getTask(id: string): Promise<WeightedTask | null> {
@@ -698,12 +700,13 @@ export class JsonStorage implements StorageInterface {
   }
 
   /**
-   * V2: Get the single highest priority task (excludes completed tasks)
+   * V2: Get the single highest priority task (excludes completed/cancelled tasks)
    */
   async getTopPriority(): Promise<WeightedTask | null> {
-    // Get all tasks sorted by priority and find the first non-completed one
+    // Get all tasks sorted by priority and find the first actionable one
     const sorted = this.taskHeap.toSortedArray();
-    return sorted.find(t => t.status !== 'complete') || null;
+    const finishedStatuses = ['complete', 'completed', 'cancelled'];
+    return sorted.find(t => !finishedStatuses.includes(t.status)) || null;
   }
 
   /**

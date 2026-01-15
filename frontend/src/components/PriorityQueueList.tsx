@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectFilteredTasks, selectSortedTasks } from '../store/selectors';
-import { setFilterPriority, setFilterStatus, setSearchQuery, resetFilters } from '../store';
+import { setFilterPriority, setFilterStatus, setSearchQuery, resetFilters, toggleHideCompleted } from '../store';
 import { useLogDragReorderMutation } from '../store/api';
 import { TaskCard } from './TaskCard';
-import { ListFilter, Search, X, Brain, Sparkles } from 'lucide-react';
+import { ListFilter, Search, X, Brain, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { Priority, TaskStatus } from '../types';
 
@@ -19,8 +19,9 @@ export function PriorityQueueList() {
   const filterPriority = useAppSelector((state) => state.ui.filterPriority);
   const filterStatus = useAppSelector((state) => state.ui.filterStatus);
   const searchQuery = useAppSelector((state) => state.ui.searchQuery);
+  const hideCompleted = useAppSelector((state) => state.ui.hideCompleted);
 
-  const hasFilters = filterProject !== 'all' || filterPriority !== 'all' || filterStatus !== 'all' || searchQuery;
+  const hasFilters = filterProject !== 'all' || filterPriority !== 'all' || filterStatus !== 'all' || searchQuery || !hideCompleted;
 
   // V3.2: Drag-and-drop state
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -131,6 +132,30 @@ export function PriorityQueueList() {
               </option>
             ))}
           </select>
+
+          {/* Show/Hide Completed Toggle */}
+          <button
+            onClick={() => dispatch(toggleHideCompleted())}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors border',
+              hideCompleted
+                ? 'bg-surface-800 text-surface-400 border-surface-700 hover:text-surface-200 hover:bg-surface-700'
+                : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+            )}
+            title={hideCompleted ? 'Show completed/cancelled tasks' : 'Hide completed/cancelled tasks'}
+          >
+            {hideCompleted ? (
+              <>
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Show Done</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-3.5 h-3.5" />
+                <span>Showing Done</span>
+              </>
+            )}
+          </button>
 
           {/* Clear Filters */}
           {hasFilters && (

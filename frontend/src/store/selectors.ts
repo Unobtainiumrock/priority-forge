@@ -65,6 +65,7 @@ interface RootStateWithUI {
     viewMode: string;
     isWeightsPanelOpen: boolean;
     isDetailsPanelOpen: boolean;
+    hideCompleted: boolean;
   };
 }
 
@@ -73,6 +74,7 @@ export const selectFilterPriority = (state: RootStateWithUI) => state.ui.filterP
 export const selectFilterStatus = (state: RootStateWithUI) => state.ui.filterStatus;
 export const selectSearchQuery = (state: RootStateWithUI) => state.ui.searchQuery;
 export const selectSelectedTaskId = (state: RootStateWithUI) => state.ui.selectedTaskId;
+export const selectHideCompleted = (state: RootStateWithUI) => state.ui.hideCompleted;
 
 // ============================================================================
 // DERIVED SELECTORS (Memoized computations)
@@ -91,9 +93,15 @@ export const selectSortedTasks = createSelector(
  * Tasks filtered by current UI filters
  */
 export const selectFilteredTasks = createSelector(
-  [selectSortedTasks, selectFilterProject, selectFilterPriority, selectFilterStatus, selectSearchQuery],
-  (tasks, filterProject, filterPriority, filterStatus, searchQuery): WeightedTask[] => {
+  [selectSortedTasks, selectFilterProject, selectFilterPriority, selectFilterStatus, selectSearchQuery, selectHideCompleted],
+  (tasks, filterProject, filterPriority, filterStatus, searchQuery, hideCompleted): WeightedTask[] => {
     return tasks.filter((task: WeightedTask) => {
+      // Hide completed/cancelled by default (unless toggled off)
+      // Note: Backend has both 'complete' and 'completed' status values
+      if (hideCompleted && (task.status === 'complete' || task.status === 'completed' || task.status === 'cancelled')) {
+        return false;
+      }
+      
       // Project filter
       if (filterProject !== 'all' && task.project !== filterProject) return false;
       

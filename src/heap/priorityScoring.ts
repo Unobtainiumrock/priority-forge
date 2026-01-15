@@ -112,9 +112,15 @@ export function calculateTaskWeights(
     dependencyDepth: Math.min(dependencyDepth, 5),
   };
 
-  // Apply manual overrides
+  // Apply manual overrides (only non-null values)
   if (manualOverrides) {
-    return { ...weights, ...manualOverrides };
+    const filteredOverrides: Partial<TaskWeights> = {};
+    for (const [key, value] of Object.entries(manualOverrides)) {
+      if (value !== null && value !== undefined) {
+        filteredOverrides[key as keyof TaskWeights] = value;
+      }
+    }
+    return { ...weights, ...filteredOverrides };
   }
 
   return weights;

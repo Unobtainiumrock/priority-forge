@@ -18,7 +18,7 @@ import {
   getStatusLabel, 
   getEffortLabel,
   formatScore,
-  scoreToUrgency,
+  priorityToUrgency,
 } from '../lib/utils';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setSelectedTask } from '../store';
@@ -53,7 +53,7 @@ export function TaskCard({
   const dispatch = useAppDispatch();
   const selectedTaskId = useAppSelector((state) => state.ui.selectedTaskId);
   const isSelected = selectedTaskId === task.id;
-  const urgency = scoreToUrgency(task.priorityScore);
+  const urgency = priorityToUrgency(task.priority);
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
 
   const _StatusIcon = {
