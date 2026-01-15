@@ -102,9 +102,9 @@ export const selectFilteredTasks = createSelector(
   [selectSortedTasks, selectFilterProject, selectFilterPriority, selectFilterStatus, selectSearchQuery, selectHideCompleted],
   (tasks, filterProject, filterPriority, filterStatus, searchQuery, hideCompleted): WeightedTask[] => {
     return tasks.filter((task: WeightedTask) => {
-      // Hide completed/cancelled by default (unless toggled off)
-      // Note: Backend has both 'complete' and 'completed' status values
-      if (hideCompleted && (task.status === 'complete' || task.status === 'completed' || task.status === 'cancelled')) {
+      // Hide complete/cancelled by default (unless toggled off)
+      // Canonical status is 'complete' (normalized from legacy 'completed')
+      if (hideCompleted && (task.status === 'complete' || task.status === 'cancelled')) {
         return false;
       }
       
@@ -162,6 +162,7 @@ export const selectTasksByPriority = createSelector(
 
 /**
  * Tasks grouped by status (for kanban view)
+ * Note: 'complete' is canonical status (legacy 'completed' normalized)
  */
 export const selectTasksByStatus = createSelector(
   [selectSortedTasks],
@@ -171,7 +172,6 @@ export const selectTasksByStatus = createSelector(
     blocked: tasks.filter((t: WeightedTask) => t.status === 'blocked'),
     waiting: tasks.filter((t: WeightedTask) => t.status === 'waiting'),
     complete: tasks.filter((t: WeightedTask) => t.status === 'complete'),
-    completed: tasks.filter((t: WeightedTask) => t.status === 'completed'),
     cancelled: tasks.filter((t: WeightedTask) => t.status === 'cancelled'),
   })
 );

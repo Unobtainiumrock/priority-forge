@@ -2,7 +2,9 @@
 
 export type Priority = 'P0' | 'P1' | 'P2' | 'P3';
 export type ProjectStatus = 'active' | 'complete' | 'blocked' | 'shelved';
-export type TaskStatus = 'not_started' | 'in_progress' | 'complete' | 'completed' | 'blocked' | 'waiting' | 'cancelled';
+// Canonical status is 'complete' (not 'completed')
+// Note: 'completed' kept temporarily for backwards compatibility during migration
+export type TaskStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked' | 'waiting' | 'cancelled';
 export type Effort = 'low' | 'medium' | 'high';
 
 export interface Project {
