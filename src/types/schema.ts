@@ -119,6 +119,8 @@ export interface TaskCompletionRecord {
   // V3.3: Actual work duration tracking
   startedAt?: string;             // When work began (status → in_progress)
   actualWorkTime?: number;        // Hours from startedAt to completedAt (actual work, not queue time)
+  // V4: Workspace tracking for ML aggregation
+  workspaceId?: string;           // Which workspace this completion came from
 }
 
 // V3: Priority change event (for learning from user overrides)
@@ -133,6 +135,8 @@ export interface PriorityChangeEvent {
   // Context: what was the queue state when user made this change?
   queuePositionBefore: number;  // Rank in queue before change
   queuePositionAfter: number;   // Rank in queue after change
+  // V4: Workspace tracking for ML aggregation
+  workspaceId?: string;
 }
 
 // V3: Task selection event (for learning user preferences)
@@ -146,6 +150,8 @@ export interface TaskSelectionEvent {
   queueSize: number;             // How many tasks were available?
   wasTopSelected: boolean;       // Did user follow our recommendation?
   timestamp: string;
+  // V4: Workspace tracking for ML aggregation
+  workspaceId?: string;
 }
 
 // V3: Queue rebalance event (for learning queue dynamics)
@@ -168,6 +174,8 @@ export interface QueueRebalanceEvent {
   // Top 3 tasks before/after for quick comparison
   topTasksBefore: string[];
   topTasksAfter: string[];
+  // V4: Workspace tracking for ML aggregation
+  workspaceId?: string;
 }
 
 // V3.2: Drag reorder event (for online learning from UI interactions)
@@ -206,6 +214,8 @@ export interface DragReorderEvent {
   // Queue context
   queueSize: number;
   tasksPassedIds: string[];      // IDs of tasks that were leapfrogged
+  // V4: Workspace tracking for ML aggregation
+  workspaceId?: string;
 }
 
 // V3.2: Online learner persistent state
@@ -290,7 +300,7 @@ export interface ObjectiveProgressEvent {
   }>;
 }
 
-// V2/V3/V4 Database schema
+// V2/V3/V4 Database schema (per-workspace data)
 export interface ProgressDatabase {
   version: 'v1' | 'v2' | 'v3' | 'v3.2' | 'v4';
   lastUpdated: string;
@@ -298,20 +308,47 @@ export interface ProgressDatabase {
   tasks: WeightedTask[];
   dataGaps: DataGap[];
   decisions: Decision[];
+  // Legacy: These are now stored in GlobalMLDatabase but kept for migration
   completionRecords: TaskCompletionRecord[];
-  // V2: Tunable heuristic weights
   heuristicWeights: HeuristicWeights;
-  // V3: ML training data
   priorityChangeEvents?: PriorityChangeEvent[];
   taskSelectionEvents?: TaskSelectionEvent[];
   queueRebalanceEvents?: QueueRebalanceEvent[];
-  // V3.2: Online learning from drag-and-drop
   dragReorderEvents?: DragReorderEvent[];
   onlineLearnerState?: OnlineLearnerState;
-  // V4: Goal-conditioned learning
+  // V4: Goal-conditioned learning (workspace-scoped)
   objectives?: Objective[];
   objectiveProgressEvents?: ObjectiveProgressEvent[];
 }
+
+// V4: Global ML training data (shared across ALL workspaces)
+// This ensures training data continuity regardless of workspace switching
+export interface GlobalMLDatabase {
+  version: 'v1';
+  lastUpdated: string;
+  // V2: Tunable heuristic weights (global baseline)
+  heuristicWeights: HeuristicWeights;
+  // V3: ML training data (aggregated from all workspaces)
+  completionRecords: TaskCompletionRecord[];
+  priorityChangeEvents: PriorityChangeEvent[];
+  taskSelectionEvents: TaskSelectionEvent[];
+  queueRebalanceEvents: QueueRebalanceEvent[];
+  // V3.2: Online learning from drag-and-drop
+  dragReorderEvents: DragReorderEvent[];
+  onlineLearnerState: OnlineLearnerState;
+}
+
+export const DEFAULT_GLOBAL_ML_DATABASE: GlobalMLDatabase = {
+  version: 'v1',
+  lastUpdated: new Date().toISOString(),
+  heuristicWeights: { ...DEFAULT_HEURISTIC_WEIGHTS },
+  completionRecords: [],
+  priorityChangeEvents: [],
+  taskSelectionEvents: [],
+  queueRebalanceEvents: [],
+  dragReorderEvents: [],
+  onlineLearnerState: { ...DEFAULT_ONLINE_LEARNER_STATE },
+};
 
 // API response types
 export interface UnifiedProgress {
@@ -419,4 +456,23 @@ export interface UpdateOnlineLearnerDTO {
   maxWeightChange?: number;
   minWeight?: number;
   maxWeight?: number;
+}
+
+// V4: Workspace Management
+export interface Workspace {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkspaceMetadata {
+  workspaces: Workspace[];
+  currentWorkspaceId: string | null;
+}
+
+export interface CreateWorkspaceDTO {
+  name: string;
+  description?: string;
 }

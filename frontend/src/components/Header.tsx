@@ -50,7 +50,7 @@ export function Header({ isConnected, isFetching, topPriority, taskCount }: Head
                 <div className="text-left max-w-[200px]">
                   <span className="text-xs text-surface-500 block">Top Priority</span>
                   <span className="text-sm text-surface-200 truncate block">
-                    [{topPriority.id}] {topPriority.task.slice(0, 25)}...
+                    {topPriority.task}
                   </span>
                 </div>
               </div>
