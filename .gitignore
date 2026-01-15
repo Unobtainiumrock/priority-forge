@@ -15,3 +15,6 @@ data/ml-training.json
 
 # Runtime state (PIDs, logs from setup.sh)
 .pids/
+
+# Backup directories (never commit user data backups)
+data/backup-*/
