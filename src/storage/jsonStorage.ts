@@ -64,7 +64,7 @@ const LEGACY_DB_FILE = path.join(DATA_DIR, 'progress.json'); // For migration
 
 function getEmptyDatabase(): ProgressDatabase {
   return {
-    version: 'v3.2',
+    version: 'v4',
     lastUpdated: new Date().toISOString(),
     projects: [],
     tasks: [],
@@ -559,7 +559,7 @@ export class JsonStorage implements StorageInterface {
     
     const v32Db: ProgressDatabase = {
       ...db,
-      version: 'v3.2',
+      version: 'v4',
       priorityChangeEvents: imputedPriorityChangeEvents,
       taskSelectionEvents: imputedTaskSelectionEvents,
       queueRebalanceEvents: imputedQueueRebalanceEvents,

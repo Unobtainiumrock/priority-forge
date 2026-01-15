@@ -22,6 +22,7 @@ import projectsRouter from './routes/projects';
 import tasksRouter from './routes/tasks';
 import dataGapsRouter from './routes/dataGaps';
 import decisionsRouter from './routes/decisions';
+import { VERSION, VERSION_TAG, APP_NAME, FULL_NAME } from './version';
 
 const app = express();
 const PORT = process.env.PORT || 3456;
@@ -42,7 +43,17 @@ app.use((_req, res, next) => {
 
 // Health check
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', version: 'v2', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: VERSION_TAG, timestamp: new Date().toISOString() });
+});
+
+// Version endpoint - single source of truth for all clients
+app.get('/version', (_req, res) => {
+  res.json({ 
+    version: VERSION,
+    versionTag: VERSION_TAG,
+    name: APP_NAME,
+    fullName: FULL_NAME,
+  });
 });
 
 // Full status endpoint - V2 with heap-based priorities
@@ -331,47 +342,35 @@ app.post('/mcp', mcpHandler);
 app.listen(PORT, () => {
   console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
-║       Priority Forge v3.2                                     ║
-║       Online Learning from Drag-and-Drop Reordering           ║
+║       ${FULL_NAME.padEnd(55)}║
+║       Workspaces + Global ML Learning                         ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  REST API:  http://localhost:${PORT}                             ║
 ║  MCP:       http://localhost:${PORT}/mcp                         ║
 ║  Health:    http://localhost:${PORT}/health                      ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  V3.2 NEW - Online Learning from UI:                          ║
-║    • Drag-and-drop tasks to reorder → generates pairwise      ║
-║      preferences → SGD updates weights → all scores recalc    ║
-║    • POST /drag-reorder      - Log drag event + learn         ║
-║    • GET  /online-learner    - View learning state/accuracy   ║
-║    • PUT  /online-learner    - Configure learning rate, etc.  ║
-║    • GET  /drag-reorder-events - View all drag history        ║
+║  V4 NEW - Workspaces:                                         ║
+║    • Separate task databases per context (work/personal/etc)  ║
+║    • Global ML training data shared across all workspaces     ║
+║    • GET  /workspaces         - List all workspaces           ║
+║    • POST /workspaces         - Create new workspace          ║
+║    • POST /workspaces/:id/switch - Switch active workspace    ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  V3 - Dynamic Rebalancing + ML Training:                      ║
-║    • Queue auto-rebalances on dependency graph changes        ║
-║    • Logs QueueRebalanceEvents for trajectory learning        ║
-║    • Collects PriorityChangeEvents & TaskSelectionEvents      ║
-║    • export_training_data    - Export for XGBoost training    ║
-║    • get_ml_summary          - Training data statistics       ║
-╠═══════════════════════════════════════════════════════════════╣
-║  MCP Resources & Prompts:                                     ║
-║    resources/list            - List available resources       ║
-║    resources/read            - Read resource content          ║
-║    prompts/list              - List workflow templates        ║
-║    prompts/get               - Get prompt with arguments      ║
+║  Online Learning (V3.2):                                      ║
+║    • Drag-and-drop tasks → pairwise preferences → SGD update  ║
+║    • POST /drag-reorder       - Log drag event + learn        ║
+║    • GET  /online-learner     - View learning state           ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  Priority Endpoints:                                          ║
-║    GET  /status              - Full system status             ║
-║    GET  /top-priority        - Single highest priority task   ║
-║    POST /recalculate         - Recalculate all priorities     ║
-║    GET  /heuristic-weights   - View weight configuration      ║
-║    PUT  /heuristic-weights   - Update weights & recalculate   ║
+║    GET  /status               - Full system status            ║
+║    GET  /top-priority         - Single highest priority task  ║
+║    GET  /version              - App version info              ║
+║    POST /recalculate          - Recalculate all priorities    ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  Standard Endpoints:                                          ║
-║    CRUD /projects            - Project management             ║
-║    CRUD /tasks               - Task priority queue            ║
-║    CRUD /data-gaps           - Data collection gaps           ║
-║    POST /decisions           - Decision log                   ║
-║    POST /mcp                 - MCP JSON-RPC 2.0               ║
+║    CRUD /projects             - Project management            ║
+║    CRUD /tasks                - Task priority queue           ║
+║    POST /mcp                  - MCP JSON-RPC 2.0              ║
 ╚═══════════════════════════════════════════════════════════════╝
   `);
 });

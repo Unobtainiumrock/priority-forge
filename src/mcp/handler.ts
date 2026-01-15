@@ -19,6 +19,7 @@ import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import { storage } from '../storage/jsonStorage';
+import { VERSION, VERSION_TAG } from '../version';
 
 // MCP Protocol: JSON-RPC 2.0 based
 // See: https://modelcontextprotocol.io/docs/concepts/architecture
@@ -1253,10 +1254,10 @@ export async function mcpHandler(req: Request, res: Response): Promise<void> {
           },
           serverInfo: {
             name: 'priority-forge',
-            version: '3.3.0',  // V3.3: Work duration tracking for ML effort estimation
+            version: VERSION,
           },
           // Include instructions that clients should show to AI
-          instructions: `You are connected to a task prioritization system (Priority Forge v3.3).
+          instructions: `You are connected to a task prioritization system (Priority Forge ${VERSION_TAG}).
 
 ## MANDATORY STARTUP SEQUENCE
 1. Read 'progress://current-focus' - understand top priority

@@ -5,7 +5,7 @@ import { PriorityQueueList } from './components/PriorityQueueList';
 import { DecisionsPanel } from './components/DecisionsPanel';
 import { HeuristicWeightTuner } from './components/HeuristicWeightTuner';
 import { WorkspaceSwitcher } from './components/WorkspaceSwitcher';
-import { useGetStatusQuery } from './store';
+import { useGetStatusQuery, useGetVersionQuery } from './store';
 import { useAppSelector } from './store/hooks';
 import { selectHeuristicWeights } from './store/selectors';
 
@@ -25,6 +25,9 @@ function App() {
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
+
+  // Fetch version info (cached, no polling needed)
+  const { data: versionInfo } = useGetVersionQuery();
 
   const heuristicWeights = useAppSelector(selectHeuristicWeights);
   const isConnected = !!data && !isError;
@@ -98,7 +101,7 @@ function App() {
       {/* Footer */}
       <footer className="mt-12 py-6 border-t border-surface-800">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-surface-500">
-          <span>Priority Forge v2.2 — Task Prioritization Dashboard</span>
+          <span>{versionInfo?.fullName ?? 'Priority Forge'} — Task Prioritization Dashboard</span>
           <div className="flex items-center gap-4">
             {heuristicWeights && (
               <span className="font-mono">

@@ -19,11 +19,24 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3456';
 
+// Version info from backend
+export interface VersionInfo {
+  version: string;
+  versionTag: string;
+  name: string;
+  fullName: string;
+}
+
 export const priorityApi = createApi({
   reducerPath: 'priorityApi',
   baseQuery: fetchBaseQuery({ baseUrl: API_BASE }),
   tagTypes: ['Status', 'Tasks', 'Weights'],
   endpoints: (builder) => ({
+    // GET /version - App version info (single source of truth)
+    getVersion: builder.query<VersionInfo, void>({
+      query: () => '/version',
+    }),
+
     // GET /status - Main data fetch
     getStatus: builder.query<UnifiedProgress, void>({
       query: () => '/status',
@@ -262,6 +275,7 @@ export const priorityApi = createApi({
 
 // Export hooks for usage in components
 export const {
+  useGetVersionQuery,
   useGetStatusQuery,
   useGetTopPriorityQuery,
   useGetHeuristicWeightsQuery,

@@ -10,7 +10,39 @@
 [![GitHub issues](https://img.shields.io/github/issues/Unobtainiumrock/priority-forge.svg)](https://github.com/Unobtainiumrock/priority-forge/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/Unobtainiumrock/priority-forge.svg)](https://github.com/Unobtainiumrock/priority-forge/pulls)
 
-HTTP-based MCP server for cross-project task prioritization with heap-based priority scoring and auto-generated markdown output.
+**AI-powered task prioritization that learns from your decisions.** Cross-project tracking with heap-based priority scoring, drag-and-drop reordering, and online ML that adapts to how *you* work.
+
+<div align="center">
+
+###  Dashboard Overview
+
+![Priority Forge Dashboard](docs/screenshots/dashboard-overview.png)
+
+*Real-time priority queue with expandable task details, workspace switching, and heuristic weight tuning*
+
+</div>
+
+<details>
+<summary><strong>📸 More Screenshots</strong></summary>
+
+<br>
+
+#### Priority Queue with Expandable Tasks
+![Task Queue](docs/screenshots/task-queue-expanded.png)
+
+*Click any task to reveal notes, dependencies, and completion controls*
+
+#### Workspace Switcher
+![Workspaces](docs/screenshots/workspace-switcher.png)
+
+*Separate task databases for work, personal, client projects—ML learning persists across all*
+
+#### Heuristic Weight Tuner
+![Weight Tuner](docs/screenshots/weight-tuner.png)
+
+*Real-time sliders to adjust how blocking dependencies, cross-project impact, and time sensitivity affect priority scores*
+
+</details>
 
 ---
 
