@@ -31,6 +31,12 @@ export const selectPriorityQueue = createSelector(
   (data): WeightedTask[] => data?.priorityQueue ?? []
 );
 
+// Backend-calculated task stats (includes all tasks, not just active)
+export const selectBackendTaskStats = createSelector(
+  selectStatusData,
+  (data) => data?.taskStats ?? null
+);
+
 export const selectProjects = createSelector(
   selectStatusData,
   (data): Project[] => data?.projects ?? []
@@ -165,25 +171,46 @@ export const selectTasksByStatus = createSelector(
     blocked: tasks.filter((t: WeightedTask) => t.status === 'blocked'),
     waiting: tasks.filter((t: WeightedTask) => t.status === 'waiting'),
     complete: tasks.filter((t: WeightedTask) => t.status === 'complete'),
+    completed: tasks.filter((t: WeightedTask) => t.status === 'completed'),
+    cancelled: tasks.filter((t: WeightedTask) => t.status === 'cancelled'),
   })
 );
 
 /**
- * Task statistics
+ * Task statistics - uses backend stats for accurate counts (includes completed)
  */
 export const selectTaskStats = createSelector(
-  [selectPriorityQueue],
-  (tasks) => ({
-    total: tasks.length,
-    p0Count: tasks.filter((t: WeightedTask) => t.priority === 'P0').length,
-    p1Count: tasks.filter((t: WeightedTask) => t.priority === 'P1').length,
-    p2Count: tasks.filter((t: WeightedTask) => t.priority === 'P2').length,
-    p3Count: tasks.filter((t: WeightedTask) => t.priority === 'P3').length,
-    inProgress: tasks.filter((t: WeightedTask) => t.status === 'in_progress').length,
-    blocked: tasks.filter((t: WeightedTask) => t.status === 'blocked').length,
-    waiting: tasks.filter((t: WeightedTask) => t.status === 'waiting').length,
-    complete: tasks.filter((t: WeightedTask) => t.status === 'complete').length,
-  })
+  [selectBackendTaskStats, selectPriorityQueue],
+  (backendStats, tasks) => {
+    // Use backend stats if available (includes all tasks)
+    if (backendStats) {
+      return {
+        total: backendStats.total,
+        active: backendStats.active,
+        p0Count: backendStats.p0,
+        p1Count: backendStats.p1,
+        p2Count: backendStats.p2,
+        p3Count: backendStats.p3,
+        inProgress: backendStats.inProgress,
+        blocked: backendStats.blocked,
+        waiting: backendStats.waiting,
+        complete: backendStats.completed,
+      };
+    }
+    // Fallback: calculate from local queue (active only)
+    return {
+      total: tasks.length,
+      active: tasks.length,
+      p0Count: tasks.filter((t: WeightedTask) => t.priority === 'P0').length,
+      p1Count: tasks.filter((t: WeightedTask) => t.priority === 'P1').length,
+      p2Count: tasks.filter((t: WeightedTask) => t.priority === 'P2').length,
+      p3Count: tasks.filter((t: WeightedTask) => t.priority === 'P3').length,
+      inProgress: tasks.filter((t: WeightedTask) => t.status === 'in_progress').length,
+      blocked: tasks.filter((t: WeightedTask) => t.status === 'blocked').length,
+      waiting: tasks.filter((t: WeightedTask) => t.status === 'waiting').length,
+      complete: 0,
+    };
+  }
 );
 
 /**

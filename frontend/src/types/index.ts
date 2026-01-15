@@ -56,12 +56,26 @@ export interface Decision {
   createdAt: string;
 }
 
+// Backend task statistics (accurate counts including completed)
+export interface BackendTaskStats {
+  total: number;
+  active: number;
+  completed: number;
+  inProgress: number;
+  blocked: number;
+  waiting: number;
+  p0: number;
+  p1: number;
+  p3: number;
+}
+
 // API Response types
 export interface UnifiedProgress {
   version: 'v1' | 'v2';
   lastUpdated: string;
   projects: Project[];
   priorityQueue: WeightedTask[];
+  taskStats?: BackendTaskStats;
   decisions: Decision[];
   topPriority?: WeightedTask;
   heuristicWeights?: HeuristicWeights;

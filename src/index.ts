@@ -60,13 +60,31 @@ app.get('/version', (_req, res) => {
 app.get('/status', async (_req, res) => {
   try {
     const db = await storage.getAll();
-    const tasks = await storage.getTasks();
+    const tasks = await storage.getTasks(); // Active tasks only
+    const allTasks = await storage.getAllTasks(); // All tasks for stats
     const topPriority = await storage.getTopPriority();
+    
+    // Calculate stats from ALL tasks (not just active)
+    const finishedStatuses = ['complete', 'completed', 'cancelled'];
+    const taskStats = {
+      total: allTasks.length,
+      active: tasks.length,
+      completed: allTasks.filter(t => finishedStatuses.includes(t.status)).length,
+      inProgress: allTasks.filter(t => t.status === 'in_progress').length,
+      blocked: allTasks.filter(t => t.status === 'blocked').length,
+      waiting: allTasks.filter(t => t.status === 'waiting').length,
+      p0: allTasks.filter(t => t.priority === 'P0' && !finishedStatuses.includes(t.status)).length,
+      p1: allTasks.filter(t => t.priority === 'P1' && !finishedStatuses.includes(t.status)).length,
+      p2: allTasks.filter(t => t.priority === 'P2' && !finishedStatuses.includes(t.status)).length,
+      p3: allTasks.filter(t => t.priority === 'P3' && !finishedStatuses.includes(t.status)).length,
+    };
+    
     res.json({
       version: db.version,
       lastUpdated: db.lastUpdated,
       projects: db.projects,
       priorityQueue: tasks,
+      taskStats, // NEW: accurate counts from all tasks
       dataGaps: db.dataGaps,
       decisions: db.decisions,
       topPriority,
