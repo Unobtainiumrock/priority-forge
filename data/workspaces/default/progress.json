@@ -1,0 +1,468 @@
+{
+  "version": "v3.2",
+  "lastUpdated": "2026-01-15T03:54:37.790Z",
+  "projects": [
+    {
+      "id": "2b44d3bb-a331-4284-b525-2b14a50a2463",
+      "name": "example-project",
+      "path": "~/projects/example",
+      "status": "active",
+      "primaryFocus": "Your project description here",
+      "createdAt": "2026-01-15T03:17:06.615Z",
+      "updatedAt": "2026-01-15T03:17:06.615Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "EXAMPLE-001",
+      "priority": "P1",
+      "task": "Replace this with your first task",
+      "project": "example-project",
+      "status": "cancelled",
+      "notes": "Delete this example and add your own tasks via the API",
+      "createdAt": "2026-01-15T03:17:06.615Z",
+      "updatedAt": "2026-01-15T03:24:49.130Z",
+      "priorityScore": 82,
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "BB-001",
+      "priority": "P0",
+      "task": "Fix accept_battle_invite RPC - state column NOT NULL constraint",
+      "project": "beastbound",
+      "status": "complete",
+      "blocking": "BB-002, BB-003",
+      "notes": "Migration applied successfully. Function now builds JSONB state. Tested and working.",
+      "createdAt": "2026-01-15T03:22:34.296Z",
+      "updatedAt": "2026-01-15T03:24:42.628Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 4,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": -59,
+      "startedAt": "2026-01-15T03:23:04.225Z"
+    },
+    {
+      "id": "BB-002",
+      "priority": "P0",
+      "task": "Verify accept invite flow end-to-end (RPC, battle row, navigation)",
+      "project": "beastbound",
+      "status": "not_started",
+      "dependencies": [
+        "BB-001"
+      ],
+      "notes": "After BB-001 fixed: test Accept creates battle row, invite marked accepted, both players navigate to /battle/pvp",
+      "createdAt": "2026-01-15T03:22:35.447Z",
+      "updatedAt": "2026-01-15T03:22:35.447Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 1
+      },
+      "priorityScore": -29
+    },
+    {
+      "id": "BB-003",
+      "priority": "P0",
+      "task": "Real-time PvP battle sync - beasts, turns, actions",
+      "project": "beastbound",
+      "status": "not_started",
+      "dependencies": [
+        "BB-002"
+      ],
+      "notes": "Core PvP functionality. Once both players enter battle room, ensure beast data syncs and turn actions broadcast correctly. Critical path for multiplayer.",
+      "createdAt": "2026-01-15T03:22:43.413Z",
+      "updatedAt": "2026-01-15T03:24:39.848Z",
+      "effort": "high",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 3,
+        "dependencyDepth": 2
+      },
+      "priorityScore": -13
+    },
+    {
+      "id": "BB-004",
+      "priority": "P1",
+      "task": "Presence system improvements - heartbeat reliability",
+      "project": "beastbound",
+      "status": "not_started",
+      "dependencies": [
+        "BB-003"
+      ],
+      "notes": "usePresence hook implemented. Needs tuning for edge cases (app kill, network drop, reconnection). Important for showing online friends accurately.",
+      "createdAt": "2026-01-15T03:22:43.663Z",
+      "updatedAt": "2026-01-15T03:24:40.898Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 82
+    },
+    {
+      "id": "BB-005",
+      "priority": "P1",
+      "task": "Battle invite expiration handling",
+      "project": "beastbound",
+      "status": "not_started",
+      "dependencies": [
+        "BB-002"
+      ],
+      "notes": "Auto-dismiss expired invites after 60s, cleanup old pending invites from DB. Prevents stale invites cluttering UI.",
+      "createdAt": "2026-01-15T03:22:43.871Z",
+      "updatedAt": "2026-01-15T03:24:41.949Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 73
+    },
+    {
+      "id": "BB-006",
+      "priority": "P1",
+      "task": "Battle UI - Redesign action menu to compact 2x2 command grid",
+      "project": "beastbound",
+      "status": "complete",
+      "notes": "Replaced 6-button vertical stack with iconic FIGHT/CAPTURE/BEAST/RUN grid. Moves expand when FIGHT tapped. Much more screen real estate for battle scene.",
+      "createdAt": "2026-01-15T03:23:40.754Z",
+      "updatedAt": "2026-01-15T03:23:51.955Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 82
+    },
+    {
+      "id": "BB-007",
+      "priority": "P2",
+      "task": "Battle UI - Remove bounce animation, default to moves menu",
+      "project": "beastbound",
+      "status": "complete",
+      "notes": "Removed spring animation on menu transitions. Menu now defaults to moves view and remembers last state between turns.",
+      "createdAt": "2026-01-15T03:23:42.013Z",
+      "updatedAt": "2026-01-15T03:23:52.311Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 173
+    },
+    {
+      "id": "BB-008",
+      "priority": "P1",
+      "task": "Fix pre-existing TypeScript errors in encounter.tsx",
+      "project": "beastbound",
+      "status": "not_started",
+      "blocking": "BB-009, BB-010",
+      "notes": "16 TS errors blocking clean builds: Neutral element not in Elements type, CombatantState not imported, OwnedBeast missing isShiny/ivs fields. Should fix before more UI work.",
+      "createdAt": "2026-01-15T03:23:43.916Z",
+      "updatedAt": "2026-01-15T03:24:38.990Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 82
+    },
+    {
+      "id": "BB-009",
+      "priority": "P3",
+      "task": "Battle UI - Add move power/type effectiveness indicators",
+      "project": "beastbound",
+      "status": "not_started",
+      "notes": "Show super effective / not very effective hints when selecting moves against current enemy",
+      "createdAt": "2026-01-15T03:23:45.577Z",
+      "updatedAt": "2026-01-15T03:23:45.577Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 282
+    },
+    {
+      "id": "BB-010",
+      "priority": "P3",
+      "task": "Battle UI - Animate beast entrance/exit transitions",
+      "project": "beastbound",
+      "status": "not_started",
+      "notes": "Add slide-in/fade animations when swapping beasts or entering battle",
+      "createdAt": "2026-01-15T03:23:47.094Z",
+      "updatedAt": "2026-01-15T03:23:47.094Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 282
+    },
+    {
+      "id": "BB-011",
+      "priority": "P1",
+      "task": "Battle results - XP gain and level up flow",
+      "project": "beastbound",
+      "status": "not_started",
+      "notes": "After victory: calculate XP, animate XP bar fill, handle level up with stat increases and potential move learning",
+      "createdAt": "2026-01-15T03:24:51.290Z",
+      "updatedAt": "2026-01-15T03:24:51.290Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 82
+    },
+    {
+      "id": "BB-012",
+      "priority": "P2",
+      "task": "Battle sound effects integration",
+      "project": "beastbound",
+      "status": "not_started",
+      "notes": "Add SFX for: attacks by element type, hits, critical hits, capture shake/success/fail, menu selections, beast faint",
+      "createdAt": "2026-01-15T03:24:52.787Z",
+      "updatedAt": "2026-01-15T03:24:52.787Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 182
+    },
+    {
+      "id": "BB-013",
+      "priority": "P2",
+      "task": "Status effect visual indicators on beast sprites",
+      "project": "beastbound",
+      "status": "not_started",
+      "notes": "Show burn flames, poison bubbles, sleep Zs, paralysis sparks as animated overlays on affected beasts",
+      "createdAt": "2026-01-15T03:24:54.690Z",
+      "updatedAt": "2026-01-15T03:24:54.690Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 173
+    },
+    {
+      "id": "BB-014",
+      "priority": "P2",
+      "task": "Wild encounter - different biome beast pools",
+      "project": "beastbound",
+      "status": "not_started",
+      "notes": "Forest spawns Nature/Earth, Volcano spawns Fire, Ocean spawns Water/Ice. Use background to determine pool.",
+      "createdAt": "2026-01-15T03:24:55.909Z",
+      "updatedAt": "2026-01-15T03:24:55.909Z",
+      "effort": "low",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 9,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 173
+    },
+    {
+      "id": "BB-015",
+      "priority": "P3",
+      "task": "Battle background parallax/weather effects",
+      "project": "beastbound",
+      "status": "not_started",
+      "notes": "Add subtle parallax movement to backgrounds, occasional weather particles (rain, embers, leaves) for atmosphere",
+      "createdAt": "2026-01-15T03:24:57.328Z",
+      "updatedAt": "2026-01-15T03:24:57.328Z",
+      "effort": "medium",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 282
+    }
+  ],
+  "dataGaps": [],
+  "decisions": [],
+  "completionRecords": [],
+  "heuristicWeights": {
+    "blocking": 10,
+    "crossProject": 5,
+    "timeSensitive": 8,
+    "effortValue": 3,
+    "dependency": 2
+  },
+  "priorityChangeEvents": [
+    {
+      "id": "0038e0d2-a885-4f34-ad10-6088464f2235",
+      "taskId": "BB-008",
+      "oldPriority": "P2",
+      "newPriority": "P1",
+      "oldScore": 182,
+      "newScore": 82,
+      "timestamp": "2026-01-15T03:24:38.991Z",
+      "queuePositionBefore": 8,
+      "queuePositionAfter": 3
+    },
+    {
+      "id": "c682d9cf-520b-4c34-9878-93dc43a930fe",
+      "taskId": "BB-003",
+      "oldPriority": "P1",
+      "newPriority": "P0",
+      "oldScore": 87,
+      "newScore": -13,
+      "timestamp": "2026-01-15T03:24:39.848Z",
+      "queuePositionBefore": 5,
+      "queuePositionAfter": 2
+    },
+    {
+      "id": "cadb3465-cb33-4c17-b811-3736c30606ea",
+      "taskId": "BB-004",
+      "oldPriority": "P2",
+      "newPriority": "P1",
+      "oldScore": 182,
+      "newScore": 82,
+      "timestamp": "2026-01-15T03:24:40.898Z",
+      "queuePositionBefore": 8,
+      "queuePositionAfter": 4
+    },
+    {
+      "id": "7bc7ee4c-bf7f-465d-bfd3-e143e688965d",
+      "taskId": "BB-005",
+      "oldPriority": "P2",
+      "newPriority": "P1",
+      "oldScore": 173,
+      "newScore": 73,
+      "timestamp": "2026-01-15T03:24:41.949Z",
+      "queuePositionBefore": 7,
+      "queuePositionAfter": 3
+    }
+  ],
+  "taskSelectionEvents": [],
+  "queueRebalanceEvents": [
+    {
+      "id": "b19ef69d-25e0-468a-bad1-9ba32aeb36a8",
+      "trigger": "task_updated",
+      "triggerTaskId": "BB-008",
+      "timestamp": "2026-01-15T03:24:38.991Z",
+      "queueSizeBefore": 9,
+      "queueSizeAfter": 9,
+      "significantChanges": [
+        {
+          "taskId": "BB-008",
+          "rankBefore": 6,
+          "rankAfter": 3,
+          "scoreBefore": 182,
+          "scoreAfter": 82
+        }
+      ],
+      "topTasksBefore": [
+        "BB-001",
+        "BB-002",
+        "EXAMPLE-001"
+      ],
+      "topTasksAfter": [
+        "BB-001",
+        "BB-002",
+        "EXAMPLE-001"
+      ]
+    },
+    {
+      "id": "aa99e922-5b9d-4bf8-9a47-3f0136c458c7",
+      "trigger": "task_updated",
+      "triggerTaskId": "BB-005",
+      "timestamp": "2026-01-15T03:24:41.949Z",
+      "queueSizeBefore": 9,
+      "queueSizeAfter": 9,
+      "significantChanges": [
+        {
+          "taskId": "BB-005",
+          "rankBefore": 6,
+          "rankAfter": 3,
+          "scoreBefore": 173,
+          "scoreAfter": 73
+        }
+      ],
+      "topTasksBefore": [
+        "BB-001",
+        "BB-002",
+        "BB-003"
+      ],
+      "topTasksAfter": [
+        "BB-001",
+        "BB-002",
+        "BB-003"
+      ]
+    }
+  ],
+  "dragReorderEvents": [],
+  "onlineLearnerState": {
+    "enabled": true,
+    "learningRate": 0.01,
+    "momentum": 0.9,
+    "totalUpdates": 0,
+    "momentumBuffer": {
+      "blocking": 0,
+      "crossProject": 0,
+      "timeSensitive": 0,
+      "effortValue": 0,
+      "dependency": 0
+    },
+    "maxWeightChange": 0.5,
+    "minWeight": 0.1,
+    "maxWeight": 50,
+    "cumulativeLoss": 0,
+    "correctPredictions": 0,
+    "totalPairs": 0
+  }
+}

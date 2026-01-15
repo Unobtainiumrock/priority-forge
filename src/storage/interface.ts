@@ -39,6 +39,8 @@ import {
   UpdateHeuristicWeightsDTO,
   LogDragReorderDTO,
   UpdateOnlineLearnerDTO,
+  Workspace,
+  CreateWorkspaceDTO,
 } from '../types/schema';
 
 export interface StorageInterface {
@@ -161,4 +163,13 @@ export interface StorageInterface {
     learningRate: number;
     enabled: boolean;
   }>;
+  
+  // V4: Workspace Management
+  getWorkspaces(): Promise<Workspace[]>;
+  getCurrentWorkspaceId(): Promise<string | null>;
+  getWorkspace(id: string): Promise<Workspace | null>;
+  createWorkspace(data: CreateWorkspaceDTO): Promise<Workspace>;
+  switchWorkspace(workspaceId: string): Promise<void>;
+  deleteWorkspace(workspaceId: string): Promise<boolean>;
+  seedCurrentWorkspace(): Promise<void>;
 }

@@ -1,0 +1,18 @@
+{
+  "workspaces": [
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "Migrated from legacy database",
+      "createdAt": "2026-01-15T03:26:54.014Z",
+      "updatedAt": "2026-01-15T03:26:54.015Z"
+    },
+    {
+      "id": "89b7c218-b685-4db6-9b39-0f383660d33e",
+      "name": "Gravity",
+      "createdAt": "2026-01-15T03:28:25.019Z",
+      "updatedAt": "2026-01-15T03:28:25.019Z"
+    }
+  ],
+  "currentWorkspaceId": "default"
+}

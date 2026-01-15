@@ -1,0 +1,79 @@
+{
+  "version": "v3.2",
+  "lastUpdated": "2026-01-15T03:54:32.162Z",
+  "projects": [
+    {
+      "id": "575fffb0-89ce-4cf1-a85b-30525b827378",
+      "name": "gravity",
+      "path": "/Users/mylesdavid/Development/Repos/priority-forge",
+      "status": "active",
+      "primaryFocus": "Gravity project workspace",
+      "createdAt": "2026-01-15T03:30:55.413Z",
+      "updatedAt": "2026-01-15T03:30:55.413Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "c38b5a43-98b9-4f87-8fd3-1dff23ad84b4",
+      "priority": "P1",
+      "task": "Add quick task creation form to UI",
+      "project": "gravity",
+      "status": "not_started",
+      "notes": "Allow adding tasks directly from the dashboard instead of only via MCP",
+      "createdAt": "2026-01-15T03:34:26.557Z",
+      "updatedAt": "2026-01-15T03:34:26.557Z",
+      "weights": {
+        "blockingCount": 0,
+        "crossProjectImpact": 0,
+        "timeSensitivity": 0,
+        "effortValueRatio": 6,
+        "dependencyDepth": 0
+      },
+      "priorityScore": 82
+    }
+  ],
+  "dataGaps": [],
+  "decisions": [],
+  "completionRecords": [],
+  "heuristicWeights": {
+    "blocking": 10,
+    "crossProject": 5,
+    "timeSensitive": 8,
+    "effortValue": 3,
+    "dependency": 2
+  },
+  "priorityChangeEvents": [],
+  "taskSelectionEvents": [],
+  "queueRebalanceEvents": [
+    {
+      "id": "90b09da9-a408-40f2-9b8c-b9a89246ddc9",
+      "trigger": "weights_changed",
+      "timestamp": "2026-01-15T03:28:40.740Z",
+      "queueSizeBefore": 0,
+      "queueSizeAfter": 0,
+      "significantChanges": [],
+      "topTasksBefore": [],
+      "topTasksAfter": []
+    }
+  ],
+  "dragReorderEvents": [],
+  "onlineLearnerState": {
+    "enabled": true,
+    "learningRate": 0.01,
+    "momentum": 0.9,
+    "totalUpdates": 0,
+    "momentumBuffer": {
+      "blocking": 0,
+      "crossProject": 0,
+      "timeSensitive": 0,
+      "effortValue": 0,
+      "dependency": 0
+    },
+    "maxWeightChange": 0.5,
+    "minWeight": 0.1,
+    "maxWeight": 50,
+    "cumulativeLoss": 0,
+    "correctPredictions": 0,
+    "totalPairs": 0
+  }
+}

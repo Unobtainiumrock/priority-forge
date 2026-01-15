@@ -821,6 +821,68 @@ const tools = [
       required: [],
     },
   },
+  // ====== V4: Workspace Management Tools ======
+  {
+    name: 'list_workspaces',
+    description: 'V4: List all available workspaces',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'get_current_workspace',
+    description: 'V4: Get the currently active workspace',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'create_workspace',
+    description: 'V4: Create a new workspace',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Workspace name' },
+        description: { type: 'string', description: 'Optional workspace description' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'switch_workspace',
+    description: 'V4: Switch to a different workspace. This changes the active workspace and reloads all tasks/projects.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        workspaceId: { type: 'string', description: 'ID of the workspace to switch to' },
+      },
+      required: ['workspaceId'],
+    },
+  },
+  {
+    name: 'delete_workspace',
+    description: 'V4: Delete a workspace (cannot delete the current workspace)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        workspaceId: { type: 'string', description: 'ID of the workspace to delete' },
+      },
+      required: ['workspaceId'],
+    },
+  },
+  {
+    name: 'seed_workspace',
+    description: 'V4: Seed the current workspace with example data (only works if workspace is empty)',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
 ];
 
 async function handleToolCall(name: string, params: Record<string, unknown>): Promise<unknown> {
@@ -1089,6 +1151,70 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
           totalPairsGenerated: events.reduce((sum, e) => sum + e.implicitPreferences.length, 0),
           eventsWithWeightUpdates: events.filter(e => e.appliedWeightDelta).length,
         },
+      };
+    }
+
+    // ====== V4: Workspace Management Tools ======
+    case 'list_workspaces': {
+      const workspaces = await storage.getWorkspaces();
+      const currentId = await storage.getCurrentWorkspaceId();
+      return {
+        workspaces,
+        currentWorkspaceId: currentId,
+        count: workspaces.length,
+      };
+    }
+
+    case 'get_current_workspace': {
+      const currentId = await storage.getCurrentWorkspaceId();
+      if (!currentId) {
+        return { message: 'No workspace is currently active' };
+      }
+      const workspace = await storage.getWorkspace(currentId);
+      return {
+        workspace: workspace || null,
+        workspaceId: currentId,
+      };
+    }
+
+    case 'create_workspace': {
+      const workspace = await storage.createWorkspace({
+        name: params.name as string,
+        description: params.description as string | undefined,
+      });
+      const currentId = await storage.getCurrentWorkspaceId();
+      return {
+        workspace,
+        message: `Created workspace "${workspace.name}"`,
+        isCurrent: workspace.id === currentId,
+      };
+    }
+
+    case 'switch_workspace': {
+      await storage.switchWorkspace(params.workspaceId as string);
+      const workspace = await storage.getWorkspace(params.workspaceId as string);
+      return {
+        workspace,
+        message: `Switched to workspace "${workspace?.name || params.workspaceId}"`,
+        workspaceId: params.workspaceId,
+      };
+    }
+
+    case 'delete_workspace': {
+      const deleted = await storage.deleteWorkspace(params.workspaceId as string);
+      return {
+        success: deleted,
+        message: deleted 
+          ? `Deleted workspace ${params.workspaceId}`
+          : `Workspace ${params.workspaceId} not found`,
+      };
+    }
+
+    case 'seed_workspace': {
+      await storage.seedCurrentWorkspace();
+      return {
+        success: true,
+        message: 'Workspace seeded with example data (1 project, 1 task)',
       };
     }
 
