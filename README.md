@@ -664,4 +664,4 @@ The system **doesn't learn WHICH tasks should block others** — that semantic u
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See the [LICENSE](LICENSE) file for details.s
