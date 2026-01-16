@@ -150,10 +150,37 @@ interface TaskSelectionEvent {
   wasTopSelected: boolean;     // Did user follow recommendation?
   queueSize: number;
   timestamp: string;
+  
+  // V3.4: Enhanced learning signals for skipped tasks
+  skippedTaskIds?: string[];   // ALL tasks ranked higher that user ignored
+  
+  // V3.4: Pairwise preferences (the ML gold!)
+  implicitPreferences?: Array<{
+    preferredTaskId: string;   // Task user selected
+    skippedTaskId: string;     // Task ranked higher but ignored
+    scoreDiff: number;         // selected_score - skipped_score
+  }>;
+  
+  // V3.4: Feature snapshot of selected task
+  selectedTaskFeatures?: {
+    priority: Priority;
+    priorityScore: number;
+    weights: TaskWeights;
+    effort?: Effort;
+    hasDeadline: boolean;
+    hasBlocking: boolean;
+    hasDependencies: boolean;
+  };
 }
 ```
 
-**Training Signal:** User preference between competing tasks.
+**Training Signals:**
+- `wasTopSelected: false`: User disagreed with our top recommendation
+- `skippedTaskIds`: All tasks the user considered but rejected (rich implicit feedback)
+- `implicitPreferences`: Pairwise ranking preferences (user prefers selected over ALL skipped)
+- `selectedTaskFeatures`: Feature snapshot for offline retraining
+
+**V3.4 Enhancement:** When user selects task at rank 5 instead of rank 1, we now generate 4 pairwise preferences: "user prefers task-5 over task-1, task-2, task-3, task-4". This is the same ML gold as drag-and-drop reordering but captured passively.
 
 ### 3. Queue Rebalance Events
 
@@ -214,7 +241,8 @@ interface TaskCompletionRecord {
 
 **Approach:** Pairwise ranking loss
 - For each `TaskSelectionEvent` where `wasTopSelected = false`:
-  - User preferred task at rank N over task at rank 1
+  - User preferred task at rank N over ALL tasks ranked 1 to N-1
+  - **V3.4**: Use `implicitPreferences` array directly - each entry is a training pair
   - Learn weights that would have ranked the selected task higher
 
 **Model:** XGBoost with ranking objective (`rank:pairwise`)
@@ -225,7 +253,15 @@ interface TaskCompletionRecord {
 - `effort` (low=1, medium=2, high=3)
 - `hasDependencies`, `hasBlocking`
 
-**Data Requirements:** ~50+ selection events where user disagreed with recommendation.
+**Data Requirements:** 
+- ~50+ selection events where user disagreed with recommendation
+- **V3.4 Enhanced**: Use `mlReady.selectionPairs` combined with drag reorder pairs
+- Each non-top selection generates multiple pairs (richer signal than before)
+
+**Training Data Sources:**
+1. `mlReady.selectionPairs` - From task selections (passive)
+2. `dragReorderEvents.implicitPreferences` - From UI drag-and-drop (explicit)
+3. Both can be combined into unified pairwise training set
 
 ### Target 2: Completion Time Prediction (Regression)
 
@@ -382,11 +418,21 @@ Model learns: "Given where we are and where we want to be, which task best advan
 |--------|---------|------|-----------|
 | Selection events | 50 | 200 | 500+ |
 | Selection accuracy | N/A | 70%+ | 85%+ |
+| **Selections with pairwise data** | 10 | 50 | 200+ |
+| **Total selection pairs** | 20 | 100 | 500+ |
 | Completion records | 50 | 200 | 500+ |
 | **Completions with `actualWorkTime`** | 10 | 50 | 100+ |
 | Rebalance events | 20 | 100 | 300+ |
 | Tasks with effort | 50% | 80% | 95% |
 | Tasks with dependencies | 20% | 40% | 60% |
+
+### V3.4 Selection Pairwise Quality
+
+The new `implicitPreferences` field captures when users skip higher-ranked tasks. This data is critical for pairwise ranking loss training:
+
+- **Rich signal**: Each non-top selection generates N-1 pairwise preferences (where N = selected rank)
+- **Passive collection**: Unlike drag-and-drop, this happens naturally during task selection
+- **Combined with drag data**: Selection pairs and drag pairs can be merged for training
 
 ### V3.3 Work Duration Quality
 
@@ -461,7 +507,16 @@ Returns:
       }
     ],
     "tasks": [...],
-    "rebalances": [...]
+    "rebalances": [...],
+    "selectionPairs": [                // V3.4: Pairwise preferences from task selections
+      {
+        "preferredTaskId": "TASK-005",
+        "skippedTaskId": "TASK-001",
+        "scoreDiff": 15.2,             // positive = heuristics got it wrong
+        "timestamp": "2026-01-16T12:00:00Z",
+        "queueSize": 10
+      }
+    ]
   },
   "summary": {
     "totalCompletions": 47,
@@ -474,7 +529,9 @@ Returns:
       "completionsWithWorkTime": 12,   // V3.3: Tracks reliable work time data
       "tasksWithEffort": 35,
       "tasksWithDependencies": 18,
-      "rebalancesWithSignificantChanges": 23
+      "rebalancesWithSignificantChanges": 23,
+      "selectionsWithPairwiseData": 45, // V3.4: Selections with skipped task data
+      "totalSelectionPairs": 127        // V3.4: Total pairwise preferences
     }
   }
 }

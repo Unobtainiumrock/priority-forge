@@ -1226,6 +1226,7 @@ export class JsonStorage implements StorageInterface {
   /**
    * V3: Log when user selects a task to work on
    * This captures user preference signals for training
+   * V3.4: Enhanced with skipped task tracking and pairwise preferences
    */
   async logTaskSelection(selectedTaskId: string): Promise<TaskSelectionEvent | null> {
     const selectedTask = this.taskMap.get(selectedTaskId);
@@ -1234,6 +1235,36 @@ export class JsonStorage implements StorageInterface {
     const sorted = this.taskHeap.toSortedArray().filter(t => t.status !== 'complete');
     const topTask = sorted[0];
     const selectedRank = sorted.findIndex(t => t.id === selectedTaskId);
+
+    // V3.4: Collect all skipped task IDs (tasks ranked higher than selected)
+    const skippedTaskIds: string[] = [];
+    for (let i = 0; i < selectedRank; i++) {
+      skippedTaskIds.push(sorted[i].id);
+    }
+
+    // V3.4: Generate pairwise preferences (user prefers selected over all skipped)
+    // This is the ML gold - each skip is an implicit preference signal
+    const implicitPreferences: TaskSelectionEvent['implicitPreferences'] = [];
+    for (let i = 0; i < selectedRank; i++) {
+      const skippedTask = sorted[i];
+      implicitPreferences.push({
+        preferredTaskId: selectedTaskId,
+        skippedTaskId: skippedTask.id,
+        // Positive scoreDiff means heuristics ranked skipped higher but user disagreed
+        scoreDiff: selectedTask.priorityScore - skippedTask.priorityScore,
+      });
+    }
+
+    // V3.4: Capture feature snapshot for offline retraining
+    const selectedTaskFeatures: TaskSelectionEvent['selectedTaskFeatures'] = {
+      priority: selectedTask.priority,
+      priorityScore: selectedTask.priorityScore,
+      weights: selectedTask.weights,
+      effort: selectedTask.effort,
+      hasDeadline: !!selectedTask.deadline,
+      hasBlocking: !!selectedTask.blocking,
+      hasDependencies: !!(selectedTask.dependencies && selectedTask.dependencies.length > 0),
+    };
 
     const event: TaskSelectionEvent = {
       id: uuidv4(),
@@ -1247,12 +1278,20 @@ export class JsonStorage implements StorageInterface {
       timestamp: new Date().toISOString(),
       // V4: Tag with workspace for ML filtering
       workspaceId: this.currentWorkspaceId || undefined,
+      // V3.4: Enhanced learning signals
+      skippedTaskIds: skippedTaskIds.length > 0 ? skippedTaskIds : undefined,
+      implicitPreferences: implicitPreferences.length > 0 ? implicitPreferences : undefined,
+      selectedTaskFeatures,
     };
 
     // V4: Write to global ML file
     this.globalML.taskSelectionEvents.push(event);
     
-    console.log(`📊 V3: Logged task selection: ${selectedTaskId} (rank ${selectedRank + 1}/${sorted.length}, was_top: ${event.wasTopSelected})`);
+    const skippedCount = skippedTaskIds.length;
+    console.log(`📊 V3.4: Logged task selection: ${selectedTaskId} (rank ${selectedRank + 1}/${sorted.length}, skipped ${skippedCount} tasks, was_top: ${event.wasTopSelected})`);
+    if (skippedCount > 0) {
+      console.log(`  ↳ Generated ${implicitPreferences.length} pairwise preferences from skipped tasks`);
+    }
     
     // V4: Save global ML data
     this.saveGlobalML();
@@ -1307,6 +1346,8 @@ export class JsonStorage implements StorageInterface {
         tasksWithEffort: number;
         tasksWithDependencies: number;
         rebalancesWithSignificantChanges: number;
+        selectionsWithPairwiseData: number;  // V3.4: How many selections have pairwise preferences
+        totalSelectionPairs: number;  // V3.4: Total pairwise preferences from selections
       };
     };
     // ML-ready format with nulls handled
@@ -1343,6 +1384,14 @@ export class JsonStorage implements StorageInterface {
         queueSizeAfter: number;
         significantChangeCount: number;
         topTaskChanged: number;  // 0 or 1
+      }>;
+      // V3.4: Selection pairwise preferences (combined with drag reorder for training)
+      selectionPairs: Array<{
+        preferredTaskId: string;
+        skippedTaskId: string;
+        scoreDiff: number;  // positive = heuristics got it wrong
+        timestamp: string;
+        queueSize: number;
       }>;
     };
   }> {
@@ -1428,6 +1477,36 @@ export class JsonStorage implements StorageInterface {
       r => r.significantChanges.length > 0
     ).length;
 
+    // V3.4: Count selections with pairwise data and total pairs
+    const selectionsWithPairwiseData = taskSelectionEvents.filter(
+      e => e.implicitPreferences && e.implicitPreferences.length > 0
+    ).length;
+    const totalSelectionPairs = taskSelectionEvents.reduce(
+      (sum, e) => sum + (e.implicitPreferences?.length || 0), 0
+    );
+
+    // V3.4: ML-ready selection pairwise preferences
+    const mlSelectionPairs: Array<{
+      preferredTaskId: string;
+      skippedTaskId: string;
+      scoreDiff: number;
+      timestamp: string;
+      queueSize: number;
+    }> = [];
+    for (const event of taskSelectionEvents) {
+      if (event.implicitPreferences) {
+        for (const pref of event.implicitPreferences) {
+          mlSelectionPairs.push({
+            preferredTaskId: pref.preferredTaskId,
+            skippedTaskId: pref.skippedTaskId,
+            scoreDiff: pref.scoreDiff,
+            timestamp: event.timestamp,
+            queueSize: event.queueSize,
+          });
+        }
+      }
+    }
+
     return {
       completionRecords,
       priorityChangeEvents,
@@ -1447,12 +1526,15 @@ export class JsonStorage implements StorageInterface {
           tasksWithEffort,
           tasksWithDependencies,
           rebalancesWithSignificantChanges,
+          selectionsWithPairwiseData,  // V3.4: Selections with skipped task data
+          totalSelectionPairs,  // V3.4: Total pairwise preferences from selections
         },
       },
       mlReady: {
         completions: mlCompletions,
         tasks: mlTasks,
         rebalances: mlRebalances,
+        selectionPairs: mlSelectionPairs,  // V3.4: Pairwise preferences from task selections
       },
     };
   }

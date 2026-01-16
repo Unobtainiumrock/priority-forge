@@ -140,6 +140,7 @@ export interface PriorityChangeEvent {
 }
 
 // V3: Task selection event (for learning user preferences)
+// V3.4: Enhanced with skipped task tracking for pairwise learning
 export interface TaskSelectionEvent {
   id: string;
   selectedTaskId: string;
@@ -152,6 +153,30 @@ export interface TaskSelectionEvent {
   timestamp: string;
   // V4: Workspace tracking for ML aggregation
   workspaceId?: string;
+  
+  // V3.4: Enhanced learning signals for skipped tasks
+  // Captures ALL tasks ranked higher than selected (not just top task)
+  skippedTaskIds?: string[];     // IDs of tasks user skipped to select this one
+  
+  // V3.4: Pairwise preferences (the ML gold!)
+  // If user selects task at rank 5, generates:
+  //   selected > task_at_rank_0, selected > task_at_rank_1, ..., selected > task_at_rank_4
+  implicitPreferences?: Array<{
+    preferredTaskId: string;     // The task user selected (should rank higher)
+    skippedTaskId: string;       // Task that was ranked higher but ignored
+    scoreDiff: number;           // selected_score - skipped_score (positive = heuristics got it wrong)
+  }>;
+  
+  // V3.4: Feature snapshot of selected task (for offline retraining)
+  selectedTaskFeatures?: {
+    priority: Priority;
+    priorityScore: number;
+    weights: TaskWeights;
+    effort?: Effort;
+    hasDeadline: boolean;
+    hasBlocking: boolean;
+    hasDependencies: boolean;
+  };
 }
 
 // V3: Queue rebalance event (for learning queue dynamics)
