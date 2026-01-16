@@ -889,18 +889,18 @@ export class JsonStorage implements StorageInterface {
     const sortedBefore = this.taskHeap.toSortedArray();
     const queuePositionBefore = sortedBefore.findIndex(t => t.id === id);
     
-    // V3.3: Capture startedAt when transitioning to in_progress
+    // V4.0: Capture startedAt when transitioning to in_progress
     let startedAt = existingTask.startedAt;
     if (data.status === 'in_progress' && oldStatus !== 'in_progress' && !startedAt) {
       startedAt = new Date().toISOString();
-      console.log(`📊 V3.3: Task ${id} started work at ${startedAt}`);
+      console.log(`📊 V4.0: Task ${id} started work at ${startedAt}`);
     }
     
     // Merge updates
     const updatedBase: WeightedTask = {
       ...existingTask,
       ...data,
-      startedAt,  // V3.3: Preserve or set startedAt
+      startedAt,  // V4.0: Preserve or set startedAt
       weights: data.weights 
         ? { ...existingTask.weights, ...data.weights }
         : existingTask.weights,
@@ -1152,14 +1152,14 @@ export class JsonStorage implements StorageInterface {
     const completedTime = new Date(completedAt).getTime();
     const hoursElapsed = (completedTime - createdAt) / (1000 * 60 * 60);
 
-    // V3.3: Calculate actual work time (from startedAt, not createdAt)
+    // V4.0: Calculate actual work time (from startedAt, not createdAt)
     let actualWorkTime: number | undefined;
     if (task.startedAt) {
       const startedTime = new Date(task.startedAt).getTime();
       actualWorkTime = Math.round(((completedTime - startedTime) / (1000 * 60 * 60)) * 100) / 100;
-      console.log(`📊 V3.3: Task ${taskId} work duration: ${actualWorkTime}h (started: ${task.startedAt})`);
+      console.log(`📊 V4.0: Task ${taskId} work duration: ${actualWorkTime}h (started: ${task.startedAt})`);
     } else {
-      console.log(`⚠️ V3.3: Task ${taskId} completed without startedAt - using queue time as fallback`);
+      console.log(`⚠️ V4.0: Task ${taskId} completed without startedAt - using queue time as fallback`);
     }
 
     // Count priority changes for this task (from global ML data)
@@ -1178,7 +1178,7 @@ export class JsonStorage implements StorageInterface {
       // V3: Capture score at completion for training
       initialPriorityScore: task.priorityScore,
       finalPriorityScore: task.priorityScore,
-      // V3.3: Actual work duration tracking
+      // V4.0: Actual work duration tracking
       startedAt: task.startedAt,
       actualWorkTime,
       // V4: Tag with workspace for ML filtering
@@ -1226,7 +1226,7 @@ export class JsonStorage implements StorageInterface {
   /**
    * V3: Log when user selects a task to work on
    * This captures user preference signals for training
-   * V3.4: Enhanced with skipped task tracking and pairwise preferences
+   * V4.1: Enhanced with skipped task tracking and pairwise preferences
    */
   async logTaskSelection(selectedTaskId: string): Promise<TaskSelectionEvent | null> {
     const selectedTask = this.taskMap.get(selectedTaskId);
@@ -1236,13 +1236,13 @@ export class JsonStorage implements StorageInterface {
     const topTask = sorted[0];
     const selectedRank = sorted.findIndex(t => t.id === selectedTaskId);
 
-    // V3.4: Collect all skipped task IDs (tasks ranked higher than selected)
+    // V4.1: Collect all skipped task IDs (tasks ranked higher than selected)
     const skippedTaskIds: string[] = [];
     for (let i = 0; i < selectedRank; i++) {
       skippedTaskIds.push(sorted[i].id);
     }
 
-    // V3.4: Generate pairwise preferences (user prefers selected over all skipped)
+    // V4.1: Generate pairwise preferences (user prefers selected over all skipped)
     // This is the ML gold - each skip is an implicit preference signal
     const implicitPreferences: TaskSelectionEvent['implicitPreferences'] = [];
     for (let i = 0; i < selectedRank; i++) {
@@ -1255,7 +1255,7 @@ export class JsonStorage implements StorageInterface {
       });
     }
 
-    // V3.4: Capture feature snapshot for offline retraining
+    // V4.1: Capture feature snapshot for offline retraining
     const selectedTaskFeatures: TaskSelectionEvent['selectedTaskFeatures'] = {
       priority: selectedTask.priority,
       priorityScore: selectedTask.priorityScore,
@@ -1278,7 +1278,7 @@ export class JsonStorage implements StorageInterface {
       timestamp: new Date().toISOString(),
       // V4: Tag with workspace for ML filtering
       workspaceId: this.currentWorkspaceId || undefined,
-      // V3.4: Enhanced learning signals
+      // V4.1: Enhanced learning signals
       skippedTaskIds: skippedTaskIds.length > 0 ? skippedTaskIds : undefined,
       implicitPreferences: implicitPreferences.length > 0 ? implicitPreferences : undefined,
       selectedTaskFeatures,
@@ -1288,7 +1288,7 @@ export class JsonStorage implements StorageInterface {
     this.globalML.taskSelectionEvents.push(event);
     
     const skippedCount = skippedTaskIds.length;
-    console.log(`📊 V3.4: Logged task selection: ${selectedTaskId} (rank ${selectedRank + 1}/${sorted.length}, skipped ${skippedCount} tasks, was_top: ${event.wasTopSelected})`);
+    console.log(`📊 V4.1: Logged task selection: ${selectedTaskId} (rank ${selectedRank + 1}/${sorted.length}, skipped ${skippedCount} tasks, was_top: ${event.wasTopSelected})`);
     if (skippedCount > 0) {
       console.log(`  ↳ Generated ${implicitPreferences.length} pairwise preferences from skipped tasks`);
     }
@@ -1342,12 +1342,12 @@ export class JsonStorage implements StorageInterface {
       selectionAccuracy: number;
       dataQuality: {
         completionsWithScores: number;
-        completionsWithWorkTime: number;  // V3.3: How many completions have reliable work duration
+        completionsWithWorkTime: number;  // V4.0: How many completions have reliable work duration
         tasksWithEffort: number;
         tasksWithDependencies: number;
         rebalancesWithSignificantChanges: number;
-        selectionsWithPairwiseData: number;  // V3.4: How many selections have pairwise preferences
-        totalSelectionPairs: number;  // V3.4: Total pairwise preferences from selections
+        selectionsWithPairwiseData: number;  // V4.1: How many selections have pairwise preferences
+        totalSelectionPairs: number;  // V4.1: Total pairwise preferences from selections
       };
     };
     // ML-ready format with nulls handled
@@ -1355,9 +1355,9 @@ export class JsonStorage implements StorageInterface {
       completions: Array<{
         taskId: string;
         completionTimeHours: number;
-        workTimeHours: number;     // V3.3: Actual work time (startedAt → completedAt)
-        queueTimeHours: number;    // V3.3: Queue time (createdAt → startedAt)
-        hasWorkTimeData: number;   // V3.3: 1 if workTimeHours is reliable, 0 if fallback
+        workTimeHours: number;     // V4.0: Actual work time (startedAt → completedAt)
+        queueTimeHours: number;    // V4.0: Queue time (createdAt → startedAt)
+        hasWorkTimeData: number;   // V4.0: 1 if workTimeHours is reliable, 0 if fallback
         wasBlocking: number;  // 0 or 1
         outcome: string;
         initialScore: number;
@@ -1385,7 +1385,7 @@ export class JsonStorage implements StorageInterface {
         significantChangeCount: number;
         topTaskChanged: number;  // 0 or 1
       }>;
-      // V3.4: Selection pairwise preferences (combined with drag reorder for training)
+      // V4.1: Selection pairwise preferences (combined with drag reorder for training)
       selectionPairs: Array<{
         preferredTaskId: string;
         skippedTaskId: string;
@@ -1411,7 +1411,7 @@ export class JsonStorage implements StorageInterface {
     const completionsWithScores = completionRecords.filter(
       r => r.initialPriorityScore !== undefined
     ).length;
-    // V3.3: Track completions with actual work time data
+    // V4.0: Track completions with actual work time data
     const completionsWithWorkTime = completionRecords.filter(
       r => r.actualWorkTime !== undefined
     ).length;
@@ -1429,7 +1429,7 @@ export class JsonStorage implements StorageInterface {
       const task = this.taskMap.get(r.taskId);
       const initialScore = r.initialPriorityScore ?? task?.priorityScore ?? 0;
       const finalScore = r.finalPriorityScore ?? task?.priorityScore ?? 0;
-      // V3.3: Include work time and queue time separately
+      // V4.0: Include work time and queue time separately
       const hasWorkTime = r.actualWorkTime !== undefined;
       const queueTimeHours = hasWorkTime && r.startedAt
         ? Math.round(((new Date(r.startedAt).getTime() - new Date(task?.createdAt || r.startedAt).getTime()) / (1000 * 60 * 60)) * 100) / 100
@@ -1477,7 +1477,7 @@ export class JsonStorage implements StorageInterface {
       r => r.significantChanges.length > 0
     ).length;
 
-    // V3.4: Count selections with pairwise data and total pairs
+    // V4.1: Count selections with pairwise data and total pairs
     const selectionsWithPairwiseData = taskSelectionEvents.filter(
       e => e.implicitPreferences && e.implicitPreferences.length > 0
     ).length;
@@ -1485,7 +1485,7 @@ export class JsonStorage implements StorageInterface {
       (sum, e) => sum + (e.implicitPreferences?.length || 0), 0
     );
 
-    // V3.4: ML-ready selection pairwise preferences
+    // V4.1: ML-ready selection pairwise preferences
     const mlSelectionPairs: Array<{
       preferredTaskId: string;
       skippedTaskId: string;
@@ -1522,19 +1522,19 @@ export class JsonStorage implements StorageInterface {
         selectionAccuracy,
         dataQuality: {
           completionsWithScores,
-          completionsWithWorkTime,  // V3.3: Tracks how many have actual work duration
+          completionsWithWorkTime,  // V4.0: Tracks how many have actual work duration
           tasksWithEffort,
           tasksWithDependencies,
           rebalancesWithSignificantChanges,
-          selectionsWithPairwiseData,  // V3.4: Selections with skipped task data
-          totalSelectionPairs,  // V3.4: Total pairwise preferences from selections
+          selectionsWithPairwiseData,  // V4.1: Selections with skipped task data
+          totalSelectionPairs,  // V4.1: Total pairwise preferences from selections
         },
       },
       mlReady: {
         completions: mlCompletions,
         tasks: mlTasks,
         rebalances: mlRebalances,
-        selectionPairs: mlSelectionPairs,  // V3.4: Pairwise preferences from task selections
+        selectionPairs: mlSelectionPairs,  // V4.1: Pairwise preferences from task selections
       },
     };
   }

@@ -1,9 +1,9 @@
 #!/usr/bin/env npx ts-node
 /**
- * V3.3 Migration: Impute startedAt and actualWorkTime for historical data
+ * V4.0 Migration: Impute startedAt and actualWorkTime for historical data
  * 
  * This script retroactively adds work duration estimates to completion records
- * that were created before V3.3 introduced startedAt tracking.
+ * that were created before V4.0 introduced startedAt tracking.
  * 
  * Imputation Strategy:
  * - For short tasks (< 2h total time): 80% is work time, 20% queue time
@@ -87,7 +87,7 @@ function estimateWorkTime(
 }
 
 function migrateData(): void {
-  console.log('🔄 V3.3 Migration: Imputing work duration data...\n');
+  console.log('🔄 V4.0 Migration: Imputing work duration data...\n');
   
   // Load database
   if (!fs.existsSync(DB_FILE)) {

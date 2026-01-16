@@ -125,7 +125,7 @@ async function handleResourceRead(uri: string): Promise<string> {
     }
     
     case 'progress://task-protocol': {
-      return `# 📋 TASK MANAGEMENT PROTOCOL (V3.3)
+      return `# 📋 TASK MANAGEMENT PROTOCOL (V4.0)
 
 ## MANDATORY: Follow this protocol for ALL work sessions
 
@@ -176,7 +176,7 @@ This automatically calculates:
 - Ensure current task status reflects actual state
 - If incomplete, update notes with progress summary
 
-## DATA COLLECTION TARGETS (V3.3)
+## DATA COLLECTION TARGETS (V4.0)
 | Metric | Target | Why |
 |--------|--------|-----|
 | Completions with \`actualWorkTime\` | 10+ | Effort estimation learning |
@@ -1264,7 +1264,7 @@ export async function mcpHandler(req: Request, res: Response): Promise<void> {
 2. Read 'progress://auto-capture' - learn to proactively identify tasks
 3. Read 'progress://project-registry' - check if current project is registered
 
-## CRITICAL: WORK DURATION TRACKING (V3.3)
+## CRITICAL: WORK DURATION TRACKING (V4.0)
 When starting work on ANY task, you MUST call BOTH:
 1. \`log_task_selection(taskId)\` - logs which task was selected
 2. \`update_task(id, status: "in_progress")\` - captures startedAt timestamp

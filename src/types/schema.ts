@@ -80,7 +80,7 @@ export interface WeightedTask extends Task {
   // V2 additions for better scoring
   deadline?: string;      // ISO date string for time sensitivity
   effort?: Effort;        // Task effort estimate
-  // V3.3: Work duration tracking
+  // V4.0: Work duration tracking
   startedAt?: string;     // ISO timestamp when work actually began (status → in_progress)
 }
 
@@ -116,7 +116,7 @@ export interface TaskCompletionRecord {
   // V3 additions
   initialPriorityScore?: number;  // Score when task was created
   finalPriorityScore?: number;    // Score at completion
-  // V3.3: Actual work duration tracking
+  // V4.0: Actual work duration tracking
   startedAt?: string;             // When work began (status → in_progress)
   actualWorkTime?: number;        // Hours from startedAt to completedAt (actual work, not queue time)
   // V4: Workspace tracking for ML aggregation
@@ -140,7 +140,7 @@ export interface PriorityChangeEvent {
 }
 
 // V3: Task selection event (for learning user preferences)
-// V3.4: Enhanced with skipped task tracking for pairwise learning
+// V4.1: Enhanced with skipped task tracking for pairwise learning
 export interface TaskSelectionEvent {
   id: string;
   selectedTaskId: string;
@@ -154,11 +154,11 @@ export interface TaskSelectionEvent {
   // V4: Workspace tracking for ML aggregation
   workspaceId?: string;
   
-  // V3.4: Enhanced learning signals for skipped tasks
+  // V4.1: Enhanced learning signals for skipped tasks
   // Captures ALL tasks ranked higher than selected (not just top task)
   skippedTaskIds?: string[];     // IDs of tasks user skipped to select this one
   
-  // V3.4: Pairwise preferences (the ML gold!)
+  // V4.1: Pairwise preferences (the ML gold!)
   // If user selects task at rank 5, generates:
   //   selected > task_at_rank_0, selected > task_at_rank_1, ..., selected > task_at_rank_4
   implicitPreferences?: Array<{
@@ -167,7 +167,7 @@ export interface TaskSelectionEvent {
     scoreDiff: number;           // selected_score - skipped_score (positive = heuristics got it wrong)
   }>;
   
-  // V3.4: Feature snapshot of selected task (for offline retraining)
+  // V4.1: Feature snapshot of selected task (for offline retraining)
   selectedTaskFeatures?: {
     priority: Priority;
     priorityScore: number;

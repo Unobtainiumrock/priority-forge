@@ -151,17 +151,17 @@ interface TaskSelectionEvent {
   queueSize: number;
   timestamp: string;
   
-  // V3.4: Enhanced learning signals for skipped tasks
+  // V4.1: Enhanced learning signals for skipped tasks
   skippedTaskIds?: string[];   // ALL tasks ranked higher that user ignored
   
-  // V3.4: Pairwise preferences (the ML gold!)
+  // V4.1: Pairwise preferences (the ML gold!)
   implicitPreferences?: Array<{
     preferredTaskId: string;   // Task user selected
     skippedTaskId: string;     // Task ranked higher but ignored
     scoreDiff: number;         // selected_score - skipped_score
   }>;
   
-  // V3.4: Feature snapshot of selected task
+  // V4.1: Feature snapshot of selected task
   selectedTaskFeatures?: {
     priority: Priority;
     priorityScore: number;
@@ -180,7 +180,7 @@ interface TaskSelectionEvent {
 - `implicitPreferences`: Pairwise ranking preferences (user prefers selected over ALL skipped)
 - `selectedTaskFeatures`: Feature snapshot for offline retraining
 
-**V3.4 Enhancement:** When user selects task at rank 5 instead of rank 1, we now generate 4 pairwise preferences: "user prefers task-5 over task-1, task-2, task-3, task-4". This is the same ML gold as drag-and-drop reordering but captured passively.
+**V4.1 Enhancement:** When user selects task at rank 5 instead of rank 1, we now generate 4 pairwise preferences: "user prefers task-5 over task-1, task-2, task-3, task-4". This is the same ML gold as drag-and-drop reordering but captured passively.
 
 ### 3. Queue Rebalance Events
 
@@ -218,7 +218,7 @@ interface TaskCompletionRecord {
   outcome: 'completed' | 'cancelled' | 'deferred';
   initialPriorityScore: number;
   finalPriorityScore: number;
-  // V3.3: Work duration tracking
+  // V4.0: Work duration tracking
   startedAt?: string;            // When work actually began (status → in_progress)
   actualWorkTime?: number;       // Hours from startedAt to completedAt
 }
@@ -226,10 +226,10 @@ interface TaskCompletionRecord {
 
 **Training Signals:**
 - `actualCompletionTime`: Total time in system (queue time + work time)
-- `actualWorkTime`: Actual effort duration (V3.3) - critical for effort estimation learning
+- `actualWorkTime`: Actual effort duration (V4.0) - critical for effort estimation learning
 - `startedAt`: Enables distinguishing queue time from work time
 
-**V3.3 Requirement:** Agents MUST call `update_task(status: "in_progress")` when starting work to capture `startedAt`. Without this, `actualWorkTime` cannot be computed.
+**V4.0 Requirement:** Agents MUST call `update_task(status: "in_progress")` when starting work to capture `startedAt`. Without this, `actualWorkTime` cannot be computed.
 
 ---
 
@@ -242,7 +242,7 @@ interface TaskCompletionRecord {
 **Approach:** Pairwise ranking loss
 - For each `TaskSelectionEvent` where `wasTopSelected = false`:
   - User preferred task at rank N over ALL tasks ranked 1 to N-1
-  - **V3.4**: Use `implicitPreferences` array directly - each entry is a training pair
+  - **V4.1**: Use `implicitPreferences` array directly - each entry is a training pair
   - Learn weights that would have ranked the selected task higher
 
 **Model:** XGBoost with ranking objective (`rank:pairwise`)
@@ -255,7 +255,7 @@ interface TaskCompletionRecord {
 
 **Data Requirements:** 
 - ~50+ selection events where user disagreed with recommendation
-- **V3.4 Enhanced**: Use `mlReady.selectionPairs` combined with drag reorder pairs
+- **V4.1 Enhanced**: Use `mlReady.selectionPairs` combined with drag reorder pairs
 - Each non-top selection generates multiple pairs (richer signal than before)
 
 **Training Data Sources:**
@@ -267,7 +267,7 @@ interface TaskCompletionRecord {
 
 **Goal:** Predict how long a task will take to complete.
 
-**V3.3 Enhancement:** With `actualWorkTime` separate from queue time, we can now train two distinct models:
+**V4.0 Enhancement:** With `actualWorkTime` separate from queue time, we can now train two distinct models:
 
 | Model | Target Variable | What It Predicts |
 |-------|-----------------|------------------|
@@ -278,7 +278,7 @@ interface TaskCompletionRecord {
 - Task properties (effort, priority, blocking status)
 - Queue context (position, queue size)
 - Historical completion times for similar tasks
-- **V3.3 new:** `hasWorkTimeData` flag to weight reliable samples higher
+- **V4.0 new:** `hasWorkTimeData` flag to weight reliable samples higher
 
 **Model:** XGBoost regressor or simple neural network
 
@@ -426,7 +426,7 @@ Model learns: "Given where we are and where we want to be, which task best advan
 | Tasks with effort | 50% | 80% | 95% |
 | Tasks with dependencies | 20% | 40% | 60% |
 
-### V3.4 Selection Pairwise Quality
+### V4.1 Selection Pairwise Quality
 
 The new `implicitPreferences` field captures when users skip higher-ranked tasks. This data is critical for pairwise ranking loss training:
 
@@ -434,7 +434,7 @@ The new `implicitPreferences` field captures when users skip higher-ranked tasks
 - **Passive collection**: Unlike drag-and-drop, this happens naturally during task selection
 - **Combined with drag data**: Selection pairs and drag pairs can be merged for training
 
-### V3.3 Work Duration Quality
+### V4.0 Work Duration Quality
 
 The new `actualWorkTime` metric requires agents to call `update_task(status: "in_progress")` before starting work. Track this via `completionsWithWorkTime` in the data quality summary.
 
@@ -496,9 +496,9 @@ Returns:
       {
         "taskId": "TASK-001",
         "completionTimeHours": 5.2,
-        "workTimeHours": 1.5,          // V3.3: Actual work duration
-        "queueTimeHours": 3.7,         // V3.3: Time in backlog
-        "hasWorkTimeData": 1,          // V3.3: 1 if reliable, 0 if imputed
+        "workTimeHours": 1.5,          // V4.0: Actual work duration
+        "queueTimeHours": 3.7,         // V4.0: Time in backlog
+        "hasWorkTimeData": 1,          // V4.0: 1 if reliable, 0 if imputed
         "wasBlocking": 1,
         "outcome": "completed",
         "initialScore": 45,
@@ -508,7 +508,7 @@ Returns:
     ],
     "tasks": [...],
     "rebalances": [...],
-    "selectionPairs": [                // V3.4: Pairwise preferences from task selections
+    "selectionPairs": [                // V4.1: Pairwise preferences from task selections
       {
         "preferredTaskId": "TASK-005",
         "skippedTaskId": "TASK-001",
@@ -526,12 +526,12 @@ Returns:
     "selectionAccuracy": 73.2,
     "dataQuality": {
       "completionsWithScores": 47,
-      "completionsWithWorkTime": 12,   // V3.3: Tracks reliable work time data
+      "completionsWithWorkTime": 12,   // V4.0: Tracks reliable work time data
       "tasksWithEffort": 35,
       "tasksWithDependencies": 18,
       "rebalancesWithSignificantChanges": 23,
-      "selectionsWithPairwiseData": 45, // V3.4: Selections with skipped task data
-      "totalSelectionPairs": 127        // V3.4: Total pairwise preferences
+      "selectionsWithPairwiseData": 45, // V4.1: Selections with skipped task data
+      "totalSelectionPairs": 127        // V4.1: Total pairwise preferences
     }
   }
 }

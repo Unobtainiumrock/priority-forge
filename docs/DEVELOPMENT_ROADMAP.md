@@ -17,11 +17,11 @@ This document outlines future development phases for Priority Forge, with a focu
 
 ---
 
-## Current State (V3.3)
+## Current State (V4.0)
 
-The V3.3 training data is well-suited for **tabular ML** (XGBoost with numerical features) but insufficient for **embedding-based approaches**.
+The V4.0 training data is well-suited for **tabular ML** (XGBoost with numerical features) but insufficient for **embedding-based approaches**.
 
-### What V3.3 Captures
+### What V4.0 Captures
 
 | Data Type | Fields | Textual Content |
 |-----------|--------|-----------------|
@@ -30,9 +30,9 @@ The V3.3 training data is well-suited for **tabular ML** (XGBoost with numerical
 | taskSelectionEvents | taskId | IDs only |
 | tasks | id, task, project, notes, blocking, **startedAt** | Short descriptions (~5-10 words) |
 
-### V3.3 Additions (Work Duration Tracking)
+### V4.0 Additions (Work Duration Tracking)
 
-V3.3 adds critical temporal data for effort estimation:
+V4.0 adds critical temporal data for effort estimation:
 
 | Field | Location | Description |
 |-------|----------|-------------|
@@ -45,7 +45,7 @@ V3.3 adds critical temporal data for effort estimation:
 - **Queue time prediction**: How long will a task sit in backlog?
 - **Work time prediction**: How long will actual work take?
 
-### V3.3 Limitations for Embeddings
+### V4.0 Limitations for Embeddings
 
 1. **Task descriptions average 5-10 words** — insufficient for semantic understanding
 2. **No conversational context** — the "why" behind task creation is lost
@@ -127,7 +127,7 @@ interface EmbeddingReadyTask {
 }
 
 interface EmbeddingReadyCompletionRecord {
-  // === Existing V3.3 Fields ===
+  // === Existing V4.0 Fields ===
   taskId: string;
   actualCompletionTime: number;     // Total time (queue + work)
   wasBlocking: boolean;
@@ -136,7 +136,7 @@ interface EmbeddingReadyCompletionRecord {
   outcome: 'completed' | 'cancelled' | 'deferred';
   initialPriorityScore: number;
   finalPriorityScore: number;
-  // V3.3 additions
+  // V4.0 additions
   startedAt?: string;               // When work began
   actualWorkTime?: number;          // Hours of actual work
   

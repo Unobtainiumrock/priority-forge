@@ -1,13 +1,13 @@
 #!/usr/bin/env npx ts-node
 /*
- * Priority Forge - V3.4 Migration Script
+ * Priority Forge - V4.1 Migration Script
  * Imputes skippedTaskIds and implicitPreferences for historical TaskSelectionEvents
  * 
  * Run with: npx ts-node scripts/migrate-v34-selection-pairwise.ts
  * 
  * This migration:
  * 1. Reads the global ML training data file (data/ml-training.json)
- * 2. For each TaskSelectionEvent lacking V3.4 fields:
+ * 2. For each TaskSelectionEvent lacking V4.1 fields:
  *    - Imputes skippedTaskIds from topTaskId (minimum: we know at least top was skipped)
  *    - Generates implicitPreferences with topTask as the skipped preference
  * 3. Backs up original file and saves migrated data
@@ -30,7 +30,7 @@ interface TaskSelectionEvent {
   wasTopSelected: boolean;
   timestamp: string;
   workspaceId?: string;
-  // V3.4 fields to impute
+  // V4.1 fields to impute
   skippedTaskIds?: string[];
   implicitPreferences?: Array<{
     preferredTaskId: string;
@@ -64,7 +64,7 @@ const DATA_DIR = path.join(__dirname, '../data');
 const GLOBAL_ML_FILE = path.join(DATA_DIR, 'ml-training.json');
 
 function main() {
-  console.log('🔄 V3.4 Migration: Imputing historical TaskSelectionEvent pairwise data...\n');
+  console.log('🔄 V4.1 Migration: Imputing historical TaskSelectionEvent pairwise data...\n');
   
   // Check if global ML file exists
   if (!fs.existsSync(GLOBAL_ML_FILE)) {
