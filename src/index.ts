@@ -17,7 +17,9 @@
 
 import express from 'express';
 import { storage } from './storage/jsonStorage';
-import { mcpHandler } from './mcp/handler';
+import { mcpHandler, getTools, getResources, getPrompts, handleToolCall, handleResourceRead, handlePromptGet } from './mcp/handler';
+import { createStreamableHandler } from './mcp/streamableHandler';
+import { mcpProcessor, setHandlers } from './mcp/processor';
 import projectsRouter from './routes/projects';
 import tasksRouter from './routes/tasks';
 import dataGapsRouter from './routes/dataGaps';
@@ -354,8 +356,26 @@ app.post('/workspaces/current/seed', async (_req, res) => {
   }
 });
 
-// MCP endpoint (JSON-RPC 2.0)
-app.post('/mcp', mcpHandler);
+// Initialize processor with handlers
+setHandlers({
+  handleToolCall,
+  handleResourceRead,
+  handlePromptGet,
+  getTools,
+  getResources,
+  getPrompts,
+});
+
+// MCP endpoint - Streamable HTTP (protocol version 2025-03-26)
+// Supports POST, GET, and DELETE methods
+const streamableHandler = createStreamableHandler(mcpProcessor);
+app.post('/mcp', streamableHandler);
+app.get('/mcp', streamableHandler);
+app.delete('/mcp', streamableHandler);
+
+// Legacy endpoint for backwards compatibility (protocol version 2024-11-05)
+// Some older clients may still use this
+app.post('/mcp/legacy', mcpHandler);
 
 app.listen(PORT, () => {
   console.log(`

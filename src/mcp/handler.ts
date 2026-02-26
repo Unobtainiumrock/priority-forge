@@ -20,9 +20,28 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { storage } from '../storage/jsonStorage';
 import { VERSION, VERSION_TAG } from '../version';
+import {
+  TeamPulseSyncEmitter,
+  TeamPulseSyncClient,
+  loadTeamPulseConfig,
+  updateTeamPulseConfig,
+} from '../sync';
 
 // MCP Protocol: JSON-RPC 2.0 based
 // See: https://modelcontextprotocol.io/docs/concepts/architecture
+
+// ── Team Pulse Sync ──
+const tpConfig = loadTeamPulseConfig();
+const syncEmitter = new TeamPulseSyncEmitter(tpConfig, 'default');
+const syncClient = new TeamPulseSyncClient(tpConfig);
+
+syncEmitter.on('sync_event', (event) => {
+  syncClient.queueEvent(event);
+});
+
+if (tpConfig.enabled) {
+  syncClient.start();
+}
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -884,6 +903,62 @@ const tools = [
       required: [],
     },
   },
+  // ====== Team Pulse Sync Tools ======
+  {
+    name: 'enable_team_sync',
+    description: 'Enable syncing task activity to the Team Pulse hub for team-wide awareness',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        hubUrl: { type: 'string', description: 'URL of the Team Pulse hub (e.g., http://localhost:3100)' },
+        userId: { type: 'string', description: 'Your user ID on the hub' },
+        apiKey: { type: 'string', description: 'Your API key for the hub' },
+      },
+      required: ['hubUrl', 'userId', 'apiKey'],
+    },
+  },
+  {
+    name: 'disable_team_sync',
+    description: 'Disable syncing to the Team Pulse hub',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'get_sync_status',
+    description: 'Get the current Team Pulse sync status (enabled, queue depth, connection health)',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'set_project_privacy',
+    description: 'Mark a project as private so its tasks are not synced to the Team Pulse hub',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: { type: 'string', description: 'Project name to mark private/public' },
+        private: { type: 'boolean', description: 'true to make private, false to make public' },
+      },
+      required: ['project', 'private'],
+    },
+  },
+  {
+    name: 'set_task_privacy',
+    description: 'Mark a specific task as private so it is not synced to the Team Pulse hub',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'Task ID to mark private/public' },
+        private: { type: 'boolean', description: 'true to make private, false to make public' },
+      },
+      required: ['taskId', 'private'],
+    },
+  },
 ];
 
 async function handleToolCall(name: string, params: Record<string, unknown>): Promise<unknown> {
@@ -936,7 +1011,7 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
     }
 
     case 'create_task': {
-      return storage.createTask({
+      const created = await storage.createTask({
         id: params.id as string | undefined,
         priority: params.priority as 'P0' | 'P1' | 'P2' | 'P3',
         task: params.task as string,
@@ -947,22 +1022,49 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
         deadline: params.deadline as string | undefined,
         effort: params.effort as 'low' | 'medium' | 'high' | undefined,
       });
+      syncEmitter.emitTaskCreated(created as unknown as Record<string, unknown>);
+      return created;
     }
 
     case 'update_task': {
       const { id, ...updates } = params;
-      return storage.updateTask(id as string, updates);
+      const previousTask = await storage.getTask(id as string);
+      const updated = await storage.updateTask(id as string, updates);
+      if (previousTask) {
+        syncEmitter.emitTaskUpdated(
+          id as string,
+          updates,
+          previousTask as unknown as Record<string, unknown>,
+        );
+      }
+      return updated;
     }
 
     case 'complete_task': {
-      return storage.completeTask(
+      const taskBeforeComplete = await storage.getTask(params.id as string);
+      const completionResult = await storage.completeTask(
         params.id as string,
         params.outcome as 'completed' | 'cancelled' | 'deferred'
       );
+      if (taskBeforeComplete) {
+        syncEmitter.emitTaskCompleted(
+          taskBeforeComplete as unknown as Record<string, unknown>,
+          params.outcome as string,
+        );
+      }
+      return completionResult;
     }
 
     case 'log_context_switch': {
+      const switchTask = await storage.getTask(params.taskId as string);
       await storage.logContextSwitch(params.taskId as string);
+      if (switchTask) {
+        syncEmitter.emitContextSwitch(
+          switchTask.id,
+          switchTask.task,
+          switchTask.project,
+        );
+      }
       return { success: true, taskId: params.taskId };
     }
 
@@ -1007,12 +1109,14 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
 
     // ====== V2.2: Project Tools ======
     case 'create_project': {
-      return storage.createProject({
+      const createdProject = await storage.createProject({
         name: params.name as string,
         path: params.path as string,
         primaryFocus: params.primaryFocus as string,
         status: (params.status as 'active' | 'complete' | 'blocked' | 'shelved') || 'active',
       });
+      syncEmitter.emitProjectCreated(createdProject as unknown as Record<string, unknown>);
+      return createdProject;
     }
 
     case 'suggest_tasks': {
@@ -1071,14 +1175,18 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
 
     // ====== V3: ML Training Data Tools ======
     case 'log_task_selection': {
-      const event = await storage.logTaskSelection(params.taskId as string);
-      if (!event) {
+      const selectionEvent = await storage.logTaskSelection(params.taskId as string);
+      if (!selectionEvent) {
         return { error: 'Task not found' };
       }
+      const selectedTask = await storage.getTask(params.taskId as string);
+      if (selectedTask) {
+        syncEmitter.emitTaskSelected(selectedTask as unknown as Record<string, unknown>);
+      }
       return {
-        event,
+        event: selectionEvent,
         message: `Logged selection of task ${params.taskId}`,
-        wasTopRecommendation: event.wasTopSelected,
+        wasTopRecommendation: selectionEvent.wasTopSelected,
       };
     }
 
@@ -1219,11 +1327,110 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
       };
     }
 
+    // ====== Team Pulse Sync Tools ======
+    case 'enable_team_sync': {
+      const newConfig = updateTeamPulseConfig({
+        enabled: true,
+        hubUrl: params.hubUrl as string,
+        userId: params.userId as string,
+        apiKey: params.apiKey as string,
+      });
+      syncEmitter.updateConfig(newConfig);
+      syncClient.updateConfig(newConfig);
+      syncClient.start();
+      return {
+        success: true,
+        message: `Team Pulse sync enabled → ${newConfig.hubUrl}`,
+        userId: newConfig.userId,
+      };
+    }
+
+    case 'disable_team_sync': {
+      const disabledConfig = updateTeamPulseConfig({ enabled: false });
+      syncEmitter.updateConfig(disabledConfig);
+      syncClient.stop();
+      return { success: true, message: 'Team Pulse sync disabled' };
+    }
+
+    case 'get_sync_status': {
+      const currentConfig = loadTeamPulseConfig();
+      const clientStatus = syncClient.getStatus();
+      return {
+        ...clientStatus,
+        userId: currentConfig.userId,
+        privacyRules: currentConfig.privacyRules,
+      };
+    }
+
+    case 'set_project_privacy': {
+      const currentCfg = loadTeamPulseConfig();
+      const projectName = params.project as string;
+      const isPrivate = params.private as boolean;
+      const projects = new Set(currentCfg.privacyRules.privateProjects);
+      if (isPrivate) {
+        projects.add(projectName);
+      } else {
+        projects.delete(projectName);
+      }
+      const updatedCfg = updateTeamPulseConfig({
+        privacyRules: {
+          ...currentCfg.privacyRules,
+          privateProjects: Array.from(projects),
+        },
+      });
+      syncEmitter.updateConfig(updatedCfg);
+      return {
+        success: true,
+        message: `Project "${projectName}" is now ${isPrivate ? 'private' : 'public'}`,
+        privateProjects: updatedCfg.privacyRules.privateProjects,
+      };
+    }
+
+    case 'set_task_privacy': {
+      const curCfg = loadTeamPulseConfig();
+      const taskId = params.taskId as string;
+      const taskPrivate = params.private as boolean;
+      const tasks = new Set(curCfg.privacyRules.privateTasks);
+      if (taskPrivate) {
+        tasks.add(taskId);
+      } else {
+        tasks.delete(taskId);
+      }
+      const updCfg = updateTeamPulseConfig({
+        privacyRules: {
+          ...curCfg.privacyRules,
+          privateTasks: Array.from(tasks),
+        },
+      });
+      syncEmitter.updateConfig(updCfg);
+      return {
+        success: true,
+        message: `Task "${taskId}" is now ${taskPrivate ? 'private' : 'public'}`,
+        privateTasks: updCfg.privacyRules.privateTasks,
+      };
+    }
+
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
 }
 
+// Export getters for the processor
+export function getTools() {
+  return tools;
+}
+
+export function getResources() {
+  return resources;
+}
+
+export function getPrompts() {
+  return prompts;
+}
+
+export { handleToolCall, handleResourceRead, handlePromptGet };
+
+// Keep old handler for backwards compatibility
 export async function mcpHandler(req: Request, res: Response): Promise<void> {
   const rpcReq = req.body as JsonRpcRequest;
 
