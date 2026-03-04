@@ -50,6 +50,7 @@
 
 - [What is this and why should I use it?](#what-is-this-and-why-should-i-use-it)
 - [Quick Start](#quick-start)
+- [Automatic Startup (macOS)](#automatic-startup-macos)
 - [Features](#features)
 - [Universal Task Tracking (V2.1)](#universal-task-tracking-v21)
 - [MCP Integration](#mcp-integration)
@@ -139,6 +140,53 @@ npm run verify
 Server runs at `http://localhost:3456`
 
 > **Note**: The `data/progress.json` file is gitignored - each user maintains their own task database. Run the seed script to create your initial database.
+
+---
+
+## Automatic Startup (macOS)
+
+Priority Forge includes macOS Launch Agents that automatically start the backend, frontend, and watchdog services on system boot.
+
+### Quick Install
+
+```bash
+# Install and start all services
+./setup.sh install-launchd
+```
+
+This will:
+- Copy launch agent files to `~/Library/LaunchAgents/`
+- Update paths to match your installation
+- Load and start all three services (backend, frontend, watchdog)
+- Verify they're running correctly
+
+### What Gets Auto-Started
+
+1. **Backend MCP Server** (port 3456) - Always running, auto-restarts on crash
+2. **Frontend Dashboard** (port 5173) - React development server
+3. **Watchdog** - Health monitor that restarts services if they become unresponsive
+
+### Managing Services
+
+```bash
+# Check status
+launchctl list | grep priority-forge
+
+# Restart all services
+./setup.sh restart
+
+# Stop all services
+./setup.sh stop
+
+# Uninstall launch agents
+./setup.sh uninstall-launchd
+```
+
+### Manual Installation
+
+If you prefer manual control, see detailed instructions in [`launchd/README.md`](launchd/README.md).
+
+> **Note:** Launch agents only work on macOS. For Linux, consider using systemd. For Windows, see [Windows Support](#windows-support).
 
 ---
 
