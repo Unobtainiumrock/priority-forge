@@ -1,0 +1,16 @@
+[Unit]
+Description=Priority Forge Frontend Dashboard
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/unobtainium/Desktop/github/priority-forge/frontend
+Environment="PATH=/home/unobtainium/.nvm/versions/node/v20.19.0/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/unobtainium/.nvm/versions/node/v20.19.0/bin/npm run dev
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:%h/.local/share/priority-forge/frontend.log
+StandardError=append:%h/.local/share/priority-forge/frontend-error.log
+
+[Install]
+WantedBy=default.target

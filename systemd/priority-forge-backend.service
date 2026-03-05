@@ -1,0 +1,16 @@
+[Unit]
+Description=Priority Forge Backend MCP Server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/unobtainium/Desktop/github/priority-forge
+Environment="PATH=/home/unobtainium/.nvm/versions/node/v20.19.0/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/unobtainium/.nvm/versions/node/v20.19.0/bin/node dist/index.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:%h/.local/share/priority-forge/backend.log
+StandardError=append:%h/.local/share/priority-forge/backend-error.log
+
+[Install]
+WantedBy=default.target

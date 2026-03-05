@@ -51,6 +51,7 @@
 - [What is this and why should I use it?](#what-is-this-and-why-should-i-use-it)
 - [Quick Start](#quick-start)
 - [Automatic Startup (macOS)](#automatic-startup-macos)
+- [Automatic Startup (Linux/Ubuntu)](#automatic-startup-linuxubuntu)
 - [Features](#features)
 - [Universal Task Tracking (V2.1)](#universal-task-tracking-v21)
 - [MCP Integration](#mcp-integration)
@@ -186,7 +187,49 @@ launchctl list | grep priority-forge
 
 If you prefer manual control, see detailed instructions in [`launchd/README.md`](launchd/README.md).
 
-> **Note:** Launch agents only work on macOS. For Linux, consider using systemd. For Windows, see [Windows Support](#windows-support).
+> **Note:** Launch agents only work on macOS. For Linux, see below. For Windows, see [Windows Support](#windows-support).
+
+---
+
+## Automatic Startup (Linux/Ubuntu)
+
+Priority Forge includes systemd user services — the Linux equivalent of the macOS Launch Agents. The same three services are managed: backend, frontend, and watchdog.
+
+### Quick Install
+
+```bash
+./setup.sh install-systemd
+```
+
+This copies unit files to `~/.config/systemd/user/`, enables [linger](https://www.freedesktop.org/software/systemd/man/loginctl.html) so services start at boot (not just at login), and starts all three services immediately.
+
+### Managing Services
+
+```bash
+bash scripts/install-systemd.sh status    # check all services
+bash scripts/install-systemd.sh restart   # restart all
+bash scripts/install-systemd.sh stop      # stop all
+bash scripts/install-systemd.sh uninstall # remove unit files
+bash scripts/install-systemd.sh logs [backend|frontend|watchdog]  # follow logs
+```
+
+Or use systemctl directly:
+
+```bash
+systemctl --user status priority-forge-backend
+journalctl --user -u priority-forge-backend -f
+```
+
+### nvm Users
+
+The service unit files hardcode the Node.js binary path (e.g. `~/.nvm/versions/node/v20.19.0/bin`). If you upgrade Node via nvm, re-run the installer to regenerate the unit files with the new path:
+
+```bash
+bash scripts/install-systemd.sh uninstall
+bash scripts/install-systemd.sh install
+```
+
+For full details see [`systemd/README.md`](systemd/README.md).
 
 ---
 

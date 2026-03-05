@@ -1,0 +1,15 @@
+[Unit]
+Description=Priority Forge Watchdog
+After=priority-forge-backend.service priority-forge-frontend.service
+Requires=priority-forge-backend.service
+
+[Service]
+Type=simple
+ExecStart=/home/unobtainium/Desktop/github/priority-forge/scripts/watchdog-linux.sh
+Restart=always
+RestartSec=10
+StandardOutput=append:%h/.local/share/priority-forge/watchdog.log
+StandardError=append:%h/.local/share/priority-forge/watchdog-error.log
+
+[Install]
+WantedBy=default.target

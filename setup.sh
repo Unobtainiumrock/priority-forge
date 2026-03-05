@@ -600,6 +600,9 @@ case "${1:-install}" in
     verify)
         do_verify
         ;;
+    install-systemd)
+        bash "$SCRIPT_DIR/scripts/install-systemd.sh" install
+        ;;
     help|--help|-h)
         show_help
         ;;
