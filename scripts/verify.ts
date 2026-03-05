@@ -91,26 +91,41 @@ async function main() {
   console.log('└─────────────────────────────────────────┘\n');
   
   // Check 0: MCP client config
-  // Claude Code reads from ~/.claude.json → mcpServers (registered via `claude mcp add --scope user`).
-  // Must use stdio transport pointing to the stable installed proxy path.
+  // IMPORTANT: Claude Code loads MCP servers from ~/.claude.json → projects[cwd].mcpServers
+  // (local scope, registered with `claude mcp add` default/no-scope).
+  // The top-level mcpServers key (--scope user) is NOT loaded by Claude Code sessions.
+  // We check the Desktop project since that's the most common session working directory.
+  const desktopDir = path.join(HOME, 'Desktop');
   if (fs.existsSync(CLAUDE_JSON)) {
     try {
       const claudeCfg = JSON.parse(fs.readFileSync(CLAUDE_JSON, 'utf-8'));
-      const entry = claudeCfg?.mcpServers?.['priority-forge'];
-      if (!entry) {
-        check('MCP client config', false, `priority-forge not in ~/.claude.json mcpServers - run: npm run setup:mcp`);
-      } else if (entry.command === 'node' && Array.isArray(entry.args) && entry.args.includes(PROXY_INSTALL_PATH)) {
-        check('MCP client config', true, `stdio proxy → ${PROXY_INSTALL_PATH}`);
-      } else if (entry.command === 'node' && Array.isArray(entry.args)) {
-        // Registered but pointing to wrong path (e.g., old repo path)
-        check('MCP client config', false,
-          `registered but path is wrong: ${entry.args[entry.args.length - 1]} (expected ${PROXY_INSTALL_PATH}) - run: npm run setup:mcp`);
-      } else if (entry.type === 'http' || entry.url) {
-        check('MCP client config', false,
-          `registered with http transport (unreliable in main session) - run: npm run setup:mcp to switch to stdio`);
+
+      // Warn if stale user-scope entry still exists
+      if (claudeCfg?.mcpServers?.['priority-forge']) {
+        check('MCP user-scope (stale)', false,
+          'priority-forge in top-level mcpServers — this scope is NOT loaded by Claude Code. Run: npm run setup:mcp');
+      }
+
+      // Check local-scope registration for Desktop (primary working dir)
+      const desktopEntry = claudeCfg?.projects?.[desktopDir]?.mcpServers?.['priority-forge'];
+      if (!desktopEntry) {
+        check('MCP client config (Desktop)', false,
+          `not registered for ${desktopDir} - run: npm run setup:mcp`);
+      } else if (desktopEntry.command === 'node' && Array.isArray(desktopEntry.args) && desktopEntry.args.includes(PROXY_INSTALL_PATH)) {
+        check('MCP client config (Desktop)', true, `stdio proxy → ${PROXY_INSTALL_PATH}`);
       } else {
-        check('MCP client config', false,
-          `unexpected format: ${JSON.stringify(entry)} - run: npm run setup:mcp`);
+        check('MCP client config (Desktop)', false,
+          `unexpected format: ${JSON.stringify(desktopEntry)} - run: npm run setup:mcp`);
+      }
+
+      // Show coverage summary for other known dirs
+      const projects = claudeCfg?.projects || {};
+      const covered = Object.entries(projects).filter(([, proj]: [string, any]) => {
+        const e = proj?.mcpServers?.['priority-forge'];
+        return e?.command === 'node' && e?.args?.includes(PROXY_INSTALL_PATH);
+      }).map(([dir]) => dir);
+      if (covered.length > 0) {
+        check('MCP coverage', true, `registered in ${covered.length} director${covered.length === 1 ? 'y' : 'ies'}: ${covered.join(', ')}`);
       }
     } catch {
       check('MCP client config', false, '~/.claude.json is malformed JSON');

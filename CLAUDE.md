@@ -22,8 +22,10 @@ curl -X POST http://localhost:3456/tasks \
 
 - Backend: systemd user service `priority-forge-backend` — runs on port 3456, auto-starts on boot
 - Frontend: systemd user service `priority-forge-frontend` — runs on port 5173
-- MCP config: `~/.claude.json → mcpServers` (registered via `claude mcp add --scope user`, loads in every session)
-  - **NOT** `~/.claude/mcp.json` — that is a project-level discovery file requiring per-project opt-in
+- MCP config: `~/.claude.json → projects[cwd].mcpServers` (local scope, registered via `claude mcp add`)
+  - **NOT** `--scope user` — top-level `mcpServers` is written but never loaded by Claude Code sessions
+  - **NOT** `~/.claude/mcp.json` — project-level discovery file, also not reliably loaded
+  - If starting Claude from a new directory: `cd <dir> && claude mcp add priority-forge -- node ~/.local/share/priority-forge/mcp-proxy.js`
 - Agent rules: `~/.claude/CLAUDE.md` (this pattern; NOT AGENTS.md)
 
 Check backend: `curl http://localhost:3456/health`

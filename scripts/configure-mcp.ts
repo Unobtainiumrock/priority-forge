@@ -59,8 +59,9 @@ const TOOLS: Record<string, ToolConfig> = {
   },
   '3': {
     name: 'Claude Code CLI',
-    // MCP is registered via `claude mcp add --scope user`, NOT by writing a JSON file.
-    // The correct location is ~/.claude.json (global mcpServers), not ~/.claude/mcp.json.
+    // MCP is registered via `claude mcp add` (local scope, per working directory).
+    // --scope user writes to top-level mcpServers but Claude Code does NOT load that.
+    // Only projects[cwd].mcpServers (local scope) is loaded in sessions.
     // mcpConfigPath is unused for Claude Code — configureMCP handles it specially.
     mcpConfigPath: '',
     agentRulesPath: path.join(HOME, '.claude', 'CLAUDE.md'),
@@ -120,59 +121,96 @@ function mergeMCPConfig(existing: MCPConfig | null, newConfig: MCPConfig): MCPCo
 function configureMCPClaudeCode(): boolean {
   console.log(`\n  Configuring MCP for Claude Code CLI...`);
 
-  // The proxy is installed to a stable XDG data path so the registration in
-  // ~/.claude.json stays valid even if the priority-forge repo is moved.
-  const proxySource = path.resolve(__dirname, 'mcp-stdio-proxy.js');
+  // KEY FINDING: `--scope user` writes to ~/.claude.json → mcpServers (top-level)
+  // but Claude Code does NOT load top-level mcpServers in sessions.
+  // Claude Code only loads from ~/.claude.json → projects[cwd].mcpServers (local scope).
+  // We must register once per working directory the user starts Claude from.
 
+  const proxySource = path.resolve(__dirname, 'mcp-stdio-proxy.js');
   if (!fs.existsSync(proxySource)) {
     console.log(`  ✗ Proxy source not found: ${proxySource}`);
     console.log(`  Make sure you are running this from the priority-forge repo directory.`);
     return false;
   }
 
-  // Install proxy to stable location
+  // Install proxy to stable XDG location (path survives repo moves)
   fs.mkdirSync(PROXY_INSTALL_DIR, { recursive: true });
   fs.copyFileSync(proxySource, PROXY_INSTALL_PATH);
   console.log(`  ✓ Proxy installed to: ${PROXY_INSTALL_PATH}`);
 
   const claudeJsonPath = path.join(HOME, '.claude.json');
-  const existing = readJsonFile(claudeJsonPath);
-  const existingEntry = existing?.mcpServers?.['priority-forge'];
 
-  // Check if already correctly registered pointing to the stable install path
-  if (existingEntry?.command === 'node' &&
-      Array.isArray(existingEntry?.args) &&
-      existingEntry.args.includes(PROXY_INSTALL_PATH)) {
-    console.log('  MCP already registered with stdio transport (skipping)');
-    console.log(`  ✓ Registered in: ~/.claude.json → mcpServers`);
-    cleanLegacyMcpJson();
-    return true;
-  }
-
-  // Remove old registration (wrong path or wrong transport) before re-registering
-  if (existingEntry) {
-    console.log(`  Replacing existing registration (was: ${JSON.stringify(existingEntry)})`);
+  // Remove any stale user-scope registration (top-level mcpServers — not loaded by sessions)
+  const globalCfg = readJsonFile(claudeJsonPath);
+  if (globalCfg?.mcpServers?.['priority-forge']) {
     try {
-      execSync(`claude mcp remove priority-forge 2>/dev/null || true`, { stdio: 'pipe', shell: true });
+      execSync(`claude mcp remove --scope user priority-forge 2>/dev/null || true`, { stdio: 'pipe', shell: true });
+      console.log(`  ✓ Removed stale user-scope registration (was not loaded by sessions)`);
     } catch { /* ignore */ }
   }
 
-  try {
-    execSync(
-      `claude mcp add --scope user priority-forge -- node ${PROXY_INSTALL_PATH}`,
-      { stdio: 'pipe' }
-    );
-    console.log(`  ✓ Registered via: claude mcp add --scope user priority-forge -- node ${PROXY_INSTALL_PATH}`);
-    console.log(`  ✓ Written to: ~/.claude.json → mcpServers`);
-    cleanLegacyMcpJson();
-    return true;
-  } catch (err: any) {
-    console.log(`  ✗ Failed to run 'claude mcp add': ${err.message}`);
-    console.log(`  Make sure the Claude Code CLI is installed and in your PATH.`);
-    console.log(`  Manual fix:`);
-    console.log(`    claude mcp add --scope user priority-forge -- node ${PROXY_INSTALL_PATH}`);
+  // Determine which directories to register in.
+  // Must include: HOME, Desktop, current working directory, and any other known project dirs.
+  const dirsToRegister = new Set<string>();
+  dirsToRegister.add(HOME);
+  dirsToRegister.add(path.join(HOME, 'Desktop'));
+  dirsToRegister.add(process.cwd());
+
+  // Also register in all directories already known to Claude Code (from ~/.claude.json)
+  const updated = readJsonFile(claudeJsonPath);
+  const knownProjects = Object.keys(updated?.projects || {});
+  for (const dir of knownProjects) {
+    if (fs.existsSync(dir) && dir !== path.join(HOME, '.claude')) {
+      dirsToRegister.add(dir);
+    }
+  }
+
+  let registered = 0;
+  let skipped = 0;
+
+  for (const dir of dirsToRegister) {
+    if (!fs.existsSync(dir)) continue;
+
+    // Check if already correctly registered for this dir
+    const cfg = readJsonFile(claudeJsonPath);
+    const existing = cfg?.projects?.[dir]?.mcpServers?.['priority-forge'];
+    if (existing?.command === 'node' &&
+        Array.isArray(existing?.args) &&
+        existing.args.includes(PROXY_INSTALL_PATH)) {
+      console.log(`  ✓ Already registered in: ${dir}`);
+      skipped++;
+      continue;
+    }
+
+    // Remove stale entry for this dir if present
+    if (existing) {
+      try {
+        execSync(`claude mcp remove priority-forge 2>/dev/null || true`, { stdio: 'pipe', shell: true, cwd: dir });
+      } catch { /* ignore */ }
+    }
+
+    try {
+      execSync(
+        `claude mcp add priority-forge -- node ${PROXY_INSTALL_PATH}`,
+        { stdio: 'pipe', cwd: dir }
+      );
+      console.log(`  ✓ Registered in: ${dir}`);
+      registered++;
+    } catch (err: any) {
+      console.log(`  ✗ Failed for ${dir}: ${err.message}`);
+    }
+  }
+
+  if (registered === 0 && skipped === 0) {
+    console.log(`  ✗ Failed to register in any directory.`);
+    console.log(`  Manual fix (run from each directory you start Claude from):`);
+    console.log(`    claude mcp add priority-forge -- node ${PROXY_INSTALL_PATH}`);
     return false;
   }
+
+  console.log(`  ✓ Registered in ${registered} director${registered === 1 ? 'y' : 'ies'}, ${skipped} already up to date`);
+  cleanLegacyMcpJson();
+  return true;
 }
 
 function cleanLegacyMcpJson(): void {
@@ -309,7 +347,7 @@ async function main() {
     console.log('│  ✓ Configuration complete!              │');
     console.log('└─────────────────────────────────────────┘\n');
     if (tool.name === 'Claude Code CLI') {
-      console.log(`MCP Config:    ~/.claude.json → mcpServers (user scope)`);
+      console.log(`MCP Config:    ~/.claude.json → projects[cwd].mcpServers (local scope, per working dir)`);
     } else {
       console.log(`MCP Config:    ${tool.mcpConfigPath}`);
     }
