@@ -32,24 +32,21 @@ check_frontend() {
 }
 
 restart_backend() {
-    log "Backend down - attempting restart via launchctl"
-    launchctl kickstart -k "gui/$(id -u)/com.priority-forge.backend" 2>/dev/null || {
-        log "LaunchAgent kickstart failed, trying pm2 restart"
-        pm2 restart priority-forge 2>/dev/null || {
-            log "PM2 restart failed, starting fresh"
-            cd "$PRIORITY_FORGE_DIR" && pm2 start "npm run dev" --name priority-forge 2>/dev/null
-        }
-    }
+    log "Backend down - attempting restart"
+    if [ "$(uname)" = "Linux" ]; then
+        systemctl --user restart priority-forge-backend 2>/dev/null && log "Restarted via systemctl" || log "systemctl restart failed"
+    else
+        launchctl kickstart -k "gui/$(id -u)/com.priority-forge.backend" 2>/dev/null && log "Restarted via launchctl" || log "launchctl restart failed"
+    fi
 }
 
 restart_frontend() {
-    log "Frontend down - attempting restart via launchctl"
-    launchctl kickstart -k "gui/$(id -u)/com.priority-forge.frontend" 2>/dev/null || {
-        log "LaunchAgent kickstart failed, starting manually"
-        cd "$PRIORITY_FORGE_DIR/frontend" && nohup npm run dev > "$PIDS_DIR/frontend-manual.log" 2>&1 &
-        echo $! > "$PIDS_DIR/frontend-manual.pid"
-        log "Started frontend manually with PID $(cat $PIDS_DIR/frontend-manual.pid)"
-    }
+    log "Frontend down - attempting restart"
+    if [ "$(uname)" = "Linux" ]; then
+        systemctl --user restart priority-forge-frontend 2>/dev/null && log "Restarted via systemctl" || log "systemctl restart failed"
+    else
+        launchctl kickstart -k "gui/$(id -u)/com.priority-forge.frontend" 2>/dev/null && log "Restarted via launchctl" || log "launchctl restart failed"
+    fi
 }
 
 # Main watchdog loop

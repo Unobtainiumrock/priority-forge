@@ -2,6 +2,42 @@
 
 You are connected to the Priority Forge MCP server for task tracking.
 
+## INFRASTRUCTURE (know this before anything else)
+
+| Service  | Port | Check |
+|----------|------|-------|
+| Backend (MCP + REST) | **3456** | `curl http://localhost:3456/health` |
+| Frontend dashboard   | **5173** | http://localhost:5173 |
+
+Both run as persistent background services (systemd on Linux, launchd on macOS) that auto-start on boot.
+If the backend is down: `systemctl --user restart priority-forge-backend` (Linux) or `launchctl kickstart gui/$(id -u)/com.priority-forge.backend` (macOS).
+Run `npm run verify` from the priority-forge directory for a full health check.
+
+## CRITICAL: NEVER USE CLAUDE'S NATIVE TASK TOOLS
+
+Claude Code has built-in tools: `TaskCreate`, `TaskList`, `TaskUpdate`, `TaskOutput`, `TaskStop`.
+**Never use these.** They are ephemeral, session-only, and invisible to Priority Forge. Tasks created
+with them do NOT appear in the frontend and are lost when the session ends.
+
+**Always use Priority Forge MCP tools instead:**
+
+| Instead of... | Use... |
+|---------------|--------|
+| `TaskCreate`  | `mcp_priority-forge_create_task` |
+| `TaskList`    | `mcp_priority-forge_get_priorities` |
+| `TaskUpdate`  | `mcp_priority-forge_update_task` |
+| (completing)  | `mcp_priority-forge_complete_task` |
+
+**If MCP tools are not available** (session started before backend was running), use the REST API:
+```bash
+curl -X POST http://localhost:3456/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"task":"title","priority":"P1","project":"project-name","effort":"medium"}'
+```
+Then restart Claude Code so MCP tools load for the next session.
+
+---
+
 ## MANDATORY: ON EVERY CONVERSATION START
 
 Before responding to the user's first message, you MUST:

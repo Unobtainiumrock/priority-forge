@@ -355,7 +355,9 @@ Here's a quick reference for all configuration file locations:
 |------|---------------------|----------------------|
 | **Cursor** | `~/.cursor/mcp.json` | `~/.cursorrules` (global) or `.cursorrules` (project) |
 | **Droid** | `~/.factory/mcp.json` | `~/.factory/AGENTS.md` |
-| **Claude Code** | `~/.claude/mcp.json` | `~/.claude/AGENTS.md` |
+| **Claude Code** | `~/.claude/mcp.json` | `~/.claude/CLAUDE.md` |
+
+> **Claude Code note:** Claude Code reads `CLAUDE.md`, not `AGENTS.md`. The configure script writes to the correct file automatically.
 
 <details>
 <summary>Manual Agent Rules Configuration (click to expand)</summary>
@@ -670,8 +672,18 @@ If `curl http://localhost:3456/health` returns nothing:
 ### MCP tools not appearing in AI assistant
 
 1. Verify MCP config exists in the correct location for your tool
-2. Restart your AI assistant completely (not just reload)
+2. Restart your AI assistant completely (not just reload) — MCP servers are only loaded at session start
 3. Run `npm run verify` to check server health
+
+### AI assistant is using native task tools instead of Priority Forge
+
+Claude Code has built-in task tools (`TaskCreate`, `TaskList`, etc.) that look similar to Priority Forge tools but are **session-only and ephemeral** — they don't persist to the database or show in the frontend.
+
+If the agent uses these instead of `mcp_priority-forge_*` tools, it means:
+- The session was started before `~/.claude/CLAUDE.md` existed, OR
+- The MCP server wasn't running when the session launched
+
+**Fix:** Restart Claude Code. The `~/.claude/CLAUDE.md` file (written by `npm run setup:mcp`) explicitly instructs the agent to never use native task tools and to always fall back to the REST API if MCP tools are unavailable.
 
 ### MCP server showing wrong name or "Loading tools" stuck
 

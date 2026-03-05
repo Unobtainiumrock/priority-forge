@@ -6,9 +6,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
+import * as os from 'os';
+import { execSync } from 'child_process';
 
 const SERVER_URL = 'http://localhost:3456';
 const DATA_FILE = path.join(__dirname, '..', 'data', 'progress.json');
+const HOME = os.homedir();
+const CLAUDE_MCP_CONFIG = path.join(HOME, '.claude', 'mcp.json');
+const CLAUDE_MD = path.join(HOME, '.claude', 'CLAUDE.md');
+const AGENTS_MD = path.join(HOME, '.claude', 'AGENTS.md'); // legacy - should have been migrated
+const IS_LINUX = os.platform() === 'linux';
 
 interface CheckResult {
   name: string;
@@ -77,6 +84,59 @@ async function main() {
   console.log('│     Verifying Priority Forge Setup      │');
   console.log('└─────────────────────────────────────────┘\n');
   
+  // Check 0: MCP client config
+  if (fs.existsSync(CLAUDE_MCP_CONFIG)) {
+    try {
+      const mcpCfg = JSON.parse(fs.readFileSync(CLAUDE_MCP_CONFIG, 'utf-8'));
+      const entry = mcpCfg?.mcpServers?.['priority-forge'];
+      if (entry?.url === `${SERVER_URL}/mcp`) {
+        check('MCP client config', true, `~/.claude/mcp.json → ${entry.url}`);
+      } else {
+        check('MCP client config', false, `priority-forge entry missing or wrong URL (expected ${SERVER_URL}/mcp)`);
+      }
+    } catch {
+      check('MCP client config', false, '~/.claude/mcp.json is malformed JSON');
+    }
+  } else {
+    check('MCP client config', false, '~/.claude/mcp.json not found - run: npm run setup:mcp');
+  }
+
+  // Check 0b: Agent rules in CLAUDE.md (not AGENTS.md)
+  const hasCLAUDEMd = fs.existsSync(CLAUDE_MD);
+  const hasLegacyAgentsMd = fs.existsSync(AGENTS_MD);
+  if (hasCLAUDEMd && fs.readFileSync(CLAUDE_MD, 'utf-8').includes('PRIORITY_FORGE_START')) {
+    check('Agent rules (CLAUDE.md)', true, '~/.claude/CLAUDE.md contains Priority Forge rules');
+    if (hasLegacyAgentsMd) {
+      check('Agent rules (legacy)', true, 'AGENTS.md still exists but CLAUDE.md takes precedence - safe to delete AGENTS.md');
+    }
+  } else if (hasLegacyAgentsMd) {
+    check('Agent rules (CLAUDE.md)', false,
+      'Rules are in AGENTS.md (legacy) but Claude Code reads CLAUDE.md - run: npm run setup:mcp to migrate');
+  } else {
+    check('Agent rules (CLAUDE.md)', false, '~/.claude/CLAUDE.md not found - run: npm run setup:mcp');
+  }
+
+  // Check 0c: Systemd / launchd services
+  if (IS_LINUX) {
+    for (const svc of ['priority-forge-backend', 'priority-forge-frontend']) {
+      try {
+        const out = execSync(`systemctl --user is-active ${svc} 2>/dev/null`, { encoding: 'utf-8' }).trim();
+        check(`systemd: ${svc}`, out === 'active', out === 'active' ? 'active (auto-starts on boot)' : `status: ${out}`);
+      } catch {
+        check(`systemd: ${svc}`, false, 'not installed - run: bash scripts/install-systemd.sh install');
+      }
+    }
+  } else {
+    for (const svc of ['com.priority-forge.backend', 'com.priority-forge.frontend']) {
+      try {
+        const out = execSync(`launchctl list ${svc} 2>/dev/null`, { encoding: 'utf-8' });
+        check(`launchd: ${svc}`, out.includes(svc), 'loaded');
+      } catch {
+        check(`launchd: ${svc}`, false, 'not loaded - run: ./setup.sh install-launchd');
+      }
+    }
+  }
+
   // Check 1: Database file exists
   const dbExists = fs.existsSync(DATA_FILE);
   check('Database', dbExists, dbExists ? 'progress.json exists' : 'progress.json not found - run seed script');

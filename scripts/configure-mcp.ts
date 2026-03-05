@@ -53,7 +53,7 @@ const TOOLS: Record<string, ToolConfig> = {
   '3': {
     name: 'Claude Code CLI',
     mcpConfigPath: path.join(HOME, '.claude', 'mcp.json'),
-    agentRulesPath: path.join(HOME, '.claude', 'AGENTS.md'),
+    agentRulesPath: path.join(HOME, '.claude', 'CLAUDE.md'),
     mcpConfigFormat: (url: string) => ({
       mcpServers: {
         'priority-forge': { type: 'http', url }
@@ -177,7 +177,25 @@ function configureAgentRules(tool: ToolConfig): boolean {
   return true;
 }
 
+function migrateAgentsMd(): void {
+  // Claude Code used to write to AGENTS.md but now reads CLAUDE.md.
+  // If AGENTS.md exists with Priority Forge content but CLAUDE.md doesn't, migrate it.
+  const agentsPath = path.join(HOME, '.claude', 'AGENTS.md');
+  const claudePath = path.join(HOME, '.claude', 'CLAUDE.md');
+  const marker = '<!-- PRIORITY_FORGE_START -->';
+
+  if (fs.existsSync(agentsPath) && !fs.existsSync(claudePath)) {
+    const content = fs.readFileSync(agentsPath, 'utf-8');
+    if (content.includes(marker)) {
+      fs.writeFileSync(claudePath, content);
+      console.log('  ✓ Migrated Priority Forge rules from AGENTS.md → CLAUDE.md');
+    }
+  }
+}
+
 async function main() {
+  migrateAgentsMd();
+
   console.log('\n┌─────────────────────────────────────────┐');
   console.log('│     MCP Configuration                   │');
   console.log('└─────────────────────────────────────────┘\n');
