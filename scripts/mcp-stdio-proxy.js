@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // MCP stdio-to-HTTP proxy for Priority Forge
 //
-// Claude Code uses stdio as the most reliable transport for main-session MCP tools.
-// This proxy bridges Claude Code's stdio transport to the Priority Forge HTTP server,
-// allowing the server to remain a persistent systemd service while Claude Code
-// interacts with it via subprocess stdio (the universally supported MCP transport).
+// Bridges Claude Code's stdio MCP transport to the Priority Forge HTTP server.
+// The server runs as a persistent systemd/launchd service; this proxy is spawned
+// by Claude Code as a subprocess on session start.
 //
-// Usage (registered via `claude mcp add --scope user`):
-//   claude mcp add --scope user priority-forge -- node /path/to/scripts/mcp-stdio-proxy.js
+// This file is installed to ~/.local/share/priority-forge/mcp-proxy.js during
+// `npm run setup:mcp` so the registered path stays valid even if the repo moves.
 //
-// Protocol:
-//   stdin  ← Content-Length framed JSON-RPC messages from Claude Code
-//   stdout → Content-Length framed JSON-RPC responses back to Claude Code
+// Protocol routing:
+//   Client requests 2025-03-26 → POST /mcp       (Streamable HTTP, full spec)
+//   Client requests 2024-11-05 → POST /mcp/legacy (older spec, Claude Code compat)
+//   Client version unknown     → POST /mcp/legacy (safe default)
 
 'use strict';
 
@@ -19,7 +19,16 @@ const http = require('http');
 
 const SERVER_HOST = 'localhost';
 const SERVER_PORT = 3456;
-const SERVER_PATH = '/mcp';
+
+// Map protocol versions to server endpoints
+const ENDPOINTS = {
+  '2025-03-26': '/mcp',
+  '2024-11-05': '/mcp/legacy',
+};
+const DEFAULT_PATH = '/mcp/legacy'; // safe default for unknown clients
+
+// Determined on first initialize request; all subsequent requests use the same path
+let serverPath = DEFAULT_PATH;
 
 let inputBuffer = Buffer.alloc(0);
 let sessionId = null;
@@ -75,6 +84,16 @@ function processBuffer() {
 function forwardToHTTP(body) {
   const bodyStr = body.toString('utf8');
 
+  // On initialize, determine which server endpoint to use based on client's
+  // requested protocol version. This is set once and used for the session.
+  try {
+    const msg = JSON.parse(bodyStr);
+    if (msg.method === 'initialize') {
+      const clientVersion = msg.params?.protocolVersion;
+      serverPath = ENDPOINTS[clientVersion] || DEFAULT_PATH;
+    }
+  } catch { /* non-JSON or non-initialize — ignore */ }
+
   const reqHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -91,7 +110,7 @@ function forwardToHTTP(body) {
     {
       hostname: SERVER_HOST,
       port: SERVER_PORT,
-      path: SERVER_PATH,
+      path: serverPath,
       method: 'POST',
       headers: reqHeaders,
     },

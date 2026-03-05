@@ -18,6 +18,10 @@ const CLAUDE_JSON = path.join(HOME, '.claude.json');
 const CLAUDE_MD = path.join(HOME, '.claude', 'CLAUDE.md');
 const AGENTS_MD = path.join(HOME, '.claude', 'AGENTS.md'); // legacy - should have been migrated
 const IS_LINUX = os.platform() === 'linux';
+// Stable proxy install location (independent of repo path)
+const PROXY_INSTALL_PATH = os.platform() === 'darwin'
+  ? path.join(HOME, 'Library', 'Application Support', 'priority-forge', 'mcp-proxy.js')
+  : path.join(HOME, '.local', 'share', 'priority-forge', 'mcp-proxy.js');
 
 interface CheckResult {
   name: string;
@@ -88,29 +92,25 @@ async function main() {
   
   // Check 0: MCP client config
   // Claude Code reads from ~/.claude.json → mcpServers (registered via `claude mcp add --scope user`).
-  //
-  // We require stdio transport (via mcp-stdio-proxy.js), NOT http transport, because:
-  //   - http transport may be parsed at startup but never actually connect in the main session
-  //   - stdio transport is the universally reliable MCP transport (Claude Code spawns the proxy)
-  //   - The proxy bridges stdio ↔ the persistent HTTP server transparently
-  //
-  // ~/.claude/mcp.json is a project-level discovery file that won't reliably load tools.
-  const PROXY_SCRIPT = path.resolve(__dirname, 'mcp-stdio-proxy.js');
+  // Must use stdio transport pointing to the stable installed proxy path.
   if (fs.existsSync(CLAUDE_JSON)) {
     try {
       const claudeCfg = JSON.parse(fs.readFileSync(CLAUDE_JSON, 'utf-8'));
       const entry = claudeCfg?.mcpServers?.['priority-forge'];
       if (!entry) {
         check('MCP client config', false, `priority-forge not in ~/.claude.json mcpServers - run: npm run setup:mcp`);
-      } else if (entry.command === 'node' && Array.isArray(entry.args) && entry.args.includes(PROXY_SCRIPT)) {
-        check('MCP client config', true, `stdio proxy registered → ${PROXY_SCRIPT}`);
+      } else if (entry.command === 'node' && Array.isArray(entry.args) && entry.args.includes(PROXY_INSTALL_PATH)) {
+        check('MCP client config', true, `stdio proxy → ${PROXY_INSTALL_PATH}`);
+      } else if (entry.command === 'node' && Array.isArray(entry.args)) {
+        // Registered but pointing to wrong path (e.g., old repo path)
+        check('MCP client config', false,
+          `registered but path is wrong: ${entry.args[entry.args.length - 1]} (expected ${PROXY_INSTALL_PATH}) - run: npm run setup:mcp`);
       } else if (entry.type === 'http' || entry.url) {
-        // Old http transport — works in subprocesses but unreliable in main session
         check('MCP client config', false,
           `registered with http transport (unreliable in main session) - run: npm run setup:mcp to switch to stdio`);
       } else {
         check('MCP client config', false,
-          `unexpected registration format: ${JSON.stringify(entry)} - run: npm run setup:mcp`);
+          `unexpected format: ${JSON.stringify(entry)} - run: npm run setup:mcp`);
       }
     } catch {
       check('MCP client config', false, '~/.claude.json is malformed JSON');
@@ -119,15 +119,15 @@ async function main() {
     check('MCP client config', false, '~/.claude.json not found - run: npm run setup:mcp');
   }
 
-  // Check proxy script exists and is executable
-  if (fs.existsSync(PROXY_SCRIPT)) {
-    // Quick sanity: node can parse it
-    const result = spawnSync('node', ['--check', PROXY_SCRIPT], { encoding: 'utf-8' });
-    check('MCP stdio proxy', result.status === 0, result.status === 0
-      ? PROXY_SCRIPT
-      : `syntax error in proxy script: ${result.stderr}`);
+  // Check stable proxy install
+  if (fs.existsSync(PROXY_INSTALL_PATH)) {
+    const result = spawnSync('node', ['--check', PROXY_INSTALL_PATH], { encoding: 'utf-8' });
+    check('MCP stdio proxy (installed)', result.status === 0, result.status === 0
+      ? PROXY_INSTALL_PATH
+      : `syntax error: ${result.stderr}`);
   } else {
-    check('MCP stdio proxy', false, `${PROXY_SCRIPT} not found - repo may be incomplete`);
+    check('MCP stdio proxy (installed)', false,
+      `${PROXY_INSTALL_PATH} not found — run: npm run setup:mcp`);
   }
 
   // Warn if legacy ~/.claude/mcp.json still exists (misleading — won't auto-load tools)

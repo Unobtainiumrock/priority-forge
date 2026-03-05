@@ -10,6 +10,12 @@ import * as os from 'os';
 import { execSync } from 'child_process';
 
 const HOME = os.homedir();
+// Stable install location for the proxy — independent of where the repo lives.
+// ~/.local/share is the XDG data home on Linux; ~/Library/Application Support on macOS.
+const PROXY_INSTALL_DIR = os.platform() === 'darwin'
+  ? path.join(HOME, 'Library', 'Application Support', 'priority-forge')
+  : path.join(HOME, '.local', 'share', 'priority-forge');
+const PROXY_INSTALL_PATH = path.join(PROXY_INSTALL_DIR, 'mcp-proxy.js');
 
 interface MCPConfig {
   mcpServers: {
@@ -114,31 +120,36 @@ function mergeMCPConfig(existing: MCPConfig | null, newConfig: MCPConfig): MCPCo
 function configureMCPClaudeCode(): boolean {
   console.log(`\n  Configuring MCP for Claude Code CLI...`);
 
-  // Claude Code's user-level MCP config lives in ~/.claude.json under mcpServers.
-  // It must be registered via `claude mcp add --scope user`, NOT by writing ~/.claude/mcp.json
-  // (which is a project-level discovery file that requires explicit per-project opt-in
-  // AND may never actually connect with http transport in the main session).
-  //
-  // We use stdio transport (not http) because:
-  //   - stdio is the universally supported MCP transport — guaranteed to work in main session
-  //   - http transport may be parsed but not connected in Claude Code's primary context
-  //   - The stdio proxy bridges to the persistent HTTP server transparently
-  const proxyScript = path.resolve(__dirname, 'mcp-stdio-proxy.js');
+  // The proxy is installed to a stable XDG data path so the registration in
+  // ~/.claude.json stays valid even if the priority-forge repo is moved.
+  const proxySource = path.resolve(__dirname, 'mcp-stdio-proxy.js');
+
+  if (!fs.existsSync(proxySource)) {
+    console.log(`  ✗ Proxy source not found: ${proxySource}`);
+    console.log(`  Make sure you are running this from the priority-forge repo directory.`);
+    return false;
+  }
+
+  // Install proxy to stable location
+  fs.mkdirSync(PROXY_INSTALL_DIR, { recursive: true });
+  fs.copyFileSync(proxySource, PROXY_INSTALL_PATH);
+  console.log(`  ✓ Proxy installed to: ${PROXY_INSTALL_PATH}`);
+
   const claudeJsonPath = path.join(HOME, '.claude.json');
   const existing = readJsonFile(claudeJsonPath);
   const existingEntry = existing?.mcpServers?.['priority-forge'];
 
-  // Check if already correctly registered with stdio transport
+  // Check if already correctly registered pointing to the stable install path
   if (existingEntry?.command === 'node' &&
       Array.isArray(existingEntry?.args) &&
-      existingEntry.args.includes(proxyScript)) {
+      existingEntry.args.includes(PROXY_INSTALL_PATH)) {
     console.log('  MCP already registered with stdio transport (skipping)');
     console.log(`  ✓ Registered in: ~/.claude.json → mcpServers`);
     cleanLegacyMcpJson();
     return true;
   }
 
-  // Remove old http registration if present so we can re-register with stdio
+  // Remove old registration (wrong path or wrong transport) before re-registering
   if (existingEntry) {
     console.log(`  Replacing existing registration (was: ${JSON.stringify(existingEntry)})`);
     try {
@@ -146,18 +157,12 @@ function configureMCPClaudeCode(): boolean {
     } catch { /* ignore */ }
   }
 
-  if (!fs.existsSync(proxyScript)) {
-    console.log(`  ✗ Proxy script not found: ${proxyScript}`);
-    console.log(`  Make sure you are running this from the priority-forge repo directory.`);
-    return false;
-  }
-
   try {
     execSync(
-      `claude mcp add --scope user priority-forge -- node ${proxyScript}`,
+      `claude mcp add --scope user priority-forge -- node ${PROXY_INSTALL_PATH}`,
       { stdio: 'pipe' }
     );
-    console.log(`  ✓ Registered with stdio transport via proxy: ${proxyScript}`);
+    console.log(`  ✓ Registered via: claude mcp add --scope user priority-forge -- node ${PROXY_INSTALL_PATH}`);
     console.log(`  ✓ Written to: ~/.claude.json → mcpServers`);
     cleanLegacyMcpJson();
     return true;
@@ -165,7 +170,7 @@ function configureMCPClaudeCode(): boolean {
     console.log(`  ✗ Failed to run 'claude mcp add': ${err.message}`);
     console.log(`  Make sure the Claude Code CLI is installed and in your PATH.`);
     console.log(`  Manual fix:`);
-    console.log(`    claude mcp add --scope user priority-forge -- node ${proxyScript}`);
+    console.log(`    claude mcp add --scope user priority-forge -- node ${PROXY_INSTALL_PATH}`);
     return false;
   }
 }
