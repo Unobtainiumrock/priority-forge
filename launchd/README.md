@@ -19,42 +19,28 @@ Priority Forge runs three services:
 
 ### Prerequisites
 
-1. Ensure Priority Forge is cloned to a stable location (not Desktop if you move things around)
-2. Run `npm install` in the project root and `npm install` in `frontend/`
+1. Ensure Priority Forge is cloned to a stable location (paths are baked into plist files)
+2. Run `npm install` in the project root and `cd frontend && npm install`
 3. Build the backend: `npm run build`
 
-### Quick Setup
-
-Run the included setup script which handles everything:
+### Setup
 
 ```bash
-./setup.sh install-launchd
-```
-
-This will:
-- Copy .plist files to `~/Library/LaunchAgents/`
-- Update paths to match your current installation
-- Load all three services
-- Verify they're running
-
-### Manual Installation
-
-If you prefer to install manually:
-
-```bash
-# 1. Copy plist files to LaunchAgents directory
+# 1. Copy plist files and update paths to match your install location
 cp launchd/*.plist ~/Library/LaunchAgents/
+# Edit WorkingDirectory and ProgramArguments in each plist if not in the default location
 
-# 2. Update paths in the plist files if Priority Forge is not in ~/Desktop/priority-forge
-#    (Edit the WorkingDirectory and ProgramArguments paths in each file)
-
-# 3. Load the services
+# 2. Load the services
 launchctl load ~/Library/LaunchAgents/com.priority-forge.backend.plist
 launchctl load ~/Library/LaunchAgents/com.priority-forge.frontend.plist
 launchctl load ~/Library/LaunchAgents/com.priority-forge.watchdog.plist
 
-# 4. Verify they're running
-launchctl list | grep priority-forge
+# 3. Register MCP with Claude Code (stdio transport — required for main session tool loading)
+npm run setup:mcp
+# Choose option 3 (Claude Code CLI)
+
+# 4. Verify
+npm run verify
 ```
 
 ## Verification

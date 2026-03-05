@@ -7,12 +7,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
 import * as os from 'os';
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 
 const SERVER_URL = 'http://localhost:3456';
 const DATA_FILE = path.join(__dirname, '..', 'data', 'progress.json');
 const HOME = os.homedir();
-const CLAUDE_MCP_CONFIG = path.join(HOME, '.claude', 'mcp.json');
+// MCP is registered via `claude mcp add --scope user` → lives in ~/.claude.json global mcpServers.
+// ~/.claude/mcp.json is a legacy/project-level discovery file — do NOT rely on it.
+const CLAUDE_JSON = path.join(HOME, '.claude.json');
 const CLAUDE_MD = path.join(HOME, '.claude', 'CLAUDE.md');
 const AGENTS_MD = path.join(HOME, '.claude', 'AGENTS.md'); // legacy - should have been migrated
 const IS_LINUX = os.platform() === 'linux';
@@ -85,20 +87,59 @@ async function main() {
   console.log('└─────────────────────────────────────────┘\n');
   
   // Check 0: MCP client config
-  if (fs.existsSync(CLAUDE_MCP_CONFIG)) {
+  // Claude Code reads from ~/.claude.json → mcpServers (registered via `claude mcp add --scope user`).
+  //
+  // We require stdio transport (via mcp-stdio-proxy.js), NOT http transport, because:
+  //   - http transport may be parsed at startup but never actually connect in the main session
+  //   - stdio transport is the universally reliable MCP transport (Claude Code spawns the proxy)
+  //   - The proxy bridges stdio ↔ the persistent HTTP server transparently
+  //
+  // ~/.claude/mcp.json is a project-level discovery file that won't reliably load tools.
+  const PROXY_SCRIPT = path.resolve(__dirname, 'mcp-stdio-proxy.js');
+  if (fs.existsSync(CLAUDE_JSON)) {
     try {
-      const mcpCfg = JSON.parse(fs.readFileSync(CLAUDE_MCP_CONFIG, 'utf-8'));
-      const entry = mcpCfg?.mcpServers?.['priority-forge'];
-      if (entry?.url === `${SERVER_URL}/mcp`) {
-        check('MCP client config', true, `~/.claude/mcp.json → ${entry.url}`);
+      const claudeCfg = JSON.parse(fs.readFileSync(CLAUDE_JSON, 'utf-8'));
+      const entry = claudeCfg?.mcpServers?.['priority-forge'];
+      if (!entry) {
+        check('MCP client config', false, `priority-forge not in ~/.claude.json mcpServers - run: npm run setup:mcp`);
+      } else if (entry.command === 'node' && Array.isArray(entry.args) && entry.args.includes(PROXY_SCRIPT)) {
+        check('MCP client config', true, `stdio proxy registered → ${PROXY_SCRIPT}`);
+      } else if (entry.type === 'http' || entry.url) {
+        // Old http transport — works in subprocesses but unreliable in main session
+        check('MCP client config', false,
+          `registered with http transport (unreliable in main session) - run: npm run setup:mcp to switch to stdio`);
       } else {
-        check('MCP client config', false, `priority-forge entry missing or wrong URL (expected ${SERVER_URL}/mcp)`);
+        check('MCP client config', false,
+          `unexpected registration format: ${JSON.stringify(entry)} - run: npm run setup:mcp`);
       }
     } catch {
-      check('MCP client config', false, '~/.claude/mcp.json is malformed JSON');
+      check('MCP client config', false, '~/.claude.json is malformed JSON');
     }
   } else {
-    check('MCP client config', false, '~/.claude/mcp.json not found - run: npm run setup:mcp');
+    check('MCP client config', false, '~/.claude.json not found - run: npm run setup:mcp');
+  }
+
+  // Check proxy script exists and is executable
+  if (fs.existsSync(PROXY_SCRIPT)) {
+    // Quick sanity: node can parse it
+    const result = spawnSync('node', ['--check', PROXY_SCRIPT], { encoding: 'utf-8' });
+    check('MCP stdio proxy', result.status === 0, result.status === 0
+      ? PROXY_SCRIPT
+      : `syntax error in proxy script: ${result.stderr}`);
+  } else {
+    check('MCP stdio proxy', false, `${PROXY_SCRIPT} not found - repo may be incomplete`);
+  }
+
+  // Warn if legacy ~/.claude/mcp.json still exists (misleading — won't auto-load tools)
+  const legacyMcpJson = path.join(HOME, '.claude', 'mcp.json');
+  if (fs.existsSync(legacyMcpJson)) {
+    try {
+      const legacy = JSON.parse(fs.readFileSync(legacyMcpJson, 'utf-8'));
+      if (legacy?.mcpServers?.['priority-forge']) {
+        check('Legacy ~/.claude/mcp.json', false,
+          'priority-forge still in ~/.claude/mcp.json (project-level, NOT auto-loaded) - run: npm run setup:mcp to migrate');
+      }
+    } catch { /* ignore malformed legacy file */ }
   }
 
   // Check 0b: Agent rules in CLAUDE.md (not AGENTS.md)

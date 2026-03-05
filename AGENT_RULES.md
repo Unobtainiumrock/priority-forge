@@ -28,13 +28,13 @@ with them do NOT appear in the frontend and are lost when the session ends.
 | `TaskUpdate`  | `mcp_priority-forge_update_task` |
 | (completing)  | `mcp_priority-forge_complete_task` |
 
-**If MCP tools are not available** (session started before backend was running), use the REST API:
+**If MCP tools are not available**, use the REST API:
 ```bash
 curl -X POST http://localhost:3456/tasks \
   -H "Content-Type: application/json" \
   -d '{"task":"title","priority":"P1","project":"project-name","effort":"medium"}'
 ```
-Then restart Claude Code so MCP tools load for the next session.
+Then check: (1) backend is running (`curl http://localhost:3456/health`), (2) MCP is registered (`claude mcp list` should show `priority-forge`). If not registered, run `npm run setup:mcp` from the priority-forge directory, then restart Claude Code.
 
 ---
 

@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 import * as os from 'os';
+import { execSync } from 'child_process';
 
 const HOME = os.homedir();
 
@@ -52,13 +53,12 @@ const TOOLS: Record<string, ToolConfig> = {
   },
   '3': {
     name: 'Claude Code CLI',
-    mcpConfigPath: path.join(HOME, '.claude', 'mcp.json'),
+    // MCP is registered via `claude mcp add --scope user`, NOT by writing a JSON file.
+    // The correct location is ~/.claude.json (global mcpServers), not ~/.claude/mcp.json.
+    // mcpConfigPath is unused for Claude Code — configureMCP handles it specially.
+    mcpConfigPath: '',
     agentRulesPath: path.join(HOME, '.claude', 'CLAUDE.md'),
-    mcpConfigFormat: (url: string) => ({
-      mcpServers: {
-        'priority-forge': { type: 'http', url }
-      }
-    }),
+    mcpConfigFormat: (_url: string) => ({ mcpServers: {} }),
     agentRulesHeader: '<!-- Priority Forge Configuration (auto-generated) -->\n\n'
   }
 };
@@ -111,14 +111,93 @@ function mergeMCPConfig(existing: MCPConfig | null, newConfig: MCPConfig): MCPCo
   };
 }
 
+function configureMCPClaudeCode(): boolean {
+  console.log(`\n  Configuring MCP for Claude Code CLI...`);
+
+  // Claude Code's user-level MCP config lives in ~/.claude.json under mcpServers.
+  // It must be registered via `claude mcp add --scope user`, NOT by writing ~/.claude/mcp.json
+  // (which is a project-level discovery file that requires explicit per-project opt-in
+  // AND may never actually connect with http transport in the main session).
+  //
+  // We use stdio transport (not http) because:
+  //   - stdio is the universally supported MCP transport — guaranteed to work in main session
+  //   - http transport may be parsed but not connected in Claude Code's primary context
+  //   - The stdio proxy bridges to the persistent HTTP server transparently
+  const proxyScript = path.resolve(__dirname, 'mcp-stdio-proxy.js');
+  const claudeJsonPath = path.join(HOME, '.claude.json');
+  const existing = readJsonFile(claudeJsonPath);
+  const existingEntry = existing?.mcpServers?.['priority-forge'];
+
+  // Check if already correctly registered with stdio transport
+  if (existingEntry?.command === 'node' &&
+      Array.isArray(existingEntry?.args) &&
+      existingEntry.args.includes(proxyScript)) {
+    console.log('  MCP already registered with stdio transport (skipping)');
+    console.log(`  ✓ Registered in: ~/.claude.json → mcpServers`);
+    cleanLegacyMcpJson();
+    return true;
+  }
+
+  // Remove old http registration if present so we can re-register with stdio
+  if (existingEntry) {
+    console.log(`  Replacing existing registration (was: ${JSON.stringify(existingEntry)})`);
+    try {
+      execSync(`claude mcp remove priority-forge 2>/dev/null || true`, { stdio: 'pipe', shell: true });
+    } catch { /* ignore */ }
+  }
+
+  if (!fs.existsSync(proxyScript)) {
+    console.log(`  ✗ Proxy script not found: ${proxyScript}`);
+    console.log(`  Make sure you are running this from the priority-forge repo directory.`);
+    return false;
+  }
+
+  try {
+    execSync(
+      `claude mcp add --scope user priority-forge -- node ${proxyScript}`,
+      { stdio: 'pipe' }
+    );
+    console.log(`  ✓ Registered with stdio transport via proxy: ${proxyScript}`);
+    console.log(`  ✓ Written to: ~/.claude.json → mcpServers`);
+    cleanLegacyMcpJson();
+    return true;
+  } catch (err: any) {
+    console.log(`  ✗ Failed to run 'claude mcp add': ${err.message}`);
+    console.log(`  Make sure the Claude Code CLI is installed and in your PATH.`);
+    console.log(`  Manual fix:`);
+    console.log(`    claude mcp add --scope user priority-forge -- node ${proxyScript}`);
+    return false;
+  }
+}
+
+function cleanLegacyMcpJson(): void {
+  const legacyPath = path.join(HOME, '.claude', 'mcp.json');
+  if (!fs.existsSync(legacyPath)) return;
+  const legacy = readJsonFile(legacyPath);
+  const keys = Object.keys(legacy?.mcpServers || {});
+  if (keys.length === 1 && keys[0] === 'priority-forge') {
+    fs.unlinkSync(legacyPath);
+    console.log(`  ✓ Removed legacy ~/.claude/mcp.json (superseded by user-scope stdio registration)`);
+  } else if (keys.includes('priority-forge')) {
+    delete legacy.mcpServers['priority-forge'];
+    fs.writeFileSync(legacyPath, JSON.stringify(legacy, null, 2));
+    console.log(`  ✓ Removed priority-forge from legacy ~/.claude/mcp.json`);
+  }
+}
+
 function configureMCP(tool: ToolConfig): boolean {
+  // Claude Code uses a different registration mechanism
+  if (tool.name === 'Claude Code CLI') {
+    return configureMCPClaudeCode();
+  }
+
   console.log(`\n  Configuring MCP for ${tool.name}...`);
-  
+
   ensureDirectoryExists(tool.mcpConfigPath);
-  
+
   const existingConfig = readJsonFile(tool.mcpConfigPath);
   const newConfig = tool.mcpConfigFormat(SERVER_URL);
-  
+
   // Check if already configured
   if (existingConfig?.mcpServers?.['priority-forge']) {
     const existingUrl = existingConfig.mcpServers['priority-forge'].url;
@@ -128,12 +207,12 @@ function configureMCP(tool: ToolConfig): boolean {
     }
     console.log(`  Updating existing MCP config (was: ${existingUrl})`);
   }
-  
+
   const mergedConfig = mergeMCPConfig(existingConfig, newConfig);
-  
+
   fs.writeFileSync(tool.mcpConfigPath, JSON.stringify(mergedConfig, null, 2));
   console.log(`  ✓ MCP config written to: ${tool.mcpConfigPath}`);
-  
+
   return true;
 }
 
@@ -224,7 +303,11 @@ async function main() {
     console.log('\n┌─────────────────────────────────────────┐');
     console.log('│  ✓ Configuration complete!              │');
     console.log('└─────────────────────────────────────────┘\n');
-    console.log(`MCP Config:    ${tool.mcpConfigPath}`);
+    if (tool.name === 'Claude Code CLI') {
+      console.log(`MCP Config:    ~/.claude.json → mcpServers (user scope)`);
+    } else {
+      console.log(`MCP Config:    ${tool.mcpConfigPath}`);
+    }
     console.log(`Agent Rules:   ${tool.agentRulesPath}`);
     console.log(`Server URL:    ${SERVER_URL}`);
     console.log('\nIMPORTANT: Restart ' + tool.name + ' for changes to take effect.\n');
