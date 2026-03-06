@@ -18,3 +18,6 @@ data/ml-training.json
 
 # Backup directories (never commit user data backups)
 data/backup-*/
+
+# Generated MCP config (per-machine, created by configure-mcp)
+.mcp.json

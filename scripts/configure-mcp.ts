@@ -168,12 +168,10 @@ function configureMCPClaudeCode(): boolean {
   // The .mcp.json approach: place a discovery file in each working directory and
   // pre-accept the trust dialog by writing to enabledMcpjsonServers in ~/.claude.json.
   // This is how Claude Code's official plugin marketplace works.
-  const mcpJsonEntry = {
-    'priority-forge': {
-      type: 'stdio',
-      command: 'node',
-      args: [PROXY_INSTALL_PATH],
-    }
+  const mcpServerEntry = {
+    type: 'stdio',
+    command: 'node',
+    args: [PROXY_INSTALL_PATH],
   };
 
   let registered = 0;
@@ -184,13 +182,21 @@ function configureMCPClaudeCode(): boolean {
 
     const mcpJsonPath = path.join(dir, '.mcp.json');
     const existingMcpJson = readJsonFile(mcpJsonPath) || {};
-    const existingEntry = existingMcpJson['priority-forge'];
+    const existingEntry = existingMcpJson?.mcpServers?.['priority-forge'];
     const isCorrect = existingEntry?.command === 'node' &&
       Array.isArray(existingEntry?.args) &&
       existingEntry.args.includes(PROXY_INSTALL_PATH);
 
     if (!isCorrect) {
-      const updated = { ...existingMcpJson, ...mcpJsonEntry };
+      const updated = {
+        ...existingMcpJson,
+        mcpServers: {
+          ...existingMcpJson?.mcpServers,
+          'priority-forge': mcpServerEntry,
+        },
+      };
+      // Remove any stale top-level 'priority-forge' key from previous buggy writes
+      delete (updated as any)['priority-forge'];
       fs.writeFileSync(mcpJsonPath, JSON.stringify(updated, null, 2));
       console.log(`  ✓ Written .mcp.json in: ${dir}`);
       registered++;
