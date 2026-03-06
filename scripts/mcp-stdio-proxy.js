@@ -77,8 +77,27 @@ function processBuffer() {
     const body = inputBuffer.slice(bodyStart, bodyStart + contentLength);
     inputBuffer = inputBuffer.slice(bodyStart + contentLength);
 
-    forwardToHTTP(body);
+    dispatchMessage(body);
   }
+}
+
+function dispatchMessage(body) {
+  const bodyStr = body.toString('utf8');
+
+  let msg;
+  try { msg = JSON.parse(bodyStr); } catch { /* malformed — forward anyway */ }
+
+  // Notifications: messages with a method but no id.
+  // By MCP spec these are fire-and-forget — no response is expected.
+  // Do NOT forward to the HTTP backend: legacy endpoint incorrectly returns
+  // "Method not found" errors for them, which breaks the client handshake.
+  if (msg && msg.method && msg.id === undefined) {
+    // Nothing to send back, nothing to track
+    maybeExit();
+    return;
+  }
+
+  forwardToHTTP(body);
 }
 
 function forwardToHTTP(body) {

@@ -12,8 +12,8 @@ import { execSync, spawnSync } from 'child_process';
 const SERVER_URL = 'http://localhost:3456';
 const DATA_FILE = path.join(__dirname, '..', 'data', 'progress.json');
 const HOME = os.homedir();
-// MCP is registered via `claude mcp add --scope user` → lives in ~/.claude.json global mcpServers.
-// ~/.claude/mcp.json is a legacy/project-level discovery file — do NOT rely on it.
+// MCP is registered via .mcp.json files in each working directory.
+// Trust is pre-accepted by writing enabledMcpjsonServers to ~/.claude.json.
 const CLAUDE_JSON = path.join(HOME, '.claude.json');
 const CLAUDE_MD = path.join(HOME, '.claude', 'CLAUDE.md');
 const AGENTS_MD = path.join(HOME, '.claude', 'AGENTS.md'); // legacy - should have been migrated
@@ -90,12 +90,33 @@ async function main() {
   console.log('│     Verifying Priority Forge Setup      │');
   console.log('└─────────────────────────────────────────┘\n');
   
-  // Check 0: MCP client config
-  // IMPORTANT: Claude Code loads MCP servers from ~/.claude.json → projects[cwd].mcpServers
-  // (local scope, registered with `claude mcp add` default/no-scope).
-  // The top-level mcpServers key (--scope user) is NOT loaded by Claude Code sessions.
-  // We check the Desktop project since that's the most common session working directory.
+  // Check 0: MCP client config via .mcp.json + enabledMcpjsonServers
+  // Claude Code discovers .mcp.json files in the working directory.
+  // Trust is pre-accepted via enabledMcpjsonServers in ~/.claude.json.
+  // We check the Desktop directory since that's the most common session working directory.
   const desktopDir = path.join(HOME, 'Desktop');
+  const desktopMcpJson = path.join(desktopDir, '.mcp.json');
+
+  // Check .mcp.json presence and content
+  if (fs.existsSync(desktopMcpJson)) {
+    try {
+      const mcpJson = JSON.parse(fs.readFileSync(desktopMcpJson, 'utf-8'));
+      const entry = mcpJson?.['priority-forge'];
+      if (entry?.command === 'node' && Array.isArray(entry?.args) && entry.args.includes(PROXY_INSTALL_PATH)) {
+        check('MCP .mcp.json (Desktop)', true, `~/Desktop/.mcp.json → ${PROXY_INSTALL_PATH}`);
+      } else {
+        check('MCP .mcp.json (Desktop)', false,
+          `unexpected format: ${JSON.stringify(entry)} - run: npm run setup:mcp`);
+      }
+    } catch {
+      check('MCP .mcp.json (Desktop)', false, '~/Desktop/.mcp.json is malformed JSON');
+    }
+  } else {
+    check('MCP .mcp.json (Desktop)', false,
+      `~/Desktop/.mcp.json not found - run: npm run setup:mcp`);
+  }
+
+  // Check trust pre-acceptance in ~/.claude.json
   if (fs.existsSync(CLAUDE_JSON)) {
     try {
       const claudeCfg = JSON.parse(fs.readFileSync(CLAUDE_JSON, 'utf-8'));
@@ -106,32 +127,29 @@ async function main() {
           'priority-forge in top-level mcpServers — this scope is NOT loaded by Claude Code. Run: npm run setup:mcp');
       }
 
-      // Check local-scope registration for Desktop (primary working dir)
-      const desktopEntry = claudeCfg?.projects?.[desktopDir]?.mcpServers?.['priority-forge'];
-      if (!desktopEntry) {
-        check('MCP client config (Desktop)', false,
-          `not registered for ${desktopDir} - run: npm run setup:mcp`);
-      } else if (desktopEntry.command === 'node' && Array.isArray(desktopEntry.args) && desktopEntry.args.includes(PROXY_INSTALL_PATH)) {
-        check('MCP client config (Desktop)', true, `stdio proxy → ${PROXY_INSTALL_PATH}`);
+      // Check trust pre-acceptance for Desktop
+      const desktopEnabled: string[] = claudeCfg?.projects?.[desktopDir]?.enabledMcpjsonServers || [];
+      if (desktopEnabled.includes('priority-forge')) {
+        check('MCP trust (Desktop)', true, 'priority-forge pre-accepted in enabledMcpjsonServers');
       } else {
-        check('MCP client config (Desktop)', false,
-          `unexpected format: ${JSON.stringify(desktopEntry)} - run: npm run setup:mcp`);
+        check('MCP trust (Desktop)', false,
+          'priority-forge not in enabledMcpjsonServers for Desktop — run: npm run setup:mcp');
       }
 
-      // Show coverage summary for other known dirs
+      // Show coverage: dirs with both .mcp.json and trust pre-accepted
       const projects = claudeCfg?.projects || {};
-      const covered = Object.entries(projects).filter(([, proj]: [string, any]) => {
-        const e = proj?.mcpServers?.['priority-forge'];
-        return e?.command === 'node' && e?.args?.includes(PROXY_INSTALL_PATH);
+      const trusted = Object.entries(projects).filter(([, proj]: [string, any]) => {
+        const enabled: string[] = proj?.enabledMcpjsonServers || [];
+        return enabled.includes('priority-forge');
       }).map(([dir]) => dir);
-      if (covered.length > 0) {
-        check('MCP coverage', true, `registered in ${covered.length} director${covered.length === 1 ? 'y' : 'ies'}: ${covered.join(', ')}`);
+      if (trusted.length > 1) {
+        check('MCP trust coverage', true, `pre-accepted in ${trusted.length} directories`);
       }
     } catch {
-      check('MCP client config', false, '~/.claude.json is malformed JSON');
+      check('MCP trust config', false, '~/.claude.json is malformed JSON');
     }
   } else {
-    check('MCP client config', false, '~/.claude.json not found - run: npm run setup:mcp');
+    check('MCP trust config', false, '~/.claude.json not found - run: npm run setup:mcp');
   }
 
   // Check stable proxy install
