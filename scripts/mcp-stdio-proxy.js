@@ -9,9 +9,14 @@
 // `npm run setup:mcp` so the registered path stays valid even if the repo moves.
 //
 // Protocol routing:
+//   Client requests 2025-11-25 → POST /mcp       (latest spec, Claude Code 2.1.74+)
 //   Client requests 2025-03-26 → POST /mcp       (Streamable HTTP, full spec)
-//   Client requests 2024-11-05 → POST /mcp/legacy (older spec, Claude Code compat)
+//   Client requests 2024-11-05 → POST /mcp/legacy (older spec)
 //   Client version unknown     → POST /mcp/legacy (safe default)
+//
+// Framing auto-detection:
+//   Content-Length framing: "Content-Length: N\r\n\r\nJSON"  (MCP spec)
+//   Newline-delimited JSON: "JSON\n"  (Claude Code 2.1.74+)
 
 'use strict';
 
@@ -22,10 +27,11 @@ const SERVER_PORT = 3456;
 
 // Map protocol versions to server endpoints
 const ENDPOINTS = {
+  '2025-11-25': '/mcp',
   '2025-03-26': '/mcp',
   '2024-11-05': '/mcp/legacy',
 };
-const DEFAULT_PATH = '/mcp/legacy'; // safe default for unknown clients
+const DEFAULT_PATH = '/mcp'; // default to current endpoint
 
 // Determined on first initialize request; all subsequent requests use the same path
 let serverPath = DEFAULT_PATH;
@@ -34,6 +40,8 @@ let inputBuffer = Buffer.alloc(0);
 let sessionId = null;
 let pendingRequests = 0;
 let stdinEnded = false;
+// Auto-detected from first message: 'content-length' or 'newline'
+let framingMode = null;
 
 process.stdin.on('data', (chunk) => {
   inputBuffer = Buffer.concat([inputBuffer, chunk]);
@@ -53,6 +61,32 @@ function maybeExit() {
 }
 
 function processBuffer() {
+  // Auto-detect framing mode from the first bytes we receive
+  if (!framingMode && inputBuffer.length > 0) {
+    framingMode = inputBuffer[0] === 0x7B /* '{' */ ? 'newline' : 'content-length';
+  }
+
+  if (framingMode === 'newline') {
+    processNewlineDelimited();
+  } else {
+    processContentLength();
+  }
+}
+
+function processNewlineDelimited() {
+  while (true) {
+    const newlineIdx = inputBuffer.indexOf('\n');
+    if (newlineIdx === -1) break;
+
+    const line = inputBuffer.slice(0, newlineIdx).toString('utf8').trim();
+    inputBuffer = inputBuffer.slice(newlineIdx + 1);
+
+    if (line.length === 0) continue;
+    dispatchMessage(Buffer.from(line, 'utf8'));
+  }
+}
+
+function processContentLength() {
   while (true) {
     // MCP stdio framing: "Content-Length: N\r\n\r\n" followed by N bytes of JSON
     const headerEnd = inputBuffer.indexOf('\r\n\r\n');
@@ -181,10 +215,14 @@ function forwardToHTTP(body) {
 }
 
 function writeToStdout(jsonStr) {
-  const encoded = Buffer.from(jsonStr, 'utf8');
-  const frame = `Content-Length: ${encoded.length}\r\n\r\n`;
-  process.stdout.write(frame);
-  process.stdout.write(encoded);
+  if (framingMode === 'newline') {
+    process.stdout.write(jsonStr + '\n');
+  } else {
+    const encoded = Buffer.from(jsonStr, 'utf8');
+    const frame = `Content-Length: ${encoded.length}\r\n\r\n`;
+    process.stdout.write(frame);
+    process.stdout.write(encoded);
+  }
 }
 
 // Keep process alive while stdin is open
