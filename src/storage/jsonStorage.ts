@@ -493,12 +493,12 @@ export class JsonStorage implements StorageInterface {
     }
     
     // Migrate V2 to V3 if needed
-    if (migratedDb.version === 'v2' || !migratedDb.priorityChangeEvents) {
+    if (migratedDb.version === 'v2') {
       migratedDb = this.migrateToV3(migratedDb);
     }
-    
+
     // Migrate V3 to V3.2 if needed (online learning support)
-    if (migratedDb.version === 'v3' || !migratedDb.dragReorderEvents) {
+    if (migratedDb.version === 'v3') {
       migratedDb = this.migrateToV32(migratedDb);
     }
     
