@@ -325,22 +325,15 @@ export interface ObjectiveProgressEvent {
   }>;
 }
 
-// V2/V3/V4 Database schema (per-workspace data)
+// V4 Database schema (per-workspace data)
 export interface ProgressDatabase {
-  version: 'v1' | 'v2' | 'v3' | 'v3.2' | 'v4';
+  version: 'v4';
   lastUpdated: string;
   projects: Project[];
   tasks: WeightedTask[];
   dataGaps: DataGap[];
   decisions: Decision[];
   heuristicWeights: HeuristicWeights;
-  // Legacy V3 fields — now stored in GlobalMLDatabase. Present only in old files for migration.
-  completionRecords?: TaskCompletionRecord[];
-  priorityChangeEvents?: PriorityChangeEvent[];
-  taskSelectionEvents?: TaskSelectionEvent[];
-  queueRebalanceEvents?: QueueRebalanceEvent[];
-  dragReorderEvents?: DragReorderEvent[];
-  onlineLearnerState?: OnlineLearnerState;
   // V4: Goal-conditioned learning (workspace-scoped)
   objectives?: Objective[];
   objectiveProgressEvents?: ObjectiveProgressEvent[];

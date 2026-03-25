@@ -61,8 +61,7 @@ import { MinHeap, toWeightedTask, recalculateAllScores, getDefaultWeights } from
 const DATA_DIR = path.join(__dirname, '../../data');
 const WORKSPACES_DIR = path.join(DATA_DIR, 'workspaces');
 const WORKSPACES_META_FILE = path.join(DATA_DIR, 'workspaces.json');
-const GLOBAL_ML_FILE = path.join(DATA_DIR, 'ml-training.json'); // V4: Global ML training data
-const LEGACY_DB_FILE = path.join(DATA_DIR, 'progress.json'); // For migration
+const GLOBAL_ML_FILE = path.join(DATA_DIR, 'ml-training.json');
 
 function getEmptyDatabase(): ProgressDatabase {
   return {
@@ -102,8 +101,10 @@ export class JsonStorage implements StorageInterface {
   private static readonly WRITE_GRACE_PERIOD_MS = 1500;  // Ignore file changes within 1.5s of our write
 
   constructor() {
-    // Initialize workspace system (includes global ML migration)
-    this.initializeWorkspaces();
+    // Ensure workspace directory exists
+    if (!fs.existsSync(WORKSPACES_DIR)) {
+      fs.mkdirSync(WORKSPACES_DIR, { recursive: true });
+    }
     // Load global ML training data
     this.globalML = this.loadGlobalML();
     // Load current workspace
@@ -188,78 +189,7 @@ export class JsonStorage implements StorageInterface {
       console.error('❌ Failed to reload database:', err);
     }
   }
-  
-  /**
-   * V4: Initialize workspace directories and metadata
-   */
-  private initializeWorkspaces(): void {
-    if (!fs.existsSync(WORKSPACES_DIR)) {
-      fs.mkdirSync(WORKSPACES_DIR, { recursive: true });
-    }
-    
-    // Migrate legacy database to default workspace if it exists
-    if (fs.existsSync(LEGACY_DB_FILE) && !fs.existsSync(WORKSPACES_META_FILE)) {
-      console.log('🔄 Migrating legacy database to default workspace...');
-      const defaultWorkspaceId = 'default';
-      const workspaceDir = path.join(WORKSPACES_DIR, defaultWorkspaceId);
-      fs.mkdirSync(workspaceDir, { recursive: true });
-      
-      // Read legacy database
-      const legacyDb = JSON.parse(fs.readFileSync(LEGACY_DB_FILE, 'utf-8')) as ProgressDatabase;
-      
-      // Extract ML data to global file (V4: Preserve training continuity)
-      if (!fs.existsSync(GLOBAL_ML_FILE)) {
-        console.log('🧠 Extracting ML training data to global file...');
-        const globalML: GlobalMLDatabase = {
-          version: 'v1',
-          lastUpdated: new Date().toISOString(),
-          heuristicWeights: legacyDb.heuristicWeights || { ...DEFAULT_HEURISTIC_WEIGHTS },
-          completionRecords: (legacyDb.completionRecords || []).map(r => ({
-            ...r,
-            workspaceId: defaultWorkspaceId,  // Tag with source workspace
-          })),
-          priorityChangeEvents: (legacyDb.priorityChangeEvents || []).map(e => ({
-            ...e,
-            workspaceId: defaultWorkspaceId,
-          })),
-          taskSelectionEvents: (legacyDb.taskSelectionEvents || []).map(e => ({
-            ...e,
-            workspaceId: defaultWorkspaceId,
-          })),
-          queueRebalanceEvents: (legacyDb.queueRebalanceEvents || []).map(e => ({
-            ...e,
-            workspaceId: defaultWorkspaceId,
-          })),
-          dragReorderEvents: (legacyDb.dragReorderEvents || []).map(e => ({
-            ...e,
-            workspaceId: defaultWorkspaceId,
-          })),
-          onlineLearnerState: legacyDb.onlineLearnerState || { ...DEFAULT_ONLINE_LEARNER_STATE },
-        };
-        fs.writeFileSync(GLOBAL_ML_FILE, JSON.stringify(globalML, null, 2));
-        console.log(`✅ Migrated ${globalML.completionRecords.length} completion records, ${globalML.taskSelectionEvents.length} selection events to global ML file`);
-      }
-      
-      // Copy legacy database to workspace (workspace-scoped data only)
-      const workspaceDbFile = path.join(workspaceDir, 'progress.json');
-      fs.copyFileSync(LEGACY_DB_FILE, workspaceDbFile);
-      
-      // Create workspace metadata
-      const metadata: WorkspaceMetadata = {
-        workspaces: [{
-          id: defaultWorkspaceId,
-          name: 'Default',
-          description: 'Migrated from legacy database',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }],
-        currentWorkspaceId: defaultWorkspaceId,
-      };
-      fs.writeFileSync(WORKSPACES_META_FILE, JSON.stringify(metadata, null, 2));
-      console.log('✅ Migration complete! Legacy database migrated to default workspace.');
-    }
-  }
-  
+
   /**
    * V4: Load current workspace ID from metadata
    */
@@ -470,206 +400,23 @@ export class JsonStorage implements StorageInterface {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    
-    // V4: Use workspace-specific database file
-    const dbFile = this.currentWorkspaceId 
-      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
-      : LEGACY_DB_FILE; // Fallback to legacy for migration
-    
+
+    const dbFile = this.getWorkspaceDbFile(this.currentWorkspaceId!);
+
     if (!fs.existsSync(dbFile)) {
       const empty = getEmptyDatabase();
       fs.writeFileSync(dbFile, JSON.stringify(empty, null, 2));
       return empty;
     }
-    const raw = fs.readFileSync(dbFile, 'utf-8');
-    const db = JSON.parse(raw) as ProgressDatabase;
-    
-    // Migration chain: V1 → V2 → V3 → V3.2
-    let migratedDb = db;
-    
-    // Migrate V1 to V2 if needed
-    if (migratedDb.version === 'v1' || !migratedDb.heuristicWeights) {
-      migratedDb = this.migrateToV2(migratedDb);
-    }
-    
-    // Migrate V2 to V3 if needed
-    if (migratedDb.version === 'v2') {
-      migratedDb = this.migrateToV3(migratedDb);
-    }
-
-    // Migrate V3 to V3.2 if needed (online learning support)
-    if (migratedDb.version === 'v3') {
-      migratedDb = this.migrateToV32(migratedDb);
-    }
-    
-    return migratedDb;
-  }
-
-  /**
-   * Migrate V1 database to V2 format
-   */
-  private migrateToV2(db: ProgressDatabase): ProgressDatabase {
-    console.log('🔄 Migrating database from V1 to V2...');
-    
-    const heuristicWeights = db.heuristicWeights || { ...DEFAULT_HEURISTIC_WEIGHTS };
-    
-    // Convert all tasks to weighted tasks
-    const weightedTasks = recalculateAllScores(db.tasks, heuristicWeights);
-    
-    const v2Db: ProgressDatabase = {
-      ...db,
-      version: 'v2',
-      tasks: weightedTasks,
-      heuristicWeights,
-      lastUpdated: new Date().toISOString(),
-    };
-    
-    // Save migrated database
-    const dbFile = this.currentWorkspaceId 
-      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
-      : LEGACY_DB_FILE;
-    fs.writeFileSync(dbFile, JSON.stringify(v2Db, null, 2));
-    console.log('✅ Migration complete! Database is now V2.');
-    
-    return v2Db;
-  }
-
-  /**
-   * Migrate V2 database to V3 format (adds ML training data arrays)
-   */
-  private migrateToV3(db: ProgressDatabase): ProgressDatabase {
-    console.log('🔄 Migrating database from V2 to V3...');
-    
-    const v3Db: ProgressDatabase = {
-      ...db,
-      version: 'v3',
-      priorityChangeEvents: db.priorityChangeEvents || [],
-      taskSelectionEvents: db.taskSelectionEvents || [],
-      lastUpdated: new Date().toISOString(),
-    };
-    
-    // Save migrated database
-    const dbFile = this.currentWorkspaceId 
-      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
-      : LEGACY_DB_FILE;
-    fs.writeFileSync(dbFile, JSON.stringify(v3Db, null, 2));
-    console.log('✅ Migration complete! Database is now V3.');
-    
-    return v3Db;
-  }
-
-  /**
-   * Migrate V3 database to V3.2 format (adds online learning support)
-   * Includes data imputation for existing events to ensure consistent shapes
-   */
-  private migrateToV32(db: ProgressDatabase): ProgressDatabase {
-    console.log('🔄 Migrating database from V3 to V3.2 (Online Learning)...');
-    
-    // Data imputation: Ensure all existing events have required fields
-    const imputedPriorityChangeEvents = (db.priorityChangeEvents || []).map(event => ({
-      ...event,
-      // Impute missing fields with sensible defaults
-      queuePositionBefore: event.queuePositionBefore ?? -1,
-      queuePositionAfter: event.queuePositionAfter ?? -1,
-    }));
-    
-    const imputedTaskSelectionEvents = (db.taskSelectionEvents || []).map(event => ({
-      ...event,
-      // Impute missing fields
-      selectedTaskRank: event.selectedTaskRank ?? 0,
-      queueSize: event.queueSize ?? 1,
-    }));
-    
-    const imputedQueueRebalanceEvents = (db.queueRebalanceEvents || []).map(event => ({
-      ...event,
-      // Ensure arrays exist
-      significantChanges: event.significantChanges || [],
-      topTasksBefore: event.topTasksBefore || [],
-      topTasksAfter: event.topTasksAfter || [],
-    }));
-    
-    // Impute completion records for ML training
-    const imputedCompletionRecords = (db.completionRecords || []).map(record => ({
-      ...record,
-      // Impute missing score fields (use 0 as neutral default)
-      initialPriorityScore: record.initialPriorityScore ?? 0,
-      finalPriorityScore: record.finalPriorityScore ?? 0,
-    }));
-    
-    // Synthesize drag events from existing priority changes (for training continuity)
-    // Each priority change can be interpreted as an implicit reorder preference
-    const syntheticDragEvents: DragReorderEvent[] = imputedPriorityChangeEvents
-      .filter(e => e.queuePositionBefore >= 0 && e.queuePositionAfter >= 0)
-      .map(event => {
-        const fromRank = event.queuePositionBefore;
-        const toRank = event.queuePositionAfter;
-        const direction = toRank < fromRank ? 'promoted' : 'demoted';
-        
-        return {
-          id: `synthetic-${event.id}`,
-          taskId: event.taskId,
-          fromRank,
-          toRank,
-          direction,
-          timestamp: event.timestamp,
-          implicitPreferences: [], // Can't reconstruct without full queue state
-          draggedTaskFeatures: {
-            priority: event.newPriority,
-            priorityScore: event.newScore,
-            weights: {
-              blockingCount: 0,
-              crossProjectImpact: 0,
-              timeSensitivity: 0,
-              effortValueRatio: 5,
-              dependencyDepth: 0,
-            },
-            hasDeadline: false,
-            hasBlocking: false,
-            hasDependencies: false,
-          },
-          queueSize: 0,
-          tasksPassedIds: [],
-        } as DragReorderEvent;
-      });
-    
-    console.log(`  📊 Imputed ${imputedPriorityChangeEvents.length} priority change events`);
-    console.log(`  📊 Imputed ${imputedTaskSelectionEvents.length} task selection events`);
-    console.log(`  📊 Imputed ${imputedQueueRebalanceEvents.length} queue rebalance events`);
-    console.log(`  📊 Imputed ${imputedCompletionRecords.length} completion records`);
-    console.log(`  📊 Synthesized ${syntheticDragEvents.length} drag events from priority changes`);
-    
-    const v32Db: ProgressDatabase = {
-      ...db,
-      version: 'v4',
-      priorityChangeEvents: imputedPriorityChangeEvents,
-      taskSelectionEvents: imputedTaskSelectionEvents,
-      queueRebalanceEvents: imputedQueueRebalanceEvents,
-      completionRecords: imputedCompletionRecords,
-      // New V3.2 fields
-      dragReorderEvents: syntheticDragEvents,
-      onlineLearnerState: { ...DEFAULT_ONLINE_LEARNER_STATE },
-      lastUpdated: new Date().toISOString(),
-    };
-    
-    // Save migrated database
-    const dbFile = this.currentWorkspaceId 
-      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
-      : LEGACY_DB_FILE;
-    fs.writeFileSync(dbFile, JSON.stringify(v32Db, null, 2));
-    console.log('✅ Migration complete! Database is now V3.2 with Online Learning support.');
-    
-    return v32Db;
+    return JSON.parse(fs.readFileSync(dbFile, 'utf-8')) as ProgressDatabase;
   }
 
   private async save(): Promise<void> {
     // Sync array from Map before saving
     this.syncTasksArray();
     this.db.lastUpdated = new Date().toISOString();
-    
-    // V4: Save to workspace-specific database file
-    const dbFile = this.currentWorkspaceId 
-      ? this.getWorkspaceDbFile(this.currentWorkspaceId)
-      : LEGACY_DB_FILE; // Fallback
+
+    const dbFile = this.getWorkspaceDbFile(this.currentWorkspaceId!);
     
     // V4.1: Track our write time to avoid reload loops from file watcher
     this.lastWriteTime = Date.now();
