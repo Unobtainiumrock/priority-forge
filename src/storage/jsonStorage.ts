@@ -16,6 +16,7 @@
  */
 
 import * as fs from 'fs';
+import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import chokidar, { FSWatcher } from 'chokidar';
@@ -71,15 +72,7 @@ function getEmptyDatabase(): ProgressDatabase {
     tasks: [],
     dataGaps: [],
     decisions: [],
-    completionRecords: [],
     heuristicWeights: { ...DEFAULT_HEURISTIC_WEIGHTS },
-    // V3: ML training data
-    priorityChangeEvents: [],
-    taskSelectionEvents: [],
-    queueRebalanceEvents: [],
-    // V3.2: Online learning
-    dragReorderEvents: [],
-    onlineLearnerState: { ...DEFAULT_ONLINE_LEARNER_STATE },
   };
 }
 
@@ -343,9 +336,11 @@ export class JsonStorage implements StorageInterface {
   /**
    * V4: Save global ML training data
    */
-  private saveGlobalML(): void {
+  private async saveGlobalML(): Promise<void> {
     this.globalML.lastUpdated = new Date().toISOString();
-    fs.writeFileSync(GLOBAL_ML_FILE, JSON.stringify(this.globalML, null, 2));
+    const tmpFile = GLOBAL_ML_FILE + '.tmp';
+    await fsPromises.writeFile(tmpFile, JSON.stringify(this.globalML, null, 2));
+    await fsPromises.rename(tmpFile, GLOBAL_ML_FILE);
   }
 
   /**
@@ -594,7 +589,7 @@ export class JsonStorage implements StorageInterface {
     }));
     
     // Impute completion records for ML training
-    const imputedCompletionRecords = db.completionRecords.map(record => ({
+    const imputedCompletionRecords = (db.completionRecords || []).map(record => ({
       ...record,
       // Impute missing score fields (use 0 as neutral default)
       initialPriorityScore: record.initialPriorityScore ?? 0,
@@ -678,7 +673,9 @@ export class JsonStorage implements StorageInterface {
     
     // V4.1: Track our write time to avoid reload loops from file watcher
     this.lastWriteTime = Date.now();
-    fs.writeFileSync(dbFile, JSON.stringify(this.db, null, 2));
+    const tmpFile = dbFile + '.tmp';
+    await fsPromises.writeFile(tmpFile, JSON.stringify(this.db, null, 2));
+    await fsPromises.rename(tmpFile, dbFile);
     if (this.onWrite) {
       await this.onWrite();
     }
@@ -791,9 +788,14 @@ export class JsonStorage implements StorageInterface {
    * V2: Get the single highest priority task (excludes completed/cancelled tasks)
    */
   async getTopPriority(): Promise<WeightedTask | null> {
-    // Get all tasks sorted by priority and find the first actionable one
-    const sorted = this.taskHeap.toSortedArray();
     const finishedStatuses = ['complete', 'completed', 'cancelled'];
+    // O(1) fast path: heap top is almost always actionable since completed tasks are removed
+    const top = this.taskHeap.peek();
+    if (top && !finishedStatuses.includes(top.status)) {
+      return top;
+    }
+    // Fallback: stale completed task at heap top, sort to find first actionable
+    const sorted = this.taskHeap.toSortedArray();
     return sorted.find(t => !finishedStatuses.includes(t.status)) || null;
   }
 
@@ -960,7 +962,7 @@ export class JsonStorage implements StorageInterface {
       
       // V4: Write to global ML file
       this.globalML.priorityChangeEvents.push(changeEvent);
-      this.saveGlobalML();
+      await this.saveGlobalML();
       
       console.log(`📊 V3: Logged priority change for ${id}: ${oldPriority} → ${data.priority}`);
     }
@@ -1049,7 +1051,7 @@ export class JsonStorage implements StorageInterface {
     this.logRebalanceEvent('weights_changed', tasksBefore, this.getTaskArray());
     
     // V4: Save global ML data (weights are global)
-    this.saveGlobalML();
+    await this.saveGlobalML();
     await this.save();
     
     return this.globalML.heuristicWeights;
@@ -1211,7 +1213,7 @@ export class JsonStorage implements StorageInterface {
     this.logRebalanceEvent('task_completed', tasksBefore, this.getTaskArray(), taskId);
     
     // V4: Save both workspace data and global ML data
-    this.saveGlobalML();
+    await this.saveGlobalML();
     await this.save();
     return record;
   }
@@ -1294,7 +1296,7 @@ export class JsonStorage implements StorageInterface {
     }
     
     // V4: Save global ML data
-    this.saveGlobalML();
+    await this.saveGlobalML();
     return event;
   }
 
@@ -1651,7 +1653,7 @@ export class JsonStorage implements StorageInterface {
     }
     
     // V4: Save global ML data
-    this.saveGlobalML();
+    await this.saveGlobalML();
     await this.save();
     return event;
   }
@@ -1788,7 +1790,7 @@ export class JsonStorage implements StorageInterface {
       ...config,
     };
     
-    this.saveGlobalML();
+    await this.saveGlobalML();
     console.log('📊 V3.2: Updated online learner config:', config);
     return this.globalML.onlineLearnerState;
   }

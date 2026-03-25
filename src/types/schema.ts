@@ -333,9 +333,9 @@ export interface ProgressDatabase {
   tasks: WeightedTask[];
   dataGaps: DataGap[];
   decisions: Decision[];
-  // Legacy: These are now stored in GlobalMLDatabase but kept for migration
-  completionRecords: TaskCompletionRecord[];
   heuristicWeights: HeuristicWeights;
+  // Legacy V3 fields — now stored in GlobalMLDatabase. Present only in old files for migration.
+  completionRecords?: TaskCompletionRecord[];
   priorityChangeEvents?: PriorityChangeEvent[];
   taskSelectionEvents?: TaskSelectionEvent[];
   queueRebalanceEvents?: QueueRebalanceEvent[];
