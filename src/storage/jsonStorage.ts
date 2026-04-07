@@ -642,6 +642,10 @@ export class JsonStorage implements StorageInterface {
     if (data.status === 'in_progress' && oldStatus !== 'in_progress' && !startedAt) {
       startedAt = new Date().toISOString();
       console.log(`📊 V4.0: Task ${id} started work at ${startedAt}`);
+      // V4.2: Auto-log task selection when work begins — ensures every started
+      // task is captured as a selection event without relying on the agent to
+      // call log_task_selection separately.
+      await this.logTaskSelection(id);
     }
     
     // Merge updates
