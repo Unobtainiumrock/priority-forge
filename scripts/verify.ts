@@ -9,7 +9,7 @@ import * as http from 'http';
 import * as os from 'os';
 import { execSync, spawnSync } from 'child_process';
 
-const SERVER_URL = 'http://localhost:3456';
+const SERVER_URL = 'http://127.0.0.1:3456';
 const DATA_FILE = path.join(__dirname, '..', 'data', 'progress.json');
 const HOME = os.homedir();
 // MCP is registered via .mcp.json files in each working directory.

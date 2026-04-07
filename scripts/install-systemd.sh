@@ -53,7 +53,7 @@ status() {
 
     echo ""
     log "Backend health check:"
-    curl -s http://localhost:3456/health && echo "" || echo "  (not responding)"
+    curl -s http://127.0.0.1:3456/health && echo "" || echo "  (not responding)"
 }
 
 restart() {

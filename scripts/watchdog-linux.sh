@@ -13,11 +13,11 @@ log() {
 }
 
 check_backend() {
-    curl -s --connect-timeout 2 "http://localhost:3456/health" > /dev/null 2>&1
+    curl -s --connect-timeout 2 "http://127.0.0.1:3456/health" > /dev/null 2>&1
 }
 
 check_frontend() {
-    curl -s --connect-timeout 2 "http://localhost:5173" > /dev/null 2>&1
+    curl -s --connect-timeout 2 "http://127.0.0.1:5173" > /dev/null 2>&1
 }
 
 restart_backend() {

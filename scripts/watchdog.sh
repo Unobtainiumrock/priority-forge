@@ -17,7 +17,7 @@ log() {
 
 check_backend() {
     # Check if backend is responding on port 3456
-    if curl -s --connect-timeout 2 "http://localhost:3456/version" > /dev/null 2>&1; then
+    if curl -s --connect-timeout 2 "http://127.0.0.1:3456/version" > /dev/null 2>&1; then
         return 0  # Backend is up
     fi
     return 1  # Backend is down
@@ -25,7 +25,7 @@ check_backend() {
 
 check_frontend() {
     # Check if frontend is responding on port 5173
-    if curl -s --connect-timeout 2 "http://localhost:5173" > /dev/null 2>&1; then
+    if curl -s --connect-timeout 2 "http://127.0.0.1:5173" > /dev/null 2>&1; then
         return 0  # Frontend is up
     fi
     return 1  # Frontend is down

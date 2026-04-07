@@ -19,12 +19,12 @@
             echo "[$(date)] Watchdog started" >> $LOG
             while true; do
                 # Check backend
-                if ! curl -s --connect-timeout 2 http://localhost:3456/version > /dev/null 2>&amp;1; then
+                if ! curl -s --connect-timeout 2 http://127.0.0.1:3456/version > /dev/null 2>&amp;1; then
                     echo "[$(date)] Backend down - restarting" >> $LOG
                     launchctl kickstart -k gui/$(id -u)/com.priority-forge.backend 2>/dev/null
                 fi
                 # Check frontend  
-                if ! curl -s --connect-timeout 2 http://localhost:5173 > /dev/null 2>&amp;1; then
+                if ! curl -s --connect-timeout 2 http://127.0.0.1:5173 > /dev/null 2>&amp;1; then
                     echo "[$(date)] Frontend down - restarting" >> $LOG
                     launchctl kickstart -k gui/$(id -u)/com.priority-forge.frontend 2>/dev/null
                 fi

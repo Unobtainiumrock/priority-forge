@@ -70,7 +70,7 @@ const TOOLS: Record<string, ToolConfig> = {
   }
 };
 
-const SERVER_URL = 'http://localhost:3456/mcp';
+const SERVER_URL = 'http://127.0.0.1:3456/mcp';
 const AGENT_RULES_SOURCE = path.join(__dirname, '..', 'AGENT_RULES.md');
 
 const rl = readline.createInterface({
