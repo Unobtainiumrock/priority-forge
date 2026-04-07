@@ -138,8 +138,7 @@ export class JsonStorage implements StorageInterface {
           pollInterval: 100
         },
         ignoreInitial: true,  // Don't fire on initial add
-        usePolling: true,     // Use polling for reliability with atomic replacements
-        interval: 1000,       // Poll every 1 second (balance between responsiveness and CPU)
+        usePolling: false,    // Use native OS watchers (inotify on Linux, FSEvents on macOS)
         atomic: true          // Handle atomic writes (mv, etc.)
       });
       
