@@ -95,12 +95,22 @@ export interface DataGap {
   updatedAt: string;
 }
 
+export type DecisionType = 'skip' | 'defer' | 'architectural' | 'prioritization' | 'other';
+
 export interface Decision {
   id: string;
   date: string;
   decision: string;
   rationale: string;
   createdAt: string;
+  // V4.2: Extended fields for ML training
+  decisionType?: DecisionType;
+  relatedTaskId?: string;
+  skippedTaskId?: string;
+  selectedTaskId?: string;
+  rankDelta?: number;
+  selectionEventId?: string;
+  workspaceId?: string;
 }
 
 // V3 prep: Context switch tracking
@@ -354,6 +364,8 @@ export interface GlobalMLDatabase {
   // V3.2: Online learning from drag-and-drop
   dragReorderEvents: DragReorderEvent[];
   onlineLearnerState: OnlineLearnerState;
+  // V4.2: Decision records for ML (aggregated from all workspaces)
+  decisions: Decision[];
 }
 
 export const DEFAULT_GLOBAL_ML_DATABASE: GlobalMLDatabase = {
@@ -366,6 +378,7 @@ export const DEFAULT_GLOBAL_ML_DATABASE: GlobalMLDatabase = {
   queueRebalanceEvents: [],
   dragReorderEvents: [],
   onlineLearnerState: { ...DEFAULT_ONLINE_LEARNER_STATE },
+  decisions: [],
 };
 
 // API response types
@@ -444,6 +457,10 @@ export interface CreateDecisionDTO {
   date: string;
   decision: string;
   rationale: string;
+  decisionType?: DecisionType;
+  relatedTaskId?: string;
+  skippedTaskId?: string;
+  selectedTaskId?: string;
 }
 
 export interface LogContextSwitchDTO {

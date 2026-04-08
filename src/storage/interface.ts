@@ -84,6 +84,11 @@ export interface StorageInterface {
   // Decisions
   getDecisions(): Promise<Decision[]>;
   createDecision(data: CreateDecisionDTO): Promise<Decision>;
+  backfillSkipDecisions(dryRun?: boolean): Promise<{
+    created: number;
+    skipped: number;
+    details: Array<{ selectionEventId: string; selectedTaskId: string; topTaskId: string; rankDelta: number }>;
+  }>;
   
   // V3 Prep: Completion Records
   logContextSwitch(taskId: string): Promise<void>;
@@ -100,6 +105,7 @@ export interface StorageInterface {
     priorityChangeEvents: PriorityChangeEvent[];
     taskSelectionEvents: TaskSelectionEvent[];
     queueRebalanceEvents: QueueRebalanceEvent[];
+    decisions: Decision[];
     tasks: WeightedTask[];
     heuristicWeights: HeuristicWeights;
     summary: {
@@ -107,12 +113,16 @@ export interface StorageInterface {
       totalPriorityChanges: number;
       totalSelections: number;
       totalRebalances: number;
+      totalDecisions: number;
+      totalSkipDecisions: number;
       selectionAccuracy: number;
       dataQuality: {
         completionsWithScores: number;
         tasksWithEffort: number;
         tasksWithDependencies: number;
         rebalancesWithSignificantChanges: number;
+        decisionsWithSkipData: number;
+        decisionsLinkedToSelections: number;
       };
     };
     mlReady: {
@@ -144,6 +154,16 @@ export interface StorageInterface {
         queueSizeAfter: number;
         significantChangeCount: number;
         topTaskChanged: number;
+      }>;
+      decisions: Array<{
+        id: string;
+        decisionType: string;
+        relatedTaskId: string | null;
+        skippedTaskId: string | null;
+        selectedTaskId: string | null;
+        rankDelta: number;
+        hasLinkedSelectionEvent: number;
+        timestamp: string;
       }>;
     };
   }>;

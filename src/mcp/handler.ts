@@ -795,6 +795,17 @@ const tools = [
       required: [],
     },
   },
+  {
+    name: 'backfill_skip_decisions',
+    description: 'V4.2: Retroactively create Decision records from historical TaskSelectionEvents where user skipped the top-ranked task. Idempotent.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        dry_run: { type: 'boolean', description: 'If true, report what would be created without writing' },
+      },
+      required: [],
+    },
+  },
   // ====== V3.2: Online Learning Tools ======
   {
     name: 'log_drag_reorder',
@@ -1209,6 +1220,11 @@ async function handleToolCall(name: string, params: Record<string, unknown>): Pr
           readyForTraining: data.summary.totalCompletions >= 10 && data.summary.totalSelections >= 20,
         },
       };
+    }
+
+    case 'backfill_skip_decisions': {
+      const dryRun = params.dry_run === true;
+      return storage.backfillSkipDecisions(dryRun);
     }
 
     // ====== V3.2: Online Learning Tools ======

@@ -255,7 +255,10 @@ export class JsonStorage implements StorageInterface {
       return empty;
     }
     try {
-      return JSON.parse(fs.readFileSync(GLOBAL_ML_FILE, 'utf-8')) as GlobalMLDatabase;
+      const loaded = JSON.parse(fs.readFileSync(GLOBAL_ML_FILE, 'utf-8')) as GlobalMLDatabase;
+      // V4.2: Default decisions array for existing databases without it
+      loaded.decisions = loaded.decisions || [];
+      return loaded;
     } catch {
       console.error('Failed to load global ML data, using defaults');
       return { ...DEFAULT_GLOBAL_ML_DATABASE };
@@ -645,7 +648,28 @@ export class JsonStorage implements StorageInterface {
       // V4.2: Auto-log task selection when work begins — ensures every started
       // task is captured as a selection event without relying on the agent to
       // call log_task_selection separately.
-      await this.logTaskSelection(id);
+      const selectionEvent = await this.logTaskSelection(id);
+      // V4.2: Auto-log skip decision when user picks a non-top task
+      if (selectionEvent && !selectionEvent.wasTopSelected) {
+        const topTaskName = this.taskMap.get(selectionEvent.topTaskId)?.task || selectionEvent.topTaskId;
+        const skipDecision: Decision = {
+          id: uuidv4(),
+          date: new Date().toISOString().split('T')[0],
+          decision: `Selected "${existingTask.task}" (rank ${selectionEvent.selectedTaskRank + 1}) over recommended "${topTaskName}" (rank 1)`,
+          rationale: `User chose task ${selectionEvent.selectedTaskRank} positions below top-ranked. Score diff: ${selectionEvent.selectedTaskScore - selectionEvent.topTaskScore}.`,
+          createdAt: new Date().toISOString(),
+          decisionType: 'skip',
+          relatedTaskId: id,
+          skippedTaskId: selectionEvent.topTaskId,
+          selectedTaskId: id,
+          rankDelta: selectionEvent.selectedTaskRank,
+          selectionEventId: selectionEvent.id,
+          workspaceId: this.currentWorkspaceId || undefined,
+        };
+        this.db.decisions.push(skipDecision);
+        this.globalML.decisions.push(skipDecision);
+        console.log(`📊 V4.2: Auto-logged skip decision (rank ${selectionEvent.selectedTaskRank + 1}, skipped "${topTaskName}")`);
+      }
     }
     
     // Merge updates
@@ -877,8 +901,16 @@ export class JsonStorage implements StorageInterface {
       decision: data.decision,
       rationale: data.rationale,
       createdAt: new Date().toISOString(),
+      decisionType: data.decisionType || 'other',
+      relatedTaskId: data.relatedTaskId,
+      skippedTaskId: data.skippedTaskId,
+      selectedTaskId: data.selectedTaskId,
+      workspaceId: this.currentWorkspaceId || undefined,
     };
     this.db.decisions.push(decision);
+    // V4.2: Dual-write to global ML for training data
+    this.globalML.decisions.push(decision);
+    await this.saveGlobalML();
     await this.save();
     return decision;
   }
@@ -1084,6 +1116,7 @@ export class JsonStorage implements StorageInterface {
     priorityChangeEvents: PriorityChangeEvent[];
     taskSelectionEvents: TaskSelectionEvent[];
     queueRebalanceEvents: QueueRebalanceEvent[];
+    decisions: Decision[];
     tasks: WeightedTask[];
     heuristicWeights: HeuristicWeights;
     summary: {
@@ -1091,6 +1124,8 @@ export class JsonStorage implements StorageInterface {
       totalPriorityChanges: number;
       totalSelections: number;
       totalRebalances: number;
+      totalDecisions: number;
+      totalSkipDecisions: number;
       selectionAccuracy: number;
       dataQuality: {
         completionsWithScores: number;
@@ -1100,6 +1135,8 @@ export class JsonStorage implements StorageInterface {
         rebalancesWithSignificantChanges: number;
         selectionsWithPairwiseData: number;  // V4.1: How many selections have pairwise preferences
         totalSelectionPairs: number;  // V4.1: Total pairwise preferences from selections
+        decisionsWithSkipData: number;
+        decisionsLinkedToSelections: number;
       };
     };
     // ML-ready format with nulls handled
@@ -1144,6 +1181,17 @@ export class JsonStorage implements StorageInterface {
         scoreDiff: number;  // positive = heuristics got it wrong
         timestamp: string;
         queueSize: number;
+      }>;
+      // V4.2: Decision records for ML
+      decisions: Array<{
+        id: string;
+        decisionType: string;
+        relatedTaskId: string | null;
+        skippedTaskId: string | null;
+        selectedTaskId: string | null;
+        rankDelta: number;
+        hasLinkedSelectionEvent: number;
+        timestamp: string;
       }>;
     };
   }> {
@@ -1259,11 +1307,31 @@ export class JsonStorage implements StorageInterface {
       }
     }
 
+    // V4.2: Decision metrics
+    const decisions = this.globalML.decisions;
+    const skipDecisions = decisions.filter(d => d.decisionType === 'skip');
+    const decisionsWithSkipData = decisions.filter(
+      d => d.decisionType === 'skip' && d.skippedTaskId && d.selectedTaskId
+    ).length;
+    const decisionsLinkedToSelections = decisions.filter(d => d.selectionEventId).length;
+
+    const mlDecisions = decisions.map(d => ({
+      id: d.id,
+      decisionType: d.decisionType || 'other',
+      relatedTaskId: d.relatedTaskId || null,
+      skippedTaskId: d.skippedTaskId || null,
+      selectedTaskId: d.selectedTaskId || null,
+      rankDelta: d.rankDelta || 0,
+      hasLinkedSelectionEvent: d.selectionEventId ? 1 : 0,
+      timestamp: d.createdAt,
+    }));
+
     return {
       completionRecords,
       priorityChangeEvents,
       taskSelectionEvents,
       queueRebalanceEvents,
+      decisions,
       tasks,
       heuristicWeights: this.globalML.heuristicWeights,
       summary: {
@@ -1271,6 +1339,8 @@ export class JsonStorage implements StorageInterface {
         totalPriorityChanges: priorityChangeEvents.length,
         totalSelections: taskSelectionEvents.length,
         totalRebalances: queueRebalanceEvents.length,
+        totalDecisions: decisions.length,
+        totalSkipDecisions: skipDecisions.length,
         selectionAccuracy,
         dataQuality: {
           completionsWithScores,
@@ -1280,6 +1350,8 @@ export class JsonStorage implements StorageInterface {
           rebalancesWithSignificantChanges,
           selectionsWithPairwiseData,  // V4.1: Selections with skipped task data
           totalSelectionPairs,  // V4.1: Total pairwise preferences from selections
+          decisionsWithSkipData,
+          decisionsLinkedToSelections,
         },
       },
       mlReady: {
@@ -1287,7 +1359,75 @@ export class JsonStorage implements StorageInterface {
         tasks: mlTasks,
         rebalances: mlRebalances,
         selectionPairs: mlSelectionPairs,  // V4.1: Pairwise preferences from task selections
+        decisions: mlDecisions,
       },
+    };
+  }
+
+  // ========== V4.2: Backfill Skip Decisions ==========
+
+  async backfillSkipDecisions(dryRun: boolean = false): Promise<{
+    created: number;
+    skipped: number;
+    details: Array<{ selectionEventId: string; selectedTaskId: string; topTaskId: string; rankDelta: number }>;
+  }> {
+    const existingLinkedEventIds = new Set(
+      this.globalML.decisions
+        .filter(d => d.selectionEventId)
+        .map(d => d.selectionEventId)
+    );
+
+    const toCreate: Decision[] = [];
+
+    for (const event of this.globalML.taskSelectionEvents) {
+      if (event.wasTopSelected) continue;
+      if (existingLinkedEventIds.has(event.id)) continue;
+
+      const selectedTask = this.taskMap.get(event.selectedTaskId);
+      const topTask = this.taskMap.get(event.topTaskId);
+
+      const decision: Decision = {
+        id: uuidv4(),
+        date: event.timestamp.split('T')[0],
+        decision: `[Backfilled] Selected "${selectedTask?.task || event.selectedTaskId}" (rank ${event.selectedTaskRank + 1}) over recommended "${topTask?.task || event.topTaskId}" (rank 1)`,
+        rationale: `Reconstructed from TaskSelectionEvent ${event.id}. Rank ${event.selectedTaskRank + 1}/${event.queueSize}, score diff: ${event.selectedTaskScore - event.topTaskScore}.`,
+        createdAt: event.timestamp,
+        decisionType: 'skip',
+        relatedTaskId: event.selectedTaskId,
+        skippedTaskId: event.topTaskId,
+        selectedTaskId: event.selectedTaskId,
+        rankDelta: event.selectedTaskRank,
+        selectionEventId: event.id,
+        workspaceId: event.workspaceId,
+      };
+      toCreate.push(decision);
+    }
+
+    if (!dryRun && toCreate.length > 0) {
+      this.globalML.decisions.push(...toCreate);
+      for (const d of toCreate) {
+        if (d.workspaceId === this.currentWorkspaceId) {
+          this.db.decisions.push(d);
+        }
+      }
+      await this.saveGlobalML();
+      await this.save();
+      console.log(`📊 V4.2: Backfilled ${toCreate.length} skip decisions from historical selection events`);
+    }
+
+    const alreadyLinked = this.globalML.taskSelectionEvents.filter(
+      e => !e.wasTopSelected && existingLinkedEventIds.has(e.id)
+    ).length;
+
+    return {
+      created: dryRun ? 0 : toCreate.length,
+      skipped: alreadyLinked,
+      details: toCreate.map(d => ({
+        selectionEventId: d.selectionEventId!,
+        selectedTaskId: d.selectedTaskId!,
+        topTaskId: d.skippedTaskId!,
+        rankDelta: d.rankDelta!,
+      })),
     };
   }
 
