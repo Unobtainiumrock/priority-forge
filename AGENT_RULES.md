@@ -28,13 +28,15 @@ with them do NOT appear in the frontend and are lost when the session ends.
 | `TaskUpdate`  | `mcp_priority-forge_update_task` |
 | (completing)  | `mcp_priority-forge_complete_task` |
 
-**If MCP tools are not available**, use the REST API:
+**If MCP tools are not available or disconnect mid-session**, use the REST API immediately (do not retry MCP):
 ```bash
-curl -X POST http://localhost:3456/tasks \
+curl -X POST http://127.0.0.1:3456/tasks \
   -H "Content-Type: application/json" \
   -d '{"task":"title","priority":"P1","project":"project-name","effort":"medium"}'
 ```
-Then check: (1) backend is running (`curl http://localhost:3456/health`), (2) MCP is registered (`claude mcp list` should show `priority-forge`). If not registered, run `npm run setup:mcp` from the priority-forge directory, then restart Claude Code.
+For task updates, use PUT (not PATCH): `curl -X PUT http://127.0.0.1:3456/tasks/TASK-ID -H "Content-Type: application/json" -d '{"status":"in_progress"}'`
+
+If MCP tools are missing entirely: check (1) backend is running (`curl http://127.0.0.1:3456/health`), (2) MCP is registered (`claude mcp list` should show `priority-forge`). If not registered, run `npm run setup:mcp` from the priority-forge directory, then restart Claude Code.
 
 ---
 
@@ -87,6 +89,37 @@ RIGHT:
 Always call `mcp_priority-forge_complete_task` with:
 - outcome: "completed" | "deferred" | "cancelled"
 
+## DECISION LOGGING PROTOCOL (V4.2)
+
+The ML pipeline now tracks decisions to learn *why* tasks are skipped, deprioritized, or deferred.
+
+**Auto-logged (no action needed):**
+- **Skip decisions** — when `update_task(status: "in_progress")` is called for a non-top-ranked task, a skip decision is automatically created with the rank delta and linked to the selection event.
+
+**Agent MUST ask user for reasoning and then call `log_decision`:**
+
+| Trigger | When | decisionType |
+|---------|------|--------------|
+| Priority downgrade | `update_task` with lower priority (e.g., P0→P2) | `prioritization` |
+| Deferral | `complete_task(outcome: "deferred")` | `defer` |
+| Cancellation | `complete_task(outcome: "cancelled")` | `defer` |
+
+```
+WRONG:
+  User: "Deprioritize the resume task"
+  Agent: *calls update_task(priority: "P3")*
+  Agent: "Done."
+
+RIGHT:
+  User: "Deprioritize the resume task"
+  Agent: "What's the reasoning for deprioritizing?"
+  User: "Mercor didn't move forward, Chloe's done, job hunt is paused"
+  Agent: *calls update_task(priority: "P3")*
+  Agent: *calls log_decision(date, decision, rationale: user's reasoning, decisionType: "prioritization")*
+```
+
+**Why this matters:** Priority changes are tracked numerically (old→new), but the reasoning is lost without a decision record. The ML system needs both the *what* (priority change event) and the *why* (decision) to learn meaningful patterns.
+
 ## END OF CONVERSATION
 
 - Review conversation for untracked work items
@@ -100,31 +133,14 @@ Always call `mcp_priority-forge_complete_task` with:
 > **Purpose:** Collect data to train XGBoost for better priority weights.
 > **Target:** 10+ completions, 20+ selections, 5+ priority changes
 
-### CRITICAL: Full Task Lifecycle Logging
+### Task Lifecycle Logging (V4.2: Mostly Automatic)
 
-**When starting work on ANY task**, do BOTH of these:
+**When starting work on ANY task**, call `update_task(status: "in_progress")`. This automatically:
+- Captures `startedAt` timestamp (work duration tracking)
+- Logs task selection event (which task was selected, what was recommended, pairwise preferences)
+- Logs a skip decision if the task wasn't top-ranked
 
-```
-WRONG:
-  User: "Let's work on INT-001"
-  Agent: *starts working on INT-001*
-
-RIGHT:
-  User: "Let's work on INT-001"
-  Agent: *calls mcp_priority-forge_log_task_selection(taskId: "INT-001")*
-         *calls mcp_priority-forge_update_task(id: "INT-001", status: "in_progress")*
-         *then starts working on INT-001*
-```
-
-`log_task_selection` captures:
-- Which task was selected
-- What our top recommendation was
-- Whether user followed our recommendation (training signal!)
-
-`update_task(status: "in_progress")` captures:
-- `startedAt` timestamp → enables `actualWorkTime` calculation
-- Distinguishes queue time from actual work time
-- Critical for learning task duration estimates
+You do NOT need to manually call `log_task_selection` — it fires automatically on the `in_progress` transition.
 
 ### Fill In Effort Estimates
 
@@ -158,7 +174,8 @@ Periodically call `mcp_priority-forge_get_ml_summary` to check:
 | Metric | Target | Why |
 |--------|--------|-----|
 | Completions | 10+ | Outcome signal |
-| Selections | 20+ | User preference signal |
+| Selections | 20+ | User preference signal (auto-logged on `in_progress`) |
 | Priority Changes | 5+ | Override/correction signal |
 | Completions with `actualWorkTime` | 10+ | Work duration learning (requires `in_progress` status) |
+| Decisions | 10+ | Decision reasoning signal (skips auto-logged, others require agent protocol) |
 

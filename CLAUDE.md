@@ -11,9 +11,9 @@ They do NOT sync with Priority Forge, do NOT appear at localhost:5173, and are L
 - Update: `mcp_priority-forge_update_task`
 - Complete: `mcp_priority-forge_complete_task`
 
-**If MCP tools are unavailable (session started before MCP loaded), use the REST API:**
+**If MCP tools are unavailable or disconnect mid-session**, use the REST API immediately:
 ```bash
-curl -X POST http://localhost:3456/tasks \
+curl -X POST http://127.0.0.1:3456/tasks \
   -H "Content-Type: application/json" \
   -d '{"task":"title","priority":"P1","project":"project-name","effort":"medium"}'
 ```
