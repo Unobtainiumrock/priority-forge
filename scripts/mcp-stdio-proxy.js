@@ -166,6 +166,7 @@ function forwardToHTTP(body) {
       path: serverPath,
       method: 'POST',
       headers: reqHeaders,
+      timeout: 5000, // 5s — fail fast instead of hanging indefinitely
     },
     (res) => {
       // Capture session ID returned on initialize
@@ -186,6 +187,10 @@ function forwardToHTTP(body) {
       });
     }
   );
+
+  req.on('timeout', () => {
+    req.destroy(new Error('Backend request timed out after 5000ms'));
+  });
 
   req.on('error', (err) => {
     pendingRequests--;
