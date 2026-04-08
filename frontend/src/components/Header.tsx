@@ -23,7 +23,7 @@ export function Header({ isConnected, isFetching, topPriority, taskCount }: Head
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-surface-950/90 backdrop-blur-xl border-b border-surface-800">
+    <header className="sticky top-0 z-50 glass">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo & Title */}

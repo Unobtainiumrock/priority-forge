@@ -12,7 +12,7 @@ export function DecisionsPanel() {
 
   if (decisions.length === 0) {
     return (
-      <div className="bg-surface-800/30 rounded-xl border border-surface-700 p-4">
+      <div className="glass-light rounded-xl p-4">
         <h3 className="text-xs font-medium text-surface-400 uppercase tracking-wider mb-3 flex items-center gap-2">
           <BookOpen className="w-4 h-4" />
           Decision Log
@@ -25,7 +25,7 @@ export function DecisionsPanel() {
   }
 
   return (
-    <div className="bg-surface-800/30 rounded-xl border border-surface-700 p-4">
+    <div className="glass-light rounded-xl p-4">
       <h3 className="text-xs font-medium text-surface-400 uppercase tracking-wider mb-3 flex items-center gap-2">
         <BookOpen className="w-4 h-4 text-blue-400" />
         Decision Log

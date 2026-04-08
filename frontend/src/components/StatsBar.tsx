@@ -19,7 +19,7 @@ export function StatsBar() {
       value: stats.p0Count, 
       icon: AlertCircle,
       color: stats.p0Count > 0 ? 'text-red-400' : 'text-surface-400',
-      bg: stats.p0Count > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-surface-800/50 border-surface-700',
+      bg: stats.p0Count > 0 ? 'bg-red-500/10 border-red-500/30 backdrop-blur-md' : 'glass-light',
       glow: stats.p0Count > 0,
     },
     { 
@@ -27,14 +27,14 @@ export function StatsBar() {
       value: stats.inProgress, 
       icon: Clock,
       color: stats.inProgress > 0 ? 'text-green-400' : 'text-surface-400',
-      bg: stats.inProgress > 0 ? 'bg-green-500/10 border-green-500/30' : 'bg-surface-800/50 border-surface-700',
+      bg: stats.inProgress > 0 ? 'bg-green-500/10 border-green-500/30 backdrop-blur-md' : 'glass-light',
     },
     { 
       label: 'Blocked', 
       value: stats.blocked, 
       icon: AlertCircle,
       color: stats.blocked > 0 ? 'text-red-400' : 'text-surface-400',
-      bg: stats.blocked > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-surface-800/50 border-surface-700',
+      bg: stats.blocked > 0 ? 'bg-red-500/10 border-red-500/30 backdrop-blur-md' : 'glass-light',
       pulse: stats.blocked > 0,
     },
     { 
@@ -42,14 +42,14 @@ export function StatsBar() {
       value: stats.waiting, 
       icon: Hourglass,
       color: stats.waiting > 0 ? 'text-amber-400' : 'text-surface-400',
-      bg: stats.waiting > 0 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-surface-800/50 border-surface-700',
+      bg: stats.waiting > 0 ? 'bg-amber-500/10 border-amber-500/30 backdrop-blur-md' : 'glass-light',
     },
     { 
       label: 'Complete', 
       value: stats.complete, 
       icon: CheckCircle2,
       color: stats.complete > 0 ? 'text-blue-400' : 'text-surface-400',
-      bg: stats.complete > 0 ? 'bg-blue-500/10 border-blue-500/30' : 'bg-surface-800/50 border-surface-700',
+      bg: stats.complete > 0 ? 'bg-blue-500/10 border-blue-500/30 backdrop-blur-md' : 'glass-light',
     },
   ];
 

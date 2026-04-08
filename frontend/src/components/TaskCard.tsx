@@ -112,8 +112,8 @@ export function TaskCard({
       <button
         onClick={handleClick}
         className={cn(
-          'task-card w-full text-left p-3 rounded-lg border transition-all',
-          'bg-surface-800/50 border-surface-700 hover:border-surface-600',
+          'task-card w-full text-left p-3 rounded-lg transition-all',
+          'glass-light hover:border-surface-500/60',
           isSelected && 'ring-2 ring-green-500/50 border-green-500/50'
         )}
       >
@@ -152,11 +152,11 @@ export function TaskCard({
       onDrop={handleDrop}
       onClick={handleClick}
       className={cn(
-        'task-card group w-full text-left p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing',
-        'animate-slide-in-left',
-        isSelected 
-          ? 'bg-surface-800 border-green-500/50 ring-2 ring-green-500/30' 
-          : 'bg-surface-800/50 border-surface-700 hover:border-surface-600',
+        'task-card group w-full text-left p-4 rounded-xl transition-all cursor-grab active:cursor-grabbing',
+        'animate-slide-in-left glass-light',
+        isSelected
+          ? 'border-green-500/50 ring-2 ring-green-500/30'
+          : 'hover:border-surface-500/60',
         urgency === 'critical' && 'border-l-4 border-l-red-500',
         urgency === 'high' && 'border-l-4 border-l-amber-500',
         // V3.2: Drag states

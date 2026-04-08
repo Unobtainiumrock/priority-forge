@@ -14,7 +14,7 @@ export function ProjectFilter() {
   const totalTasks = tasks.length;
 
   return (
-    <div className="bg-surface-800/30 rounded-xl border border-surface-700 p-4">
+    <div className="glass-light rounded-xl p-4">
       <h3 className="text-xs font-medium text-surface-400 uppercase tracking-wider mb-3">
         Filter by Project
       </h3>

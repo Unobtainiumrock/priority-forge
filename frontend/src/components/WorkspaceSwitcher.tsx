@@ -89,14 +89,14 @@ export function WorkspaceSwitcher() {
 
   if (workspacesLoading) {
     return (
-      <div className="p-4 bg-surface-800/30 rounded-xl border border-surface-700">
+      <div className="p-4 glass-light rounded-xl">
         <div className="text-sm text-surface-400">Loading workspaces...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 bg-surface-800/30 rounded-xl border border-surface-700">
+    <div className="p-4 glass-light rounded-xl">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-surface-200 flex items-center gap-2">
           <FolderOpen className="w-4 h-4" />

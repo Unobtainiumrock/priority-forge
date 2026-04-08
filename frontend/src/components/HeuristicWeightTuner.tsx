@@ -155,7 +155,7 @@ export function HeuristicWeightTuner() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 w-96 bg-surface-900/95 backdrop-blur-xl border-l border-surface-700 shadow-2xl z-40 animate-slide-in-left">
+    <div className="fixed inset-y-0 right-0 w-96 glass shadow-2xl z-40 animate-slide-in-left">
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-surface-700">

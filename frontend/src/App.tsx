@@ -44,7 +44,7 @@ function App() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Error State */}
         {isError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 animate-fade-in">
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 backdrop-blur-md animate-fade-in">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
               <span className="text-sm text-red-400">
@@ -98,7 +98,7 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-12 py-6 border-t border-surface-800">
+      <footer className="mt-12 py-6 glass">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-surface-500">
           <span>{versionInfo?.fullName ?? 'Priority Forge'} — Task Prioritization Dashboard</span>
           <div className="flex items-center gap-4">

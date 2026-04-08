@@ -85,7 +85,7 @@ export function PriorityQueueList() {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Filter Bar */}
-      <div className="mb-4 p-4 bg-surface-800/30 rounded-xl border border-surface-700">
+      <div className="mb-4 p-4 glass-light rounded-xl">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
@@ -95,7 +95,7 @@ export function PriorityQueueList() {
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-              className="w-full pl-9 pr-4 py-2 bg-surface-800 border border-surface-700 rounded-lg text-sm text-surface-200 placeholder-surface-500 focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/30"
+              className="w-full pl-9 pr-4 py-2 bg-surface-900/50 backdrop-blur-sm border border-surface-700 rounded-lg text-sm text-surface-200 placeholder-surface-500 focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/30"
             />
           </div>
 
